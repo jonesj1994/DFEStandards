@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>DfE Standards Tracker</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+<div id="app">
+
+  <!-- Sidebar -->
+  <nav id="sidebar">
+    <div class="sidebar-logo">DfE Standards Tracker</div>
+    <ul class="sidebar-nav" id="sidebar-nav">
+      <li><a href="#" data-view="dashboard" class="active">&#9632; Dashboard</a></li>
+      <li><a href="#" data-view="school-info">&#9632; School Info</a></li>
+      <li><a href="#" data-view="summary">&#9632; Summary</a></li>
+      <hr style="border-color:rgba(255,255,255,0.1);margin:6px 0;">
+      <!-- Category nav items injected by app.js -->
+    </ul>
+  </nav>
+
+  <!-- Main area -->
+  <div id="main">
+    <header id="topbar">
+      <button id="menu-toggle" aria-label="Toggle menu">&#9776;</button>
+      <h1 id="topbar-title">Dashboard</h1>
+      <span id="save-indicator">&#10003; Saved</span>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;">
+        <button class="btn btn-secondary btn-sm" id="btn-import">&#8593; Import Excel</button>
+        <button class="btn btn-success btn-sm" id="btn-export">&#8595; Export Excel</button>
+      </div>
+      <input type="file" id="file-input" accept=".xlsx" style="display:none" />
+    </header>
+
+    <main id="content">
+      <!-- Views rendered here by app.js -->
+    </main>
+  </div>
+
+</div>
+
+<div id="toast"></div>
+
+<!-- Libraries -->
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<!-- App -->
+<script src="data.js"></script>
+<script src="export.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
