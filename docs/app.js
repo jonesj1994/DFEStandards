@@ -17,6 +17,12 @@ function defaultState() {
   return {
     schoolName: "",
     schoolURN: "",
+    schoolPhase: "",
+    schoolType: "",
+    schoolLA: "",
+    schoolAddress: "",
+    schoolPhone: "",
+    schoolWebsite: "",
     assessorName: "",
     assessmentDate: "",
     ratings,
@@ -208,26 +214,78 @@ function renderDashboard() {
 
 // School Info
 function renderSchoolInfo() {
+  const hasGIAS = state.schoolName || state.schoolPhase || state.schoolType;
   return `
-  <div class="info-form">
+  <div class="info-form" style="max-width:680px">
     <h2 style="margin-top:0">School Information</h2>
-    <div class="form-field">
-      <label for="si-name">School / College Name</label>
-      <input type="text" id="si-name" value="${escAttr(state.schoolName)}" placeholder="e.g. Anytown High School" />
+
+    <div style="background:#f3f2f1;border-left:4px solid var(--dfe-blue);padding:12px 16px;border-radius:0 4px 4px 0;margin-bottom:20px;font-size:13px;color:#505a5f">
+      Enter your school URN and click <strong>Lookup</strong> to automatically fill in school details from the DfE Get Information About Schools register.
     </div>
-    <div class="form-field">
-      <label for="si-urn">URN</label>
-      <input type="text" id="si-urn" value="${escAttr(state.schoolURN)}" placeholder="e.g. 123456" />
+
+    <div style="display:flex;gap:8px;align-items:flex-end;margin-bottom:16px">
+      <div class="form-field" style="flex:1;margin:0">
+        <label for="si-urn">URN (Unique Reference Number)</label>
+        <input type="text" id="si-urn" value="${escAttr(state.schoolURN)}" placeholder="e.g. 123456" maxlength="10" />
+      </div>
+      <button class="btn btn-primary" id="btn-lookup-urn" style="white-space:nowrap">
+        <span id="lookup-btn-text">&#128269; Lookup URN</span>
+      </button>
     </div>
-    <div class="form-field">
-      <label for="si-assessor">Assessor Name</label>
-      <input type="text" id="si-assessor" value="${escAttr(state.assessorName)}" placeholder="e.g. Jane Smith" />
+
+    <div id="lookup-status" style="margin-bottom:12px;font-size:13px"></div>
+
+    ${hasGIAS ? `
+    <div style="background:#e3f5ec;border:1px solid #00703c;border-radius:4px;padding:12px 16px;margin-bottom:20px;font-size:12px;color:#00703c">
+      &#10003; School details loaded from GIAS register. You can edit any field below.
+    </div>` : ""}
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px">
+      <div class="form-field" style="grid-column:1/-1">
+        <label for="si-name">School / College Name</label>
+        <input type="text" id="si-name" value="${escAttr(state.schoolName)}" placeholder="e.g. Anytown High School" />
+      </div>
+      <div class="form-field">
+        <label for="si-phase">Phase of Education</label>
+        <input type="text" id="si-phase" value="${escAttr(state.schoolPhase)}" placeholder="e.g. Secondary" />
+      </div>
+      <div class="form-field">
+        <label for="si-type">School Type</label>
+        <input type="text" id="si-type" value="${escAttr(state.schoolType)}" placeholder="e.g. Academy Sponsor Led" />
+      </div>
+      <div class="form-field">
+        <label for="si-la">Local Authority</label>
+        <input type="text" id="si-la" value="${escAttr(state.schoolLA)}" placeholder="e.g. Manchester" />
+      </div>
+      <div class="form-field">
+        <label for="si-phone">Phone</label>
+        <input type="text" id="si-phone" value="${escAttr(state.schoolPhone)}" placeholder="e.g. 0161 123 4567" />
+      </div>
+      <div class="form-field" style="grid-column:1/-1">
+        <label for="si-address">Address</label>
+        <input type="text" id="si-address" value="${escAttr(state.schoolAddress)}" placeholder="e.g. 1 School Lane, Manchester, M1 1AA" />
+      </div>
+      <div class="form-field" style="grid-column:1/-1">
+        <label for="si-website">School Website</label>
+        <input type="url" id="si-website" value="${escAttr(state.schoolWebsite)}" placeholder="e.g. https://www.school.org.uk" />
+      </div>
     </div>
-    <div class="form-field">
-      <label for="si-date">Assessment Date</label>
-      <input type="date" id="si-date" value="${escAttr(state.assessmentDate)}" />
+
+    <hr style="border:none;border-top:1px solid #e8e8e8;margin:20px 0">
+    <h3 style="margin-top:0;font-size:15px">Assessment Details</h3>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:20px">
+      <div class="form-field">
+        <label for="si-assessor">Assessor Name</label>
+        <input type="text" id="si-assessor" value="${escAttr(state.assessorName)}" placeholder="e.g. Jane Smith" />
+      </div>
+      <div class="form-field">
+        <label for="si-date">Assessment Date</label>
+        <input type="date" id="si-date" value="${escAttr(state.assessmentDate)}" />
+      </div>
     </div>
-    <button class="btn btn-primary" id="btn-save-info">Save Information</button>
+
+    <button class="btn btn-primary" id="btn-save-info">&#10003; Save Information</button>
   </div>`;
 }
 
@@ -344,6 +402,53 @@ function renderCategory(catId) {
 }
 
 // ── Event wiring ───────────────────────────────────────────────────────────
+// ── GIAS URN Lookup ────────────────────────────────────────────────────────
+async function lookupURN() {
+  const urnInput = document.getElementById("si-urn");
+  const statusEl = document.getElementById("lookup-status");
+  const btnText = document.getElementById("lookup-btn-text");
+  const urn = urnInput ? urnInput.value.trim() : "";
+
+  if (!urn || !/^\d{5,7}$/.test(urn)) {
+    statusEl.innerHTML = `<span style="color:var(--rag-red)">&#9888; Please enter a valid URN (5–7 digits).</span>`;
+    return;
+  }
+
+  btnText.textContent = "Looking up…";
+  document.getElementById("btn-lookup-urn").disabled = true;
+  statusEl.innerHTML = `<span style="color:#505a5f">Fetching from GIAS register…</span>`;
+
+  try {
+    const res = await fetch(`https://dfe-digital.github.io/gias-data/schools/${urn}.json`);
+    if (!res.ok) {
+      if (res.status === 404) throw new Error("URN not found in the GIAS register. Check the number and try again.");
+      throw new Error(`GIAS returned status ${res.status}`);
+    }
+    const d = await res.json();
+
+    // Build address string from available parts
+    const addressParts = [d.address_1, d.address_2, d.address_3, d.county, d.postcode].filter(Boolean);
+    const address = addressParts.join(", ");
+
+    // Populate form fields live
+    const set = (id, val) => { const el = document.getElementById(id); if (el) el.value = val || ""; };
+    set("si-name",    d.name);
+    set("si-phase",   d.phase_of_education);
+    set("si-type",    d.type);
+    set("si-la",      d.local_authority);
+    set("si-phone",   d.phone);
+    set("si-address", address);
+    set("si-website", d.school_website);
+
+    statusEl.innerHTML = `<span style="color:var(--rag-green)">&#10003; Found: <strong>${escHtml(d.name)}</strong> — ${escHtml(d.phase_of_education || "")} ${escHtml(d.type || "")}</span>`;
+  } catch (err) {
+    statusEl.innerHTML = `<span style="color:var(--rag-red)">&#9888; ${escHtml(err.message)}</span>`;
+  } finally {
+    btnText.textContent = "🔍 Lookup URN";
+    document.getElementById("btn-lookup-urn").disabled = false;
+  }
+}
+
 function attachViewEvents() {
   const content = document.getElementById("content");
 
@@ -355,13 +460,25 @@ function attachViewEvents() {
     });
   });
 
+  // URN lookup
+  const btnLookup = document.getElementById("btn-lookup-urn");
+  if (btnLookup) {
+    btnLookup.addEventListener("click", () => lookupURN());
+  }
+
   // School info save
   const btnSave = document.getElementById("btn-save-info");
   if (btnSave) {
     btnSave.addEventListener("click", () => {
-      state.schoolName = document.getElementById("si-name").value.trim();
-      state.schoolURN = document.getElementById("si-urn").value.trim();
-      state.assessorName = document.getElementById("si-assessor").value.trim();
+      state.schoolURN      = document.getElementById("si-urn").value.trim();
+      state.schoolName     = document.getElementById("si-name").value.trim();
+      state.schoolPhase    = document.getElementById("si-phase").value.trim();
+      state.schoolType     = document.getElementById("si-type").value.trim();
+      state.schoolLA       = document.getElementById("si-la").value.trim();
+      state.schoolPhone    = document.getElementById("si-phone").value.trim();
+      state.schoolAddress  = document.getElementById("si-address").value.trim();
+      state.schoolWebsite  = document.getElementById("si-website").value.trim();
+      state.assessorName   = document.getElementById("si-assessor").value.trim();
       state.assessmentDate = document.getElementById("si-date").value;
       saveState();
       showToast("School information saved.");
