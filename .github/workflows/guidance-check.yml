@@ -1,0 +1,147 @@
+# Weekly check of the official guidance behind the two trackers.
+# - DfE standards: rebuilds docs/data.js from GOV.UK. If the standards changed,
+#   opens (or updates) a pull request for review. Nothing goes live until merged.
+# - If GOV.UK added, renamed or removed a standard or topic page, the generator
+#   stops; the workflow then opens an issue so a person can update ID_MAP.
+# - Cyber Essentials: opens an issue if the NCSC links a different requirements
+#   document (a new version needs the tracker updating by hand).
+name: Weekly guidance check
+
+on:
+  schedule:
+    # Mondays 05:41 UTC (05:41 GMT / 06:41 BST)
+    - cron: "41 5 * * 1"
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+  pull-requests: write
+  issues: write
+
+concurrency:
+  group: guidance-check
+  cancel-in-progress: false
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Rebuild DfE standards from GOV.UK
+        id: dfe
+        run: |
+          cp docs/data.js /tmp/data.old.js
+          if python3 scripts/gen_data_govuk.py > /tmp/gen.out 2> /tmp/gen.err; then
+            cat /tmp/gen.out
+            # The "generated" date changes every run, so ignore that line
+            if diff <(grep -v '"generated":' /tmp/data.old.js) <(grep -v '"generated":' docs/data.js) > /dev/null; then
+              git checkout -- docs/data.js
+              echo "status=same" >> "$GITHUB_OUTPUT"
+              echo "DfE standards unchanged."
+            else
+              python3 scripts/summarise_data_change.py /tmp/data.old.js docs/data.js > /tmp/summary.md
+              cat /tmp/summary.md
+              echo "status=changed" >> "$GITHUB_OUTPUT"
+            fi
+          else
+            cat /tmp/gen.out /tmp/gen.err
+            git checkout -- docs/data.js
+            echo "status=needs-review" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Check Cyber Essentials requirements version
+        id: ce
+        run: |
+          set +e
+          python3 scripts/check_ce_version.py > /tmp/ce.out 2>&1
+          code=$?
+          cat /tmp/ce.out
+          case $code in
+            0) echo "status=same" >> "$GITHUB_OUTPUT" ;;
+            2) echo "status=changed" >> "$GITHUB_OUTPUT" ;;
+            *) echo "status=error" >> "$GITHUB_OUTPUT" ;;
+          esac
+
+      - name: Write pull request description
+        if: steps.dfe.outputs.status == 'changed'
+        run: |
+          {
+            echo "Automated weekly check found changes to the DfE digital and technology standards on GOV.UK."
+            echo "Please review before merging; the live site only updates once this is merged."
+            echo
+            cat /tmp/summary.md
+            echo
+            echo "Item ids are unchanged for existing standards, so schools' saved progress carries over."
+            echo
+            echo "_Opened by the [Weekly guidance check](${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}) workflow._"
+          } > /tmp/pr-body.md
+
+      - name: Open or update pull request
+        id: pr
+        if: steps.dfe.outputs.status == 'changed'
+        continue-on-error: true
+        uses: peter-evans/create-pull-request@v7
+        with:
+          branch: guidance-update/dfe-standards
+          delete-branch: true
+          add-paths: docs/data.js
+          commit-message: Update DfE standards from GOV.UK
+          title: "Weekly guidance update: DfE standards changed on GOV.UK"
+          body-path: /tmp/pr-body.md
+
+      - name: Open or update issue for anything needing a person
+        if: >-
+          steps.dfe.outputs.status == 'needs-review' ||
+          steps.ce.outputs.status != 'same' ||
+          (steps.dfe.outputs.status == 'changed' && steps.pr.outcome != 'success')
+        uses: actions/github-script@v7
+        env:
+          DFE_STATUS: ${{ steps.dfe.outputs.status }}
+          CE_STATUS: ${{ steps.ce.outputs.status }}
+          PR_OUTCOME: ${{ steps.pr.outcome }}
+        with:
+          script: |
+            const fs = require("fs");
+            const read = f => { try { return fs.readFileSync(f, "utf8").trim(); } catch { return ""; } };
+            const run = `${process.env.GITHUB_SERVER_URL}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`;
+            const parts = [];
+            if (process.env.DFE_STATUS === "needs-review") {
+              parts.push("## DfE standards: GOV.UK changed in a way that needs a person",
+                "The generator stopped. Update `ID_MAP` / `CATS` / `RETIRED_IDS` in `scripts/gen_data_govuk.py` " +
+                "(reuse an id for a renamed standard, give a new standard a new id, never reuse ids), then run it again.",
+                "```", read("/tmp/gen.err"), "```");
+            }
+            if (process.env.DFE_STATUS === "changed" && process.env.PR_OUTCOME !== "success") {
+              parts.push("## DfE standards changed, but the pull request could not be opened",
+                "Enable **Settings → Actions → General → Allow GitHub Actions to create and approve pull requests**, " +
+                "then re-run this workflow. Summary of the changes:", read("/tmp/summary.md"));
+            }
+            if (process.env.CE_STATUS === "changed") {
+              parts.push("## Cyber Essentials: the NCSC requirements document has changed",
+                "Update `docs/ce-data.js` (requirement text, `CE_VERSION`, `CE_SOURCE_URL`), keeping existing ids.",
+                "```", read("/tmp/ce.out"), "```");
+            }
+            if (process.env.CE_STATUS === "error") {
+              parts.push("## Cyber Essentials: the check could not run", "```", read("/tmp/ce.out"), "```");
+            }
+            parts.push(`_From the [Weekly guidance check](${run}) workflow._`);
+            const title = "Weekly guidance check needs attention";
+            const body = parts.join("\n\n");
+            const open = await github.paginate(github.rest.issues.listForRepo,
+              { owner: context.repo.owner, repo: context.repo.repo, state: "open", per_page: 100 });
+            const existing = open.find(i => i.title === title && !i.pull_request);
+            if (existing) {
+              await github.rest.issues.createComment({ owner: context.repo.owner, repo: context.repo.repo,
+                issue_number: existing.number, body });
+              core.notice(`Commented on issue #${existing.number}`);
+            } else {
+              const { data } = await github.rest.issues.create({ owner: context.repo.owner, repo: context.repo.repo,
+                title, body });
+              core.notice(`Opened issue #${data.number}`);
+            }
