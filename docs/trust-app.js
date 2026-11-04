@@ -211,7 +211,15 @@
     c.focus({ preventScroll: true });
   }
 
+  let rendering = false;
   function render() {
+    // Replacing the page can blur a changed input, which fires its change
+    // handler and asks to render again mid-update. Ignore that nested call.
+    if (rendering) return;
+    rendering = true;
+    try { renderNow(); } finally { rendering = false; }
+  }
+  function renderNow() {
     const views = { overview: viewOverview, import: viewImport, trust: viewTrust, about: viewAbout, school: viewSchool };
     const titles = { overview: "Trust overview", import: "Import school files", trust: "Choose trust", about: "About this data", school: "School detail" };
     document.getElementById("content").innerHTML = (views[app.view] || viewOverview)();
@@ -406,7 +414,7 @@
       };
       const w = WORST.find(x => x.sev === s.worst);
       return `<tr class="${cls}">
-        <th scope="row" class="sticky"><button type="button" class="school-btn" data-school="${esc(s.key)}">${esc(s.name)}</button>${tags}</th>
+        <th scope="row" class="sticky"><button type="button" class="school-btn" data-school="${esc(s.key)}">${esc(s.name)}</button>${tags.trim() ? `<div class="row-tags">${tags}</div>` : ""}</th>
         <td>${esc(s.urn)}</td><td>${esc(s.phase)}</td><td>${esc(s.pupils)}</td>
         ${cells(DFE)}${cells(CE)}
         <td>${w ? `<span class="rag-pill ${w.cls}">${esc(w.label)}</span>` : `<span class="rag-pill not-set">Not assessed</span>`}</td>
@@ -647,7 +655,7 @@
           : `${sum.ready ? '<span class="tag ok">Ready to apply</span>' : '<span class="tag warn">Not ready yet</span>'}
              ${cert.level ? ` · Seeking ${esc(cert.level)}` : ""}${cert.renewalDue ? ` · Renewal ${cert.state === "overdue" ? `<strong style="color:var(--rag-red)">overdue since ${esc(ukDate(cert.renewalDue))}</strong>` : `due ${esc(ukDate(cert.renewalDue))}`}${cert.estimated ? " (estimated from certification date)" : ""}` : ""}`}
       </p>
-      <div class="table-wrap"><table class="summary-table">
+      <div class="table-wrap"><table class="summary-table cat-summary">
         <thead><tr><th>${f.id === "dfe" ? "Standard" : "Control"}</th><th>Total</th>${statusCols.map(k => `<th>${esc(k)}</th>`).join("")}<th>Overall</th></tr></thead>
         <tbody>${rows}</tbody></table></div>
       <h4>Outstanding actions (${actions.length})</h4>
