@@ -4,6 +4,9 @@ const CE_STATUSES = ["Not Set", "Not Met", "Partially Met", "Met", "N/A"];
 const CE_ORG_FIELDS = [
   ["orgName", "School / College / Trust name", "text", "e.g. Anytown High School"],
   ["orgURN", "URN", "text", "e.g. 123456"],
+  ["orgDfENumber", "DfE number (LAESTAB)", "text", "e.g. 352/4000"],
+  ["orgTrust", "Trust", "text", "e.g. Anytown Academy Trust"],
+  ["orgPupils", "Number of pupils", "text", "e.g. 850"],
   ["scopeDescription", "Scope description", "textarea", "e.g. Whole organisation, including all staff devices and Microsoft 365"],
   ["certLevel", "Certification level sought", "select", ["", "Cyber Essentials", "Cyber Essentials Plus"]],
   ["certBody", "Certification Body", "text", "e.g. name of your assessor"],
@@ -20,12 +23,21 @@ function ceDefaultState() {
   const s = { org: {}, status: {}, evidence: {}, actions: {}, owner: {} };
   CE_ORG_FIELDS.forEach(([k]) => (s.org[k] = ""));
   ceAllItems().forEach(i => { s.status[i.id] = "Not Set"; s.evidence[i.id] = ""; s.actions[i.id] = ""; s.owner[i.id] = ""; });
-  // Reuse school details already entered in the DfE tracker
-  try {
-    const dfe = JSON.parse(localStorage.getItem("dfe_tracker_v1") || "{}");
-    s.org.orgName = dfe.schoolName || "";
-    s.org.orgURN = dfe.schoolURN || "";
-  } catch (e) { /* ignore */ }
+  // Use the school chosen on the home page if there is one; otherwise reuse
+  // school details already entered in the DfE tracker
+  const profile = window.SchoolLookup && window.SchoolLookup.loadProfile();
+  if (profile) {
+    window.SchoolLookup.applyTo(s.org, window.SchoolLookup.CE_FIELDS, profile, false);
+  } else {
+    try {
+      const dfe = JSON.parse(localStorage.getItem("dfe_tracker_v1") || "{}");
+      s.org.orgName = dfe.schoolName || "";
+      s.org.orgURN = dfe.schoolURN || "";
+      s.org.orgDfENumber = dfe.schoolDfENumber || "";
+      s.org.orgTrust = dfe.schoolTrust || "";
+      s.org.orgPupils = dfe.schoolPupils || "";
+    } catch (e) { /* ignore */ }
+  }
   return s;
 }
 
@@ -45,7 +57,46 @@ function ceLoad() {
 }
 
 let ce = ceLoad();
+
+// ── Shared school profile (chosen on the home page) ────────────────────────
+// Fill empty organisation fields from it; never overwrite what the user has
+// entered. If this tracker holds a different school, offer to switch instead.
+let ceProfileConflict = null;
+(function ceSyncFromProfile() {
+  const SL = window.SchoolLookup;
+  const profile = SL && SL.loadProfile();
+  if (!profile) return;
+  if (SL.differs(ce.org.orgURN, ce.org.orgName, profile)) {
+    if (ce.org.profileKeptURN !== profile.urn) ceProfileConflict = profile;
+    return;
+  }
+  // Save if anything was filled in, including on a first visit (when the
+  // defaults were already filled from the profile)
+  let fresh = false;
+  try { fresh = !localStorage.getItem(CE_STATE_KEY); } catch (e) { /* ignore */ }
+  if (SL.applyTo(ce.org, SL.CE_FIELDS, profile, false) || fresh) {
+    try { localStorage.setItem(CE_STATE_KEY, JSON.stringify(ce)); } catch (e) { /* storage unavailable */ }
+  }
+})();
+
+function ceProfileNotice() {
+  if (!ceProfileConflict) return "";
+  const p = ceProfileConflict, o = ce.org;
+  return `<div class="profile-notice" role="status">
+    The school chosen on the home page is <strong>${esc(p.name)}</strong> (URN ${esc(p.urn)}), but this tracker holds
+    <strong>${esc(o.orgName || "another organisation")}</strong>${o.orgURN ? ` (URN ${esc(o.orgURN)})` : ""}.
+    This tracker keeps one assessment, so switching changes the organisation details only. Your statuses, evidence and actions stay as they are.
+    <div style="margin-top:8px;display:flex;gap:8px;flex-wrap:wrap">
+      <button class="btn btn-primary btn-sm" id="btn-profile-switch">Switch to ${esc(p.name)}</button>
+      <button class="btn btn-secondary btn-sm" id="btn-profile-keep">Keep ${esc(o.orgName || "current details")}</button>
+    </div>
+  </div>`;
+}
 let ceTimer = null;
+function ceSaveNow() {
+  clearTimeout(ceTimer);
+  try { localStorage.setItem(CE_STATE_KEY, JSON.stringify(ce)); } catch (e) { /* storage unavailable */ }
+}
 function ceSave() {
   clearTimeout(ceTimer);
   ceTimer = setTimeout(() => {
@@ -146,6 +197,7 @@ function ceDashboard() {
     <h2 style="margin-top:0">Cyber Essentials readiness</h2>
     <p style="color:#505a5f;font-size:13px;margin-top:0">Based on the NCSC's ${esc(CE_VERSION)}.
       <a class="guidance-link" href="${CE_SOURCE_URL}" target="_blank" rel="noopener">Read the requirements &#8599;</a></p>
+    ${ceProfileNotice()}
     ${o.orgName ? `<p style="font-size:14px;color:#505a5f">Organisation: <strong>${esc(o.orgName)}</strong>${o.orgURN ? ` &nbsp;|&nbsp; URN: <strong>${esc(o.orgURN)}</strong>` : ""}${o.renewalDate ? ` &nbsp;|&nbsp; Renewal due: <strong>${esc(o.renewalDate)}</strong>` : ""}</p>`
       : `<p style="font-size:13px"><a href="#" data-view="org">Add organisation and certification details</a></p>`}
     <div class="card" style="display:flex;align-items:center;gap:24px;padding:16px;flex-wrap:wrap">
@@ -176,7 +228,8 @@ function ceOrgView() {
   }).join("");
   return `<div style="max-width:680px">
     <h2 style="margin-top:0">Organisation &amp; Certification</h2>
-    <p style="font-size:13px;color:#505a5f">Changes save automatically. The name and URN are copied from the DfE tracker the first time you open this page.</p>
+    ${ceProfileNotice()}
+    <p style="font-size:13px;color:#505a5f">Changes save automatically. School details are filled in from the school you choose on the <a href="index.html">home page</a>, or from the DfE tracker. Anything you type here is kept.</p>
     <div class="form-grid">${fields}</div>
   </div>`;
 }
@@ -265,6 +318,20 @@ function ceBind() {
       }
     });
   });
+  const sw = document.getElementById("btn-profile-switch");
+  if (sw) {
+    sw.addEventListener("click", () => {
+      window.SchoolLookup.applyTo(ce.org, window.SchoolLookup.CE_FIELDS, ceProfileConflict, true);
+      delete ce.org.profileKeptURN;
+      ceProfileConflict = null;
+      ceSaveNow(); ceRender(); toast("Organisation details updated.");
+    });
+    document.getElementById("btn-profile-keep").addEventListener("click", () => {
+      ce.org.profileKeptURN = ceProfileConflict.urn;
+      ceProfileConflict = null;
+      ceSaveNow(); ceRender();
+    });
+  }
   content.querySelectorAll("[data-org]").forEach(el => {
     el.addEventListener(el.tagName === "SELECT" ? "change" : "input", () => {
       ce.org[el.dataset.org] = el.value; ceSave();

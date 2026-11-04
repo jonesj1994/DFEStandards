@@ -328,12 +328,33 @@ select.rag-select option[value="Met"]     { background: #eee; }
 }
 .info-form .form-field { margin-bottom: 16px; }
 
+/* School info form grid and lookup row */
+.info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px; }
+.info-grid .form-field { margin-bottom: 0; }
+.lookup-row { display: flex; gap: 8px; align-items: flex-end; margin-bottom: 16px; }
+.btn:disabled { opacity: 0.6; cursor: wait; }
+
+/* Shown when the home page school differs from the tracker's school */
+.profile-notice {
+  background: #fef3e9;
+  border-left: 4px solid var(--rag-amber);
+  padding: 12px 16px;
+  border-radius: 0 4px 4px 0;
+  margin-bottom: 16px;
+  font-size: 13px;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+
 /* ── Responsive ── */
 @media (max-width: 768px) {
   #sidebar { transform: translateX(-100%); transition: transform 0.25s; }
   #sidebar.open { transform: translateX(0); }
   #main { margin-left: 0; }
   .form-grid { grid-template-columns: 1fr; }
+  .info-grid { grid-template-columns: 1fr; }
+  .info-grid .form-field { grid-column: auto !important; }
+  #content { padding: 16px; }
   #menu-toggle { display: block !important; }
 }
 
