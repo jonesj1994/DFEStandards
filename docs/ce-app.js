@@ -370,6 +370,10 @@ function ceExport() {
 
   const name = ce.org.orgName ? "_" + ce.org.orgName.replace(/[^a-zA-Z0-9]/g, "_") : "";
   const file = `Cyber_Essentials_Readiness${name}_${new Date().toISOString().slice(0, 10)}.xlsx`;
+  // Hidden "_assessment" sheet for the trust overview (see assessment-model.js)
+  try {
+    if (window.AssessmentModel) AssessmentModel.writeSnapshotSheet(XLSX, wb, AssessmentModel.fromTrackerState("cyber-essentials", ce));
+  } catch (e) { console.warn("Assessment sheet not added:", e); }
   XLSX.writeFile(wb, file);
   toast("Exported: " + file);
 }

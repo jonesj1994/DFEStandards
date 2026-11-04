@@ -149,6 +149,18 @@
         <div class="tracker-progress" id="progress-ce"></div>
         <span class="btn">Open Cyber Essentials tracker &#8594;</span>
       </a>
+
+      <a class="tracker-card" href="trust.html" style="--accent: var(--dfe-navy)">
+        <h2>Trust Overview</h2>
+        <p>For multi-academy trusts: bring together the tracker exports from each of your schools and see the whole trust at a glance.</p>
+        <ul>
+          <li>Every academy against every standard area</li>
+          <li>Core standards, filtering and Cyber Essentials readiness</li>
+          <li>Outstanding actions and a trust Excel export</li>
+        </ul>
+        <div class="tracker-progress" id="progress-trust"></div>
+        <span class="btn">Open trust overview &#8594;</span>
+      </a>
     </div>
 
     <p class="home-footer">
@@ -198,6 +210,10 @@
     function renderTrackerCards() {
       $("progress-dfe").textContent = progress(KEYS.dfe, "ratings", ["Met", "Green"]);
       $("progress-ce").textContent = progress(KEYS.ce, "status", ["Met", "N/A"]);
+      try {
+        const tv = JSON.parse(localStorage.getItem("trust_view_settings_v1") || "{}");
+        $("progress-trust").textContent = tv.trustName ? "Trust: " + tv.trustName : "";
+      } catch (e) { /* ignore */ }
       const t = trackerSchools();
       ["dfe", "ce"].forEach(k => {
         $("school-" + k).innerHTML = t[k].name
