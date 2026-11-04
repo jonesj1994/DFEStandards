@@ -1,0 +1,45 @@
+# Refreshes the school lookup data in docs/schools/ from the DfE's
+# Get Information About Schools (GIAS) public extract.
+name: Update school data (GIAS)
+
+on:
+  schedule:
+    # Every Monday at 05:17 UTC (GIAS publishes a fresh extract each morning)
+    - cron: "17 5 * * 1"
+  workflow_dispatch: {}
+
+# Only this workflow's own token, and only enough to commit the data files
+permissions:
+  contents: write
+
+concurrency:
+  group: update-school-data
+  cancel-in-progress: false
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Download GIAS extract and build JSON
+        run: python3 scripts/build_school_data.py --out docs/schools
+
+      - name: Commit if the school data changed
+        run: |
+          # meta.json always changes (build time), so ignore it when deciding
+          if git diff --quiet -- docs/schools ':!docs/schools/meta.json' && \
+             [ -z "$(git ls-files --others --exclude-standard docs/schools)" ]; then
+            echo "No changes to school data."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898299+github-actions[bot]@users.noreply.github.com"
+          git add -A docs/schools
+          git commit -m "Update school data from GIAS ($(jq -r .sourceDate docs/schools/meta.json))"
+          git push

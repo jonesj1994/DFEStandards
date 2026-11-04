@@ -6,13 +6,13 @@
   <title>School Compliance Trackers</title>
   <link rel="stylesheet" href="style.css" />
   <style>
-    .home-header { background: var(--dfe-navy); color: #fff; padding: 40px 24px 32px; }
+    .home-header { background: var(--dfe-navy); color: #fff; padding: 40px 16px 32px; }
     .home-header h1 { margin: 0 0 8px; font-size: 28px; }
     .home-header p { margin: 0; color: rgba(255,255,255,0.8); font-size: 16px; max-width: 640px; }
     .home-wrap { max-width: 960px; margin: 0 auto; }
     .home-grid {
-      display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-      gap: 20px; padding: 32px 16px;
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(min(280px, 100%), 1fr));
+      gap: 20px; padding: 24px 16px 32px;
     }
     .tracker-card {
       background: #fff; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.12);
@@ -24,9 +24,74 @@
     .tracker-card p { margin: 0 0 16px; font-size: 14px; color: #505a5f; line-height: 1.5; flex: 1; }
     .tracker-card ul { margin: 0 0 20px; padding-left: 18px; font-size: 13px; color: #0b0c0c; line-height: 1.7; }
     .tracker-progress { font-size: 13px; color: #505a5f; margin-bottom: 14px; min-height: 18px; }
+    .tracker-school { font-size: 13px; color: #0b0c0c; margin-bottom: 6px; overflow-wrap: anywhere; }
     .tracker-card .btn { align-self: flex-start; background: var(--accent); color: #fff; }
     .home-footer { padding: 0 16px 32px; font-size: 12px; color: #505a5f; }
     .home-footer a { color: var(--dfe-blue); }
+
+    /* ── School finder ── */
+    .finder-wrap { padding: 32px 16px 0; }
+    .finder { background: #fff; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.12); padding: 24px; border-top: 6px solid var(--dfe-navy); }
+    .finder h2 { margin: 0 0 6px; font-size: 20px; color: var(--dfe-navy); }
+    .finder-intro { margin: 0 0 16px; font-size: 14px; color: #505a5f; line-height: 1.5; }
+    .finder label { display: block; font-size: 14px; font-weight: 600; margin-bottom: 4px; }
+    .finder-hint { font-size: 13px; color: #505a5f; margin: 0 0 6px; }
+    .finder-row { display: flex; gap: 8px; }
+    .finder-row input {
+      flex: 1; min-width: 0; padding: 9px 10px; font-size: 16px; font-family: inherit;
+      border: 2px solid #0b0c0c; border-radius: 4px;
+    }
+    .finder-row input:focus { outline: 3px solid #ffdd00; outline-offset: 0; }
+    .finder-row input[aria-invalid="true"] { border-color: var(--rag-red); }
+    .finder-row .btn { white-space: nowrap; font-size: 15px; }
+    .btn:disabled { opacity: 0.6; cursor: wait; }
+    .finder-status { font-size: 14px; margin-top: 12px; min-height: 0; }
+    .finder-status:empty { display: none; }
+    .finder-status.error { color: var(--rag-red); font-weight: 600; }
+    .finder-status.loading { color: #505a5f; }
+    .finder-status.ok { color: var(--rag-green); font-weight: 600; }
+    .finder-results { list-style: none; margin: 12px 0 0; padding: 0; border: 1px solid #e8e8e8; border-radius: 6px; }
+    .finder-results:empty { display: none; }
+    .finder-results li + li { border-top: 1px solid #e8e8e8; }
+    .finder-results button {
+      display: block; width: 100%; text-align: left; background: none; border: none; padding: 10px 12px;
+      font: inherit; font-size: 14px; cursor: pointer; color: var(--dfe-blue); overflow-wrap: anywhere;
+    }
+    .finder-results button:hover, .finder-results button:focus-visible { background: #f3f2f1; }
+    .finder-results small { display: block; color: #505a5f; }
+
+    .school-card { margin-top: 16px; border: 1px solid #b1b4b6; border-radius: 6px; padding: 16px; }
+    .school-card:empty { display: none; }
+    .school-card .eyebrow { font-size: 12px; font-weight: 700; color: #505a5f; text-transform: uppercase; letter-spacing: 0.5px; margin: 0 0 4px; }
+    .school-card h3 { margin: 0 0 8px; font-size: 19px; color: var(--dfe-navy); overflow-wrap: anywhere; }
+    .tag { display: inline-block; font-size: 12px; font-weight: 700; padding: 2px 8px; border-radius: 3px; margin: 0 0 12px; }
+    .tag.open { background: #e3f5ec; color: var(--rag-green); }
+    .tag.closed { background: #fde8e4; color: var(--rag-red); }
+    .tag.other { background: #fef3e9; color: #a85300; }
+    .closed-note { background: #fde8e4; border-left: 4px solid var(--rag-red); padding: 10px 12px; font-size: 14px; margin: 0 0 12px; border-radius: 0 4px 4px 0; }
+    .closed-note .btn { margin-top: 8px; }
+    .school-details { display: grid; grid-template-columns: 170px 1fr; gap: 6px 16px; margin: 0 0 14px; font-size: 14px; }
+    .school-details dt { font-weight: 600; color: #505a5f; }
+    .school-details dd { margin: 0; overflow-wrap: anywhere; }
+    .school-links { font-size: 14px; margin: 0 0 14px; display: flex; flex-wrap: wrap; gap: 6px 16px; }
+    .school-links a { color: var(--dfe-blue); }
+    .school-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+    .sync-list { list-style: none; padding: 0; margin: 14px 0 0; font-size: 13px; color: #505a5f; }
+    .sync-list li { margin: 2px 0; overflow-wrap: anywhere; }
+    .warn-box { background: #fef3e9; border-left: 4px solid var(--rag-amber); padding: 12px 14px; margin: 14px 0 0; font-size: 14px; line-height: 1.5; border-radius: 0 4px 4px 0; }
+    .warn-box p { margin: 0 0 8px; }
+    .warn-box ul { margin: 0 0 10px; padding-left: 20px; }
+    .finder-source { font-size: 12px; color: #505a5f; margin: 14px 0 0; }
+    .finder-source a { color: var(--dfe-blue); }
+    .visually-hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+    @media (max-width: 600px) {
+      .home-header { padding: 28px 16px 24px; }
+      .home-header h1 { font-size: 24px; }
+      .finder, .tracker-card { padding: 16px; }
+      .school-details { grid-template-columns: 1fr; gap: 0; }
+      .school-details dd { margin-bottom: 8px; }
+    }
   </style>
 </head>
 <body>
@@ -38,6 +103,26 @@
   </header>
 
   <main class="home-wrap">
+    <div class="finder-wrap">
+      <section class="finder" aria-labelledby="finder-title">
+        <h2 id="finder-title">Find your school</h2>
+        <p class="finder-intro">Look up your school once and its details will be filled in for you in both trackers.</p>
+        <form id="finder-form" novalidate>
+          <label for="finder-input">URN, DfE number or school name</label>
+          <p class="finder-hint" id="finder-hint">For example 100000, 352/4000 or 3524000</p>
+          <div class="finder-row">
+            <input type="text" id="finder-input" name="q" autocomplete="off" spellcheck="false"
+                   aria-describedby="finder-hint finder-status" maxlength="80" />
+            <button type="submit" class="btn btn-primary" id="finder-btn">Search</button>
+          </div>
+        </form>
+        <div class="finder-status" id="finder-status" role="status" aria-live="polite"></div>
+        <ul class="finder-results" id="finder-results" aria-label="Matching schools"></ul>
+        <div class="school-card" id="school-card"></div>
+        <p class="finder-source" id="finder-source"></p>
+      </section>
+    </div>
+
     <div class="home-grid">
       <a class="tracker-card" href="dfe.html" style="--accent: var(--dfe-blue)">
         <h2>DfE Digital &amp; Technology Standards</h2>
@@ -45,8 +130,9 @@
         <ul>
           <li>12 standard areas, RAG rated</li>
           <li>Notes, recommendations and ownership</li>
-          <li>School details looked up by URN</li>
+          <li>School details filled in from your school search</li>
         </ul>
+        <div class="tracker-school" id="school-dfe"></div>
         <div class="tracker-progress" id="progress-dfe"></div>
         <span class="btn">Open DfE tracker &#8594;</span>
       </a>
@@ -59,6 +145,7 @@
           <li>Evidence, actions and owners</li>
           <li>Certification and renewal dates</li>
         </ul>
+        <div class="tracker-school" id="school-ce"></div>
         <div class="tracker-progress" id="progress-ce"></div>
         <span class="btn">Open Cyber Essentials tracker &#8594;</span>
       </a>
@@ -67,26 +154,262 @@
     <p class="home-footer">
       Sources:
       <a href="https://www.gov.uk/guidance/meeting-digital-and-technology-standards-in-schools-and-colleges" target="_blank" rel="noopener">DfE digital and technology standards (GOV.UK)</a> ·
-      <a href="https://www.ncsc.gov.uk/cyberessentials/overview" target="_blank" rel="noopener">Cyber Essentials (NCSC)</a>.
+      <a href="https://www.ncsc.gov.uk/cyberessentials/overview" target="_blank" rel="noopener">Cyber Essentials (NCSC)</a> ·
+      <a href="https://get-information-schools.service.gov.uk/" target="_blank" rel="noopener">Get Information About Schools (DfE)</a>, Open Government Licence v3.0.
       Data is stored only in your browser. Export to Excel to keep a copy or share it.
     </p>
   </main>
 
+  <script src="school-lookup.js"></script>
   <script>
-    // Show saved progress on each card, if any
-    function progress(key, field, done) {
-      try {
-        const s = JSON.parse(localStorage.getItem(key) || "null");
-        if (!s || !s[field]) return "";
-        // Recommended (rec-*) Cyber Essentials items are not assessed
-        const v = Object.entries(s[field]).filter(([k]) => !k.startsWith("rec-")).map(([, x]) => x);
-        const n = v.filter(x => done.includes(x)).length;
-        const started = v.filter(x => x !== "Not Set").length;
-        return started ? `In progress: ${n} of ${v.length} met` : "";
-      } catch (e) { return ""; }
+    const SL = window.SchoolLookup;
+    const KEYS = { dfe: "dfe_tracker_v1", ce: "ce_tracker_v1" };
+    const $ = id => document.getElementById(id);
+    const esc = s => String(s == null ? "" : s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+
+    function readTracker(key) {
+      try { return JSON.parse(localStorage.getItem(key) || "null"); } catch (e) { return null; }
     }
-    document.getElementById("progress-dfe").textContent = progress("dfe_tracker_v1", "ratings", ["Met", "Green"]);
-    document.getElementById("progress-ce").textContent = progress("ce_tracker_v1", "status", ["Met", "N/A"]);
+    function writeTracker(key, s) {
+      try { localStorage.setItem(key, JSON.stringify(s)); return true; } catch (e) { return false; }
+    }
+
+    // ── Tracker cards: saved progress and which school each holds ──────────
+    function progress(key, field, done) {
+      const s = readTracker(key);
+      if (!s || !s[field]) return "";
+      // Recommended (rec-*) Cyber Essentials items are not assessed
+      const v = Object.entries(s[field]).filter(([k]) => !k.startsWith("rec-")).map(([, x]) => x);
+      const n = v.filter(x => done.includes(x)).length;
+      const started = v.filter(x => x !== "Not Set").length;
+      return started ? `In progress: ${n} of ${v.length} met` : "";
+    }
+
+    // Each tracker's current school, in a common shape
+    function trackerSchools() {
+      const d = readTracker(KEYS.dfe), c = readTracker(KEYS.ce);
+      const org = (c && c.org) || {};
+      return {
+        dfe: { label: "DfE tracker", exists: !!d, name: (d && d.schoolName) || "", urn: (d && d.schoolURN) || "" },
+        ce: { label: "Cyber Essentials tracker", exists: !!c, name: org.orgName || "", urn: org.orgURN || "" }
+      };
+    }
+
+    function renderTrackerCards() {
+      $("progress-dfe").textContent = progress(KEYS.dfe, "ratings", ["Met", "Green"]);
+      $("progress-ce").textContent = progress(KEYS.ce, "status", ["Met", "N/A"]);
+      const t = trackerSchools();
+      ["dfe", "ce"].forEach(k => {
+        $("school-" + k).innerHTML = t[k].name
+          ? `School: <strong>${esc(t[k].name)}</strong>${t[k].urn ? " (URN " + esc(t[k].urn) + ")" : ""}` : "";
+      });
+    }
+
+    // ── Search ──────────────────────────────────────────────────────────────
+    let shown = null;      // school currently shown in the card
+    let busy = false;
+
+    function setStatus(text, kind) {
+      const el = $("finder-status");
+      el.className = "finder-status" + (kind ? " " + kind : "");
+      el.textContent = text || "";
+      $("finder-input").setAttribute("aria-invalid", kind === "error" ? "true" : "false");
+    }
+
+    function setBusy(on) {
+      busy = on;
+      $("finder-btn").disabled = on;
+      $("finder-btn").textContent = on ? "Searching…" : "Search";
+    }
+
+    async function runSearch(query) {
+      if (busy) return;
+      $("finder-results").innerHTML = "";
+      const parsed = SL.parseQuery(query);
+      if (parsed.error) { setStatus(parsed.error, "error"); return; }
+      setBusy(true);
+      setStatus("Searching the Get Information About Schools register…", "loading");
+      try {
+        const res = await SL.find(query);
+        if (res.results) {
+          setStatus(`${res.results.length === 20 ? "Showing the first 20" : res.results.length} matching open school${res.results.length === 1 ? "" : "s"}. Choose yours:`, "ok");
+          $("finder-results").innerHTML = res.results.map(r =>
+            `<li><button type="button" data-urn="${esc(r.urn)}">${esc(r.name)}
+              <small>${esc([r.town, r.postcode].filter(Boolean).join(", "))} · URN ${esc(r.urn)}${r.dfeNumber ? " · DfE " + esc(r.dfeNumber) : ""}</small></button></li>`).join("");
+        } else {
+          setStatus("");
+          showSchool(res.school);
+        }
+      } catch (e) {
+        setStatus(e.message || "Something went wrong. Please try again.", "error");
+      } finally {
+        setBusy(false);
+      }
+    }
+
+    async function openByURN(urn) {
+      $("finder-results").innerHTML = "";
+      setBusy(true);
+      setStatus("Loading school details…", "loading");
+      try {
+        const s = await SL.byURN(urn);
+        if (!s) throw new Error("No school found for URN " + urn + ".");
+        setStatus("");
+        showSchool(s);
+        $("finder-input").value = urn;
+      } catch (e) { setStatus(e.message, "error"); }
+      finally { setBusy(false); }
+    }
+
+    // ── Result card ─────────────────────────────────────────────────────────
+    function showSchool(s, opts) {
+      shown = s;
+      const profile = SL.loadProfile();
+      const isSelected = profile && profile.urn === s.urn;
+      const statusTag = s.isClosed ? `<span class="tag closed">Closed${s.closeDate ? " " + esc(SL.formatDate(s.closeDate)) : ""}</span>`
+        : s.status === "Open" ? `<span class="tag open">Open</span>`
+        : `<span class="tag other">${esc(s.status || "Status unknown")}</span>`;
+
+      const closedNote = s.isClosed ? `<div class="closed-note">
+          <strong>This school has closed.</strong> If it became an academy or merged, the new school has a different URN and DfE number.
+          ${s.successors.length ? `<br>${s.successors.map(u => `<button type="button" class="btn btn-secondary btn-sm" data-successor="${esc(u)}">Show the school that replaced it (URN ${esc(u)})</button>`).join(" ")}` : ""}
+        </div>` : "";
+
+      const pupils = s.pupils ? `${Number(s.pupils).toLocaleString("en-GB")}${s.capacity ? " (capacity " + Number(s.capacity).toLocaleString("en-GB") + ")" : ""}${s.censusDate ? ", census " + SL.formatDate(s.censusDate) : ""}` : "";
+      const rows = [
+        ["URN", s.urn],
+        ["DfE number", s.dfeNumber || "Not available"],
+        ["Type", s.type],
+        ["Phase", s.phase + (s.ageRange ? " (ages " + s.ageRange + ")" : "")],
+        ["Status", s.status + (s.isClosed && s.closeDate ? ", closed " + SL.formatDate(s.closeDate) : "")],
+        ["Local authority", s.la + (s.laCode ? " (" + s.laCode + ")" : "")],
+        ["Trust", s.trust],
+        ["Address", s.address],
+        ["Pupils", pupils],
+        ["Phone", s.phone]
+      ].filter(([, v]) => v && String(v).trim());
+
+      const web = SL.websiteHref(s.website);
+      const sync = trackerSync(s);
+
+      $("school-card").innerHTML = `
+        <p class="eyebrow">${isSelected ? "Your selected school" : "Search result"}</p>
+        <h3>${esc(s.name)}</h3>
+        ${statusTag}
+        ${closedNote}
+        <dl class="school-details">${rows.map(([k, v]) => `<dt>${esc(k)}</dt><dd>${esc(v)}</dd>`).join("")}</dl>
+        <p class="school-links">
+          <a href="${esc(s.giasUrl)}" target="_blank" rel="noopener">View on Get Information About Schools<span class="visually-hidden"> (opens in a new tab)</span></a>
+          ${web ? `<a href="${esc(web)}" target="_blank" rel="noopener noreferrer">School website<span class="visually-hidden"> (opens in a new tab)</span></a>` : ""}
+        </p>
+        <div class="school-actions">
+          ${sync.allMatch && isSelected ? "" : `<button type="button" class="btn btn-primary" id="btn-use">Use this school in both trackers</button>`}
+          <button type="button" class="btn btn-secondary" id="btn-clear">Clear</button>
+        </div>
+        <ul class="sync-list" id="sync-list">${sync.lines.map(l => `<li>${l}</li>`).join("")}</ul>
+        <div id="warn"></div>`;
+
+      $("btn-clear").addEventListener("click", clearSelection);
+      const use = $("btn-use");
+      if (use) use.addEventListener("click", () => useSchool(false));
+      $("school-card").querySelectorAll("[data-successor]").forEach(b =>
+        b.addEventListener("click", () => openByURN(b.dataset.successor)));
+      // Move focus to the result so screen reader users hear it
+      if (!opts || !opts.noFocus) { const h = $("school-card").querySelector("h3"); h.setAttribute("tabindex", "-1"); h.focus(); }
+    }
+
+    // How each tracker relates to the school shown
+    function trackerSync(s) {
+      const t = trackerSchools();
+      const lines = [];
+      let allMatch = true;
+      const conflicts = [];
+      ["dfe", "ce"].forEach(k => {
+        const x = t[k];
+        if (!x.name && !x.urn) {
+          allMatch = false;
+          lines.push(`${x.label}: no school yet`);
+        } else if (SL.differs(x.urn, x.name, s)) {
+          allMatch = false;
+          conflicts.push(k);
+          lines.push(`${x.label}: holds <strong>${esc(x.name || "another school")}</strong>${x.urn ? " (URN " + esc(x.urn) + ")" : ""}`);
+        } else {
+          lines.push(`${x.label}: &#10003; uses this school`);
+        }
+      });
+      return { lines, allMatch, conflicts, trackers: t };
+    }
+
+    // ── Use this school ─────────────────────────────────────────────────────
+    function useSchool(confirmed) {
+      const s = shown;
+      if (!s) return;
+      const sync = trackerSync(s);
+      if (sync.conflicts.length && !confirmed) {
+        const items = sync.conflicts.map(k => {
+          const x = sync.trackers[k];
+          return `<li>The <strong>${esc(x.label)}</strong> holds <strong>${esc(x.name || "another school")}</strong>${x.urn ? " (URN " + esc(x.urn) + ")" : ""}.</li>`;
+        }).join("");
+        $("warn").innerHTML = `<div class="warn-box" role="alert">
+          <p><strong>Another school is already in use</strong></p>
+          <ul>${items}</ul>
+          <p>Each tracker keeps one assessment in this browser. If you continue, the school details in that tracker will change to <strong>${esc(s.name)}</strong>. Its ratings, notes and actions will stay as they are, so they will then show under the new school.</p>
+          <p>To keep the other school's assessment, open the tracker and use <strong>Export Excel</strong> first.</p>
+          <div class="school-actions">
+            <button type="button" class="btn btn-danger" id="btn-confirm">Yes, switch to ${esc(s.name)}</button>
+            <button type="button" class="btn btn-secondary" id="btn-cancel">Cancel</button>
+          </div></div>`;
+        $("btn-confirm").addEventListener("click", () => useSchool(true));
+        $("btn-cancel").addEventListener("click", () => { $("warn").innerHTML = ""; });
+        $("btn-confirm").focus();
+        return;
+      }
+
+      const profile = SL.saveProfile(s);
+      // Update trackers that already have saved data. A tracker with no saved data
+      // yet fills itself from the profile when it is first opened.
+      const d = readTracker(KEYS.dfe);
+      if (d) {
+        SL.applyTo(d, SL.DFE_FIELDS, profile, sync.conflicts.includes("dfe"));
+        writeTracker(KEYS.dfe, d);
+      }
+      const c = readTracker(KEYS.ce);
+      if (c) {
+        c.org = c.org || {};
+        SL.applyTo(c.org, SL.CE_FIELDS, profile, sync.conflicts.includes("ce"));
+        writeTracker(KEYS.ce, c);
+      }
+      renderTrackerCards();
+      showSchool(s, { noFocus: true });
+      setStatus(`${s.name} will be used in both trackers.`, "ok");
+    }
+
+    function clearSelection() {
+      SL.clearProfile();
+      shown = null;
+      $("school-card").innerHTML = "";
+      $("finder-results").innerHTML = "";
+      $("finder-input").value = "";
+      setStatus("Selection cleared. The trackers keep any school details they already have.", "ok");
+      $("finder-input").focus();
+    }
+
+    // ── Wiring ──────────────────────────────────────────────────────────────
+    $("finder-form").addEventListener("submit", e => { e.preventDefault(); runSearch($("finder-input").value); });
+    $("finder-results").addEventListener("click", e => {
+      const b = e.target.closest("button[data-urn]");
+      if (b) openByURN(b.dataset.urn);
+    });
+
+    renderTrackerCards();
+    const saved = SL.loadProfile();
+    if (saved) { showSchool(saved, { noFocus: true }); $("finder-input").value = saved.urn; }
+
+    SL.meta().then(m => {
+      if (m && m.sourceDate) {
+        $("finder-source").innerHTML = `School data from <a href="https://get-information-schools.service.gov.uk/" target="_blank" rel="noopener">Get Information About Schools</a>, last updated ${esc(SL.formatDate(m.sourceDate))}. Includes open schools and schools closed in the last 10 years.`;
+      }
+    });
   </script>
 </body>
 </html>

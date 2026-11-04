@@ -17,12 +17,15 @@ function defaultState() {
   return {
     schoolName: "",
     schoolURN: "",
+    schoolDfENumber: "",
     schoolPhase: "",
     schoolType: "",
     schoolLA: "",
     schoolAddress: "",
     schoolPhone: "",
     schoolWebsite: "",
+    schoolTrust: "",
+    schoolPupils: "",
     assessorName: "",
     assessmentDate: "",
     ratings,
@@ -33,6 +36,41 @@ function defaultState() {
 }
 
 let state = loadState();
+
+// ── Shared school profile (chosen on the home page) ────────────────────────
+// Fill any empty school fields from it. Fields the user has already entered are
+// never overwritten here; if the tracker holds a different school, a notice
+// offers to switch instead.
+let profileConflict = null;
+function syncFromProfile() {
+  const SL = window.SchoolLookup;
+  const profile = SL && SL.loadProfile();
+  profileConflict = null;
+  if (!profile) return;
+  if (SL.differs(state.schoolURN, state.schoolName, profile)) {
+    // "Keep" was chosen for this profile before: don't ask again
+    if (state.profileKeptURN !== profile.urn) profileConflict = profile;
+    return;
+  }
+  if (SL.applyTo(state, SL.DFE_FIELDS, profile, false)) {
+    try { localStorage.setItem(STATE_KEY, JSON.stringify(state)); } catch (e) { /* storage unavailable */ }
+  }
+}
+syncFromProfile();
+
+function profileNotice() {
+  if (!profileConflict) return "";
+  const p = profileConflict;
+  return `<div class="profile-notice" role="status">
+    The school chosen on the home page is <strong>${escHtml(p.name)}</strong> (URN ${escHtml(p.urn)}), but this tracker holds
+    <strong>${escHtml(state.schoolName || "another school")}</strong>${state.schoolURN ? ` (URN ${escHtml(state.schoolURN)})` : ""}.
+    This tracker keeps one assessment, so switching changes the school details only. Your ratings and notes stay as they are.
+    <div style="margin-top:8px;display:flex;gap:8px;flex-wrap:wrap">
+      <button class="btn btn-primary btn-sm" id="btn-profile-switch">Switch to ${escHtml(p.name)}</button>
+      <button class="btn btn-secondary btn-sm" id="btn-profile-keep">Keep ${escHtml(state.schoolName || "current school")}</button>
+    </div>
+  </div>`;
+}
 
 function loadState() {
   try {
@@ -52,6 +90,12 @@ function loadState() {
   } catch (e) {
     return defaultState();
   }
+}
+
+// Save straight away (used for one-off choices, so a quick page close can't lose them)
+function saveStateNow() {
+  clearTimeout(saveTimer);
+  try { localStorage.setItem(STATE_KEY, JSON.stringify(state)); } catch (e) { /* storage unavailable */ }
 }
 
 let saveTimer = null;
@@ -202,6 +246,7 @@ function renderDashboard() {
   <div style="max-width:900px">
     <h2 style="margin-top:0">Overview</h2>
     ${typeof STANDARDS_META !== "undefined" && STANDARDS_META.lastUpdated ? `<p class="guidance-date">Guidance last updated on GOV.UK: <strong>${escHtml(formatUkDate(STANDARDS_META.lastUpdated))}</strong> &middot; <a class="guidance-link" href="${escAttr(STANDARDS_INDEX_URL)}" target="_blank" rel="noopener">View on GOV.UK &#8599;</a></p>` : ""}
+    ${profileNotice()}
     ${state.schoolName ? `<p style="color:#505a5f;font-size:14px">School: <strong>${escHtml(state.schoolName)}</strong>${state.schoolURN ? ` &nbsp;|&nbsp; URN: <strong>${escHtml(state.schoolURN)}</strong>` : ""}</p>` : `<p style="color:#505a5f;font-size:13px"><a href="#" data-view="school-info">Add school information</a></p>`}
     <div style="display:flex;align-items:center;gap:24px;margin:16px 0;padding:16px;background:#fff;border-radius:6px;box-shadow:0 1px 3px rgba(0,0,0,0.1)">
       <div style="flex:1">
@@ -217,75 +262,53 @@ function renderDashboard() {
 
 // School Info
 function renderSchoolInfo() {
-  const hasGIAS = state.schoolName || state.schoolPhase || state.schoolType;
+  const f = (id, label, val, ph, wide, type) => `
+      <div class="form-field"${wide ? ' style="grid-column:1/-1"' : ""}>
+        <label for="${id}">${label}</label>
+        <input type="${type || "text"}" id="${id}" value="${escAttr(val || "")}" placeholder="${escAttr(ph)}" />
+      </div>`;
   return `
   <div class="info-form" style="max-width:680px">
     <h2 style="margin-top:0">School Information</h2>
+    ${profileNotice()}
 
     <div style="background:#f3f2f1;border-left:4px solid var(--dfe-blue);padding:12px 16px;border-radius:0 4px 4px 0;margin-bottom:20px;font-size:13px;color:#505a5f">
-      Enter your school URN and click <strong>Lookup</strong> to automatically fill in school details from the DfE Get Information About Schools register.
+      Enter your school's URN or DfE number and select <strong>Look up</strong> to fill in its details from the DfE Get Information About Schools register.
+      You can also <a href="index.html">find your school on the home page</a> to fill in both trackers at once.
     </div>
 
-    <div style="display:flex;gap:8px;align-items:flex-end;margin-bottom:16px">
-      <div class="form-field" style="flex:1;margin:0">
-        <label for="si-urn">URN (Unique Reference Number)</label>
-        <input type="text" id="si-urn" value="${escAttr(state.schoolURN)}" placeholder="e.g. 123456" maxlength="10" />
+    <div class="lookup-row">
+      <div class="form-field" style="flex:1;margin:0;min-width:0">
+        <label for="si-lookup">URN or DfE number</label>
+        <input type="text" id="si-lookup" value="${escAttr(state.schoolURN)}" placeholder="e.g. 100000 or 352/4000" maxlength="10" autocomplete="off" />
       </div>
       <button class="btn btn-primary" id="btn-lookup-urn" style="white-space:nowrap">
-        <span id="lookup-btn-text">&#128269; Lookup URN</span>
+        <span id="lookup-btn-text">&#128269; Look up</span>
       </button>
     </div>
 
-    <div id="lookup-status" style="margin-bottom:12px;font-size:13px"></div>
+    <div id="lookup-status" role="status" aria-live="polite" style="margin-bottom:12px;font-size:13px"></div>
 
-    ${hasGIAS ? `
-    <div style="background:#e3f5ec;border:1px solid #00703c;border-radius:4px;padding:12px 16px;margin-bottom:20px;font-size:12px;color:#00703c">
-      &#10003; School details loaded from GIAS register. You can edit any field below.
-    </div>` : ""}
-
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px">
-      <div class="form-field" style="grid-column:1/-1">
-        <label for="si-name">School / College Name</label>
-        <input type="text" id="si-name" value="${escAttr(state.schoolName)}" placeholder="e.g. Anytown High School" />
-      </div>
-      <div class="form-field">
-        <label for="si-phase">Phase of Education</label>
-        <input type="text" id="si-phase" value="${escAttr(state.schoolPhase)}" placeholder="e.g. Secondary" />
-      </div>
-      <div class="form-field">
-        <label for="si-type">School Type</label>
-        <input type="text" id="si-type" value="${escAttr(state.schoolType)}" placeholder="e.g. Academy Sponsor Led" />
-      </div>
-      <div class="form-field">
-        <label for="si-la">Local Authority</label>
-        <input type="text" id="si-la" value="${escAttr(state.schoolLA)}" placeholder="e.g. Manchester" />
-      </div>
-      <div class="form-field">
-        <label for="si-phone">Phone</label>
-        <input type="text" id="si-phone" value="${escAttr(state.schoolPhone)}" placeholder="e.g. 0161 123 4567" />
-      </div>
-      <div class="form-field" style="grid-column:1/-1">
-        <label for="si-address">Address</label>
-        <input type="text" id="si-address" value="${escAttr(state.schoolAddress)}" placeholder="e.g. 1 School Lane, Manchester, M1 1AA" />
-      </div>
-      <div class="form-field" style="grid-column:1/-1">
-        <label for="si-website">School Website</label>
-        <input type="url" id="si-website" value="${escAttr(state.schoolWebsite)}" placeholder="e.g. https://www.school.org.uk" />
-      </div>
+    <div class="info-grid">
+      ${f("si-name", "School / College Name", state.schoolName, "e.g. Anytown High School", true)}
+      ${f("si-urn", "URN", state.schoolURN, "e.g. 100000")}
+      ${f("si-dfe", "DfE Number (LAESTAB)", state.schoolDfENumber, "e.g. 352/4000")}
+      ${f("si-phase", "Phase of Education", state.schoolPhase, "e.g. Secondary")}
+      ${f("si-type", "School Type", state.schoolType, "e.g. Academy converter")}
+      ${f("si-la", "Local Authority", state.schoolLA, "e.g. Manchester")}
+      ${f("si-trust", "Trust", state.schoolTrust, "e.g. Anytown Academy Trust")}
+      ${f("si-pupils", "Number of Pupils", state.schoolPupils, "e.g. 850")}
+      ${f("si-phone", "Phone", state.schoolPhone, "e.g. 0161 123 4567")}
+      ${f("si-address", "Address", state.schoolAddress, "e.g. 1 School Lane, Manchester, M1 1AA", true)}
+      ${f("si-website", "School Website", state.schoolWebsite, "e.g. https://www.school.org.uk", true)}
     </div>
 
     <hr style="border:none;border-top:1px solid #e8e8e8;margin:20px 0">
     <h3 style="margin-top:0;font-size:15px">Assessment Details</h3>
 
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:20px">
-      <div class="form-field">
-        <label for="si-assessor">Assessor Name</label>
-        <input type="text" id="si-assessor" value="${escAttr(state.assessorName)}" placeholder="e.g. Jane Smith" />
-      </div>
-      <div class="form-field">
-        <label for="si-date">Assessment Date</label>
-        <input type="date" id="si-date" value="${escAttr(state.assessmentDate)}" />
-      </div>
+    <div class="info-grid" style="margin-bottom:20px">
+      ${f("si-assessor", "Assessor Name", state.assessorName, "e.g. Jane Smith")}
+      ${f("si-date", "Assessment Date", state.assessmentDate, "", false, "date")}
     </div>
 
     <button class="btn btn-primary" id="btn-save-info">&#10003; Save Information</button>
@@ -431,50 +454,52 @@ function renderCategory(catId) {
 }
 
 // ── Event wiring ───────────────────────────────────────────────────────────
-// ── GIAS URN Lookup ────────────────────────────────────────────────────────
+// ── GIAS lookup (shared code in school-lookup.js) ─────────────────────────
+let lastLookup = null; // school found by the most recent lookup
 async function lookupURN() {
-  const urnInput = document.getElementById("si-urn");
+  const input = document.getElementById("si-lookup");
   const statusEl = document.getElementById("lookup-status");
+  const btn = document.getElementById("btn-lookup-urn");
   const btnText = document.getElementById("lookup-btn-text");
-  const urn = urnInput ? urnInput.value.trim() : "";
+  const SL = window.SchoolLookup;
+  const q = SL.parseQuery(input ? input.value : "");
 
-  if (!urn || !/^\d{5,7}$/.test(urn)) {
-    statusEl.innerHTML = `<span style="color:var(--rag-red)">&#9888; Please enter a valid URN (5–7 digits).</span>`;
+  if (q.error || q.kind === "name") {
+    statusEl.innerHTML = `<span style="color:var(--rag-red)">&#9888; ${escHtml(q.kind === "name"
+      ? "Enter a URN (5 to 7 digits) or a DfE number such as 352/4000. To search by name, use the home page."
+      : q.error)}</span>`;
     return;
   }
 
   btnText.textContent = "Looking up…";
-  document.getElementById("btn-lookup-urn").disabled = true;
-  statusEl.innerHTML = `<span style="color:#505a5f">Fetching from GIAS register…</span>`;
+  btn.disabled = true;
+  statusEl.innerHTML = `<span style="color:#505a5f">Searching the GIAS register…</span>`;
 
   try {
-    const res = await fetch(`https://dfe-digital.github.io/gias-data/schools/${urn}.json`);
-    if (!res.ok) {
-      if (res.status === 404) throw new Error("URN not found in the GIAS register. Check the number and try again.");
-      throw new Error(`GIAS returned status ${res.status}`);
-    }
-    const d = await res.json();
-
-    // Build address string from available parts
-    const addressParts = [d.address_1, d.address_2, d.address_3, d.county, d.postcode].filter(Boolean);
-    const address = addressParts.join(", ");
-
-    // Populate form fields live
+    const { school: d } = await SL.find(input.value);
+    lastLookup = d;
+    // Populate the form; nothing is saved until "Save Information"
     const set = (id, val) => { const el = document.getElementById(id); if (el) el.value = val || ""; };
-    set("si-name",    d.name);
-    set("si-phase",   d.phase_of_education);
-    set("si-type",    d.type);
-    set("si-la",      d.local_authority);
-    set("si-phone",   d.phone);
-    set("si-address", address);
-    set("si-website", d.school_website);
+    set("si-name", d.name);
+    set("si-urn", d.urn);
+    set("si-dfe", d.dfeNumber);
+    set("si-phase", d.phase);
+    set("si-type", d.type);
+    set("si-la", d.la);
+    set("si-trust", d.trust);
+    set("si-pupils", d.pupils);
+    set("si-phone", d.phone);
+    set("si-address", d.address);
+    set("si-website", d.website);
 
-    statusEl.innerHTML = `<span style="color:var(--rag-green)">&#10003; Found: <strong>${escHtml(d.name)}</strong> — ${escHtml(d.phase_of_education || "")} ${escHtml(d.type || "")}</span>`;
+    const closed = d.isClosed ? ` <strong style="color:var(--rag-red)">This school is closed${d.closeDate ? " (" + escHtml(SL.formatDate(d.closeDate)) + ")" : ""}${d.successors.length ? ". Replaced by URN " + d.successors.map(escHtml).join(", ") : ""}.</strong>` : "";
+    statusEl.innerHTML = `<span style="color:var(--rag-green)">&#10003; Found: <strong>${escHtml(d.name)}</strong> (${escHtml([d.phase, d.type].filter(Boolean).join(", "))}).</span>${closed}
+      <span style="color:#505a5f"> Check the details, then select <strong>Save Information</strong>.</span>`;
   } catch (err) {
     statusEl.innerHTML = `<span style="color:var(--rag-red)">&#9888; ${escHtml(err.message)}</span>`;
   } finally {
-    btnText.textContent = "🔍 Lookup URN";
-    document.getElementById("btn-lookup-urn").disabled = false;
+    btnText.textContent = "🔍 Look up";
+    btn.disabled = false;
   }
 }
 
@@ -489,10 +514,32 @@ function attachViewEvents() {
     });
   });
 
-  // URN lookup
+  // URN / DfE number lookup
   const btnLookup = document.getElementById("btn-lookup-urn");
   if (btnLookup) {
     btnLookup.addEventListener("click", () => lookupURN());
+    document.getElementById("si-lookup").addEventListener("keydown", e => {
+      if (e.key === "Enter") { e.preventDefault(); lookupURN(); }
+    });
+  }
+
+  // Home page school differs from this tracker's school
+  const btnSwitch = document.getElementById("btn-profile-switch");
+  if (btnSwitch) {
+    btnSwitch.addEventListener("click", () => {
+      window.SchoolLookup.applyTo(state, window.SchoolLookup.DFE_FIELDS, profileConflict, true);
+      delete state.profileKeptURN;
+      profileConflict = null;
+      saveStateNow();
+      renderView();
+      showToast("School details updated.");
+    });
+    document.getElementById("btn-profile-keep").addEventListener("click", () => {
+      state.profileKeptURN = profileConflict.urn;
+      profileConflict = null;
+      saveStateNow();
+      renderView();
+    });
   }
 
   // School info save
@@ -500,6 +547,9 @@ function attachViewEvents() {
   if (btnSave) {
     btnSave.addEventListener("click", () => {
       state.schoolURN      = document.getElementById("si-urn").value.trim();
+      state.schoolDfENumber = document.getElementById("si-dfe").value.trim();
+      state.schoolTrust    = document.getElementById("si-trust").value.trim();
+      state.schoolPupils   = document.getElementById("si-pupils").value.trim();
       state.schoolName     = document.getElementById("si-name").value.trim();
       state.schoolPhase    = document.getElementById("si-phase").value.trim();
       state.schoolType     = document.getElementById("si-type").value.trim();
@@ -509,7 +559,15 @@ function attachViewEvents() {
       state.schoolWebsite  = document.getElementById("si-website").value.trim();
       state.assessorName   = document.getElementById("si-assessor").value.trim();
       state.assessmentDate = document.getElementById("si-date").value;
+      // A school just looked up here also becomes the shared school profile,
+      // so the home page and the Cyber Essentials tracker know about it.
+      if (lastLookup && lastLookup.urn === state.schoolURN) {
+        window.SchoolLookup.saveProfile(lastLookup);
+        profileConflict = null;
+        delete state.profileKeptURN;
+      }
       saveState();
+      renderView();
       showToast("School information saved.");
     });
   }

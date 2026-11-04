@@ -42,9 +42,12 @@ function exportToExcel(state) {
     [],
     ["School / College", state.schoolName || ""],
     ["URN", state.schoolURN || ""],
+    ["DfE Number (LAESTAB)", state.schoolDfENumber || ""],
     ["Phase of Education", state.schoolPhase || ""],
     ["School Type", state.schoolType || ""],
     ["Local Authority", state.schoolLA || ""],
+    ["Trust", state.schoolTrust || ""],
+    ["Number of Pupils", state.schoolPupils || ""],
     ["Address", state.schoolAddress || ""],
     ["Phone", state.schoolPhone || ""],
     ["Website", state.schoolWebsite || ""],
@@ -110,6 +113,9 @@ function importFromExcel(file, callback) {
       const imported = {
         schoolName: "",
         schoolURN: "",
+        schoolDfENumber: "",
+        schoolTrust: "",
+        schoolPupils: "",
         schoolPhase: "",
         schoolType: "",
         schoolLA: "",
@@ -132,10 +138,15 @@ function importFromExcel(file, callback) {
           if (!row[0]) return;
           const key = String(row[0]).toLowerCase();
           const val = row[1] ? String(row[1]) : "";
-          if (key.includes("school") || key.includes("college")) imported.schoolName = val;
+          // Specific labels first, so "Number of Pupils" or "School Type" are not
+          // mistaken for the school name
+          if (key.startsWith("dfe number") || key.includes("laestab")) imported.schoolDfENumber = val;
+          else if (key === "trust") imported.schoolTrust = val;
+          else if (key.includes("pupils")) imported.schoolPupils = val;
+          else if (key.includes("type")) imported.schoolType = val;
+          else if (key.includes("school") || key.includes("college")) imported.schoolName = val;
           else if (key === "urn") imported.schoolURN = val;
           else if (key.includes("phase")) imported.schoolPhase = val;
-          else if (key.includes("type")) imported.schoolType = val;
           else if (key.includes("local authority")) imported.schoolLA = val;
           else if (key.includes("address")) imported.schoolAddress = val;
           else if (key.includes("phone")) imported.schoolPhone = val;
