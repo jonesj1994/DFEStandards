@@ -76,10 +76,24 @@ Both trackers' Excel exports include a hidden sheet named `_assessment`:
 | 1 | `school-tracker-snapshot` | schema version | number of chunks |
 | 2… | one chunk of the snapshot JSON | | |
 
-Chunks are at most 30,000 characters (Excel's cell limit is 32,767). Import
-prefers this sheet. If it is missing (older exports) or damaged, import reads
-the visible sheets instead, matching rows by the standard's title (current or
+Chunks are at most 30,000 characters (Excel's cell limit is 32,767).
+
+Both the trust overview and the trackers' own **Import Excel** prefer this
+sheet, because it keeps every rating and note exactly even after GOV.UK
+rewords or reorders standards. They fall back to the visible sheets when:
+
+* the sheet is missing (older exports) or damaged;
+* the visible sheets were **edited in Excel after export**. Each item that
+  matches by title is compared with the hidden copy; any difference means the
+  hidden copy is out of date, so the visible sheets are used and the user is
+  told how many items changed.
+
+Reading the visible sheets matches rows by the standard's title (current or
 previous titles from `scripts/gen_data_govuk.py`'s `ID_MAP`), then by row number.
+School details in the trackers always come from the visible Info sheet, with
+gaps filled from the hidden copy. A file from the other tracker (for example a
+Cyber Essentials export opened in the DfE tracker) is refused without changing
+anything.
 
 ## Source interface
 

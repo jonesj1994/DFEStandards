@@ -197,7 +197,7 @@
 
   // Match data rows to items: by title (current or previous), then by row number
   // for rows whose title matches nothing, as long as that item is still free.
-  function matchRows(cat, dataRows, warnings) {
+  function matchRows(cat, dataRows, warnings, titled) {
     const byTitle = new Map();
     cat.items.forEach(item => [item.title, ...(item.previousTitles || [])].forEach(t => byTitle.set(norm(t), item)));
     const out = new Map(); // item.id -> row
@@ -205,7 +205,7 @@
     dataRows.forEach(row => {
       if (row.every(v => cell(v) === "")) return;
       const item = byTitle.get(norm(row[1]));
-      if (item && !out.has(item.id)) out.set(item.id, row);
+      if (item && !out.has(item.id)) { out.set(item.id, row); if (titled) titled.add(item.id); }
       else unmatched.push(row);
     });
     let byNumber = 0, skipped = 0;
@@ -277,12 +277,13 @@
     const nameFn = frameworkId === "dfe" ? dfeSheetName : ceSheetName;
     // DfE sheets: title, blank, header, data. CE sheets: title, applies-to, header, data.
     let found = 0, missing = [];
+    const titled = new Set(); // items matched by their title (not just row number)
     f.categories().forEach(cat => {
       const sheet = findCategorySheet(wb, cat, nameFn);
       if (!sheet) { missing.push(cat.title); return; }
       const rows = rowsOf(wb, sheet);
       const headerAt = rows.findIndex(r => cell(r[0]) === "#");
-      const matched = matchRows(cat, rows.slice(headerAt >= 0 ? headerAt + 1 : 3), warnings);
+      const matched = matchRows(cat, rows.slice(headerAt >= 0 ? headerAt + 1 : 3), warnings, titled);
       matched.forEach((row, id) => {
         found++;
         const status = frameworkId === "dfe" ? cell(row[4]) : cell(row[3]);
@@ -295,35 +296,50 @@
     if (missing.length) warnings.push(`sheet(s) missing, so treated as not set: ${missing.join(", ")}`);
     const exp = guessExportDate(wb, fileName, lastModified);
     snap.exportedAt = exp.at;
-    return { snapshot: snap, warnings, exportedAtSource: exp.source };
+    return { snapshot: snap, warnings, exportedAtSource: exp.source, titled };
   }
 
   // Parse one workbook into a Record. Prefers the hidden "_assessment" sheet and
   // falls back to the visible sheets, so older exports still import.
   function parseWorkbook(wb, fileName, lastModified) {
-    let raw = null, problem = null;
-    try { raw = AM.readSnapshotSheet(XLSX, wb); } catch (e) { problem = "hidden assessment sheet unreadable (" + e.message + "), so the visible sheets were used"; }
-    if (raw) {
-      const v = AM.validate(raw);
-      if (v.snapshot) {
+    const now = new Date().toISOString();
+    const hidden = AM.readWorkbookSnapshot(XLSX, wb, null);
+    let problem = hidden.reason ? hidden.reason + ", so the visible sheets were used" : "";
+    let exportedAt = "";
+
+    if (hidden.snapshot) {
+      // If the visible sheets were edited in Excel after export, the hidden copy
+      // is out of date: use the visible sheets instead (same rule as the trackers).
+      // Only items matched by title are compared, so reworded standards don't count as edits.
+      let edited = 0;
+      try {
+        const vis = parseVisibleSheets(wb, hidden.snapshot.framework, fileName, lastModified);
+        edited = AM.countItemDifferences(hidden.snapshot.items, vis.snapshot.items, Array.from(vis.titled));
+      } catch (e) { /* no readable visible sheets: rely on the hidden copy */ }
+      if (!edited) {
         return {
-          key: AM.snapshotKey(v.snapshot), snapshot: v.snapshot,
-          provenance: { fileName, importedAt: new Date().toISOString(), parsedFrom: "hidden sheet", exportedAtSource: "tracker", warnings: v.problems }
+          key: AM.snapshotKey(hidden.snapshot), snapshot: hidden.snapshot,
+          provenance: { fileName, importedAt: now, parsedFrom: "hidden sheet", exportedAtSource: "tracker", warnings: hidden.problems || [] }
         };
       }
-      problem = "hidden assessment sheet invalid (" + v.problems.join("; ") + "), so the visible sheets were used";
+      problem = `${edited} item(s) were changed in Excel after export, so the visible sheets were used instead of the saved copy`;
+      exportedAt = hidden.snapshot.exportedAt; // still the true export time
     }
+
     const fw = detectFramework(wb);
     if (!fw) throw new Error("this does not look like a DfE standards or Cyber Essentials tracker export");
     const p = parseVisibleSheets(wb, fw, fileName, lastModified);
     const v = AM.validate(p.snapshot);
     v.snapshot.frameworkVersion = "";
-    const warnings = [].concat(problem ? [problem] : [], ["older export without the hidden assessment sheet: read from the visible sheets"], p.warnings,
+    if (exportedAt) v.snapshot.exportedAt = exportedAt;
+    const warnings = [].concat(
+      problem ? [problem] : ["older export without the hidden assessment sheet: read from the visible sheets"],
+      p.warnings,
       v.problems.filter(x => !/no longer in the current/.test(x)),
-      p.exportedAtSource !== "file name" ? [`export date taken from the ${p.exportedAtSource}`] : []);
+      !exportedAt && p.exportedAtSource !== "file name" ? [`export date taken from the ${p.exportedAtSource}`] : []);
     return {
       key: AM.snapshotKey(v.snapshot), snapshot: v.snapshot,
-      provenance: { fileName, importedAt: new Date().toISOString(), parsedFrom: "visible sheets", exportedAtSource: p.exportedAtSource, warnings }
+      provenance: { fileName, importedAt: now, parsedFrom: "visible sheets", exportedAtSource: exportedAt ? "tracker" : p.exportedAtSource, warnings }
     };
   }
 

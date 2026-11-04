@@ -383,10 +383,12 @@ function ceImport(file) {
   reader.onload = e => {
     try {
       const wb = XLSX.read(new Uint8Array(e.target.result), { type: "array" });
+      // Read everything into a copy first, so a bad file changes nothing
+      const got = { org: {}, status: {}, evidence: {}, actions: {}, owner: {} };
       if (wb.Sheets.Info) {
         XLSX.utils.sheet_to_json(wb.Sheets.Info, { header: 1 }).forEach(r => {
           const f = CE_ORG_FIELDS.find(([, label]) => label === r[0]);
-          if (f) ce.org[f[0]] = r[1] != null ? String(r[1]) : "";
+          if (f) got.org[f[0]] = r[1] != null ? String(r[1]) : "";
         });
       }
       let found = 0;
@@ -397,15 +399,48 @@ function ceImport(file) {
           const item = cat.items.find(i => i.title === r[1]) || cat.items[Number(r[0]) - 1];
           if (!item) return;
           found++;
-          ce.status[item.id] = CE_STATUSES.includes(r[3]) ? r[3] : "Not Set";
-          ce.evidence[item.id] = r[4] != null ? String(r[4]) : "";
-          ce.actions[item.id] = r[5] != null ? String(r[5]) : "";
-          ce.owner[item.id] = r[6] != null ? String(r[6]) : "";
+          got.status[item.id] = CE_STATUSES.includes(r[3]) ? r[3] : "Not Set";
+          got.evidence[item.id] = r[4] != null ? String(r[4]) : "";
+          got.actions[item.id] = r[5] != null ? String(r[5]) : "";
+          got.owner[item.id] = r[6] != null ? String(r[6]) : "";
         });
       });
-      if (!found) throw new Error("no Cyber Essentials sheets found in this file");
+
+      // Hidden "_assessment" sheet: exact copy of every status and note. Used
+      // unless the visible sheets were edited in Excel after export.
+      let msg = `Imported ${found} requirements.`;
+      let usedHidden = false;
+      const AM = window.AssessmentModel;
+      if (AM) {
+        const hidden = AM.readWorkbookSnapshot(XLSX, wb, "cyber-essentials");
+        if (hidden.wrongFramework) throw new Error(hidden.reason + ". Open it in the DfE standards tracker instead");
+        if (hidden.snapshot) {
+          const visible = AM.fromTrackerState("cyber-essentials", got).items;
+          const edited = AM.countItemDifferences(hidden.snapshot.items, visible, Object.keys(got.status));
+          if (edited) {
+            msg = `Imported ${found} requirements from the visible sheets, because ${edited === 1 ? "1 was" : edited + " were"} changed in Excel after this file was exported.`;
+          } else {
+            Object.assign(got, AM.toTrackerItems(hidden.snapshot));
+            // Organisation details come from the Info sheet; fill any gaps from the hidden copy
+            const s = hidden.snapshot.school, c = hidden.snapshot.certification || {};
+            const fill = { orgName: s.name, orgURN: s.urn, orgDfENumber: s.dfeNumber, orgTrust: s.trust, orgPupils: s.pupils,
+              scopeDescription: c.scope, certLevel: c.level, certBody: c.body, certNumber: c.number,
+              certDate: c.certifiedOn, renewalDate: c.renewalDue,
+              assessorName: hidden.snapshot.assessor, assessmentDate: hidden.snapshot.assessmentDate };
+            Object.entries(fill).forEach(([k, v]) => { if (!got.org[k] && v) got.org[k] = v; });
+            usedHidden = true;
+            msg = `Imported all ${Object.keys(got.status).length} requirements exactly from the assessment saved in the file.`;
+          }
+        } else if (hidden.reason) {
+          msg = `Imported ${found} requirements from the visible sheets (the saved assessment could not be used: ${hidden.reason}).`;
+        }
+      }
+      if (!found && !usedHidden) throw new Error("no Cyber Essentials sheets found in this file");
+
+      Object.assign(ce.org, got.org);
+      ["status", "evidence", "actions", "owner"].forEach(k => Object.assign(ce[k], got[k]));
       ceSave(); ceRender();
-      toast(`Imported ${found} requirements.`);
+      toast(msg);
     } catch (err) { toast("Import failed: " + err.message); }
   };
   reader.readAsArrayBuffer(file);

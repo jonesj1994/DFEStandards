@@ -194,7 +194,45 @@ function importFromExcel(file, callback) {
         });
       });
 
-      callback(imported);
+      // ── Hidden "_assessment" sheet (exports from this version onwards) ──
+      // It holds every rating and note exactly, so it is used in preference to
+      // the visible sheets, unless the visible sheets were edited in Excel
+      // after export (then the hidden copy is out of date and is ignored).
+      const matched = Object.keys(imported.ratings);
+      let message = "";
+      let usedHidden = false;
+      const AM = window.AssessmentModel;
+      if (AM) {
+        const hidden = AM.readWorkbookSnapshot(XLSX, wb, "dfe");
+        if (hidden.wrongFramework) {
+          throw new Error(hidden.reason + ". Open it in the Cyber Essentials tracker instead.");
+        }
+        if (hidden.snapshot) {
+          const visible = AM.fromTrackerState("dfe", imported).items;
+          const edited = AM.countItemDifferences(hidden.snapshot.items, visible, matched);
+          if (edited) {
+            message = `${edited === 1 ? "1 standard was" : edited + " standards were"} changed in Excel after this file was exported, so the visible sheets were imported.`;
+          } else {
+            Object.assign(imported, AM.toTrackerItems(hidden.snapshot));
+            // School details come from the Info sheet; fill any gaps from the hidden copy
+            const s = hidden.snapshot.school;
+            const fill = { schoolName: s.name, schoolURN: s.urn, schoolDfENumber: s.dfeNumber, schoolTrust: s.trust,
+              schoolPupils: s.pupils, schoolPhase: s.phase, schoolType: s.type, schoolLA: s.la,
+              assessorName: hidden.snapshot.assessor, assessmentDate: hidden.snapshot.assessmentDate };
+            Object.entries(fill).forEach(([k, v]) => { if (!imported[k] && v) imported[k] = v; });
+            usedHidden = true;
+            message = "Imported exactly from the assessment saved in the file.";
+          }
+        } else if (hidden.reason) {
+          message = `The file's saved assessment could not be used (${hidden.reason}), so the visible sheets were imported.`;
+        }
+      }
+      // Nothing recognised: stop before the tracker's data is replaced
+      if (!usedHidden && !matched.length) {
+        throw new Error("no DfE standards were found in this file. Check it is a DfE tracker export.");
+      }
+
+      callback(imported, message);
     } catch (err) {
       showToast("Import failed: " + err.message);
     }

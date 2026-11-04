@@ -319,9 +319,52 @@
     return JSON.parse(json);
   }
 
+  // Read and validate the hidden sheet for one framework. Never throws.
+  // Returns { snapshot } when usable, otherwise { snapshot: null, reason, wrongFramework? }.
+  // reason is "" when the workbook simply has no hidden sheet (an older export).
+  function readWorkbookSnapshot(XLSX, wb, frameworkId) {
+    let raw;
+    try { raw = readSnapshotSheet(XLSX, wb); }
+    catch (e) { return { snapshot: null, reason: "the hidden assessment sheet could not be read" }; }
+    if (!raw) return { snapshot: null, reason: "" };
+    const v = validate(raw);
+    if (!v.snapshot) return { snapshot: null, reason: "the hidden assessment sheet is not valid" };
+    if (frameworkId && v.snapshot.framework !== frameworkId) {
+      return { snapshot: null, wrongFramework: v.snapshot.framework, reason: "this is a " + framework(v.snapshot.framework).shortLabel + " export" };
+    }
+    return { snapshot: v.snapshot, problems: v.problems };
+  }
+
+  // How many of the given items differ between two snapshots' item maps?
+  // Used to spot a file whose visible sheets were edited in Excel after export,
+  // which leaves the hidden sheet out of date.
+  function countItemDifferences(hiddenItems, visibleItems, ids) {
+    const blank = { status: "Not Set", notes: "", actions: "", owner: "" };
+    let n = 0;
+    (ids || Object.keys(visibleItems)).forEach(id => {
+      const a = hiddenItems[id] || blank, b = visibleItems[id] || blank;
+      if (["status", "notes", "actions", "owner"].some(k => str(a[k]) !== str(b[k]))) n++;
+    });
+    return n;
+  }
+
+  // The reverse of fromTrackerState: the item data a tracker keeps, with an
+  // entry for every current item (missing items become Not Set and blank).
+  // School details are left to each tracker's Info sheet import.
+  function toTrackerItems(snap) {
+    const f = framework(snap.framework);
+    const items = f.categories().flatMap(c => c.items);
+    const get = (id, k, d) => (snap.items[id] ? snap.items[id][k] : d);
+    const map = (k, d) => Object.fromEntries(items.map(i => [i.id, get(i.id, k, d)]));
+    return snap.framework === "dfe"
+      ? { ratings: map("status", "Not Set"), notes: map("notes", ""), recommendations: map("actions", ""), ownership: map("owner", "") }
+      : { status: map("status", "Not Set"), evidence: map("notes", ""), actions: map("actions", ""), owner: map("owner", "") };
+  }
+
   window.AssessmentModel = {
     SCHEMA_VERSION, SNAPSHOT_SHEET, FRAMEWORKS, framework,
     emptySnapshot, fromTrackerState, validate, schoolKey, snapshotKey,
-    summarise, certificationStatus, writeSnapshotSheet, readSnapshotSheet, parseDate
+    summarise, certificationStatus, writeSnapshotSheet, readSnapshotSheet, parseDate,
+    readWorkbookSnapshot, countItemDifferences, toTrackerItems
   };
 })();

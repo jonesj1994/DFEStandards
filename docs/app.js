@@ -623,11 +623,11 @@ document.getElementById("btn-import").addEventListener("click", () => {
 document.getElementById("file-input").addEventListener("change", e => {
   const file = e.target.files[0];
   if (!file) return;
-  importFromExcel(file, imported => {
+  importFromExcel(file, (imported, message) => {
     state = { ...state, ...imported };
     saveState();
     renderView();
-    showToast("Data imported successfully.");
+    showToast(message || "Data imported successfully.");
   });
   e.target.value = "";
 });
