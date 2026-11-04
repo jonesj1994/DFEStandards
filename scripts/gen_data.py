@@ -1,4 +1,7 @@
-"""Regenerate docs/data.js from the Excel template so guidance text is verbatim."""
+"""Superseded by scripts/gen_data_govuk.py, which takes titles and guidance from GOV.UK.
+
+Kept for reference only: running it would overwrite docs/data.js with the older,
+paraphrased template text. Original purpose: regenerate docs/data.js from the Excel template."""
 import glob, json, re, sys
 import openpyxl
 

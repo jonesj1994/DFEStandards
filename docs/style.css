@@ -204,6 +204,7 @@ body {
 }
 
 .guidance-link { font-size: 13px; color: var(--dfe-blue); }
+.guidance-date { font-size: 13px; color: #505a5f; }
 
 .core-note {
   font-size: 13px;
