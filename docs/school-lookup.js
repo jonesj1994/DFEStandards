@@ -5,6 +5,7 @@
 //   schools/urn/NN.json      records keyed by URN, sharded by the URN's last 2 digits
 //   schools/laestab/LLL.json local authority code -> { establishment number: [URN, ...] }
 //   schools/names.json       open schools, for search by name (loaded only when needed)
+//   schools/trusts.json      trusts: [UID, name, [open URNs]] (loaded only when needed)
 //   schools/meta.json        build date and source file
 // If the local data cannot be loaded, URN lookups fall back to the older
 // dfe-digital.github.io/gias-data service (archived January 2025, no DfE numbers).
@@ -171,6 +172,41 @@
     return out;
   }
 
+  // ── Trusts ───────────────────────────────────────────────────────────────
+  // Search by trust name (all words must match) or by group UID (exact).
+  // Returns [{ uid, name, urns: [String] }].
+  async function searchTrusts(text, limit) {
+    let trusts;
+    try { trusts = await getJSON(DATA + "trusts.json"); }
+    catch (e) { throw new LookupError("Trust search is not available right now. Please try again later.", "network"); }
+    const q = String(text || "").trim();
+    if (!q) return [];
+    const toObj = ([uid, name, urns]) => ({ uid: String(uid), name, urns: urns.map(String) });
+    if (/^\d+$/.test(q)) {
+      const hit = trusts.find(t => String(t[0]) === q);
+      return hit ? [toObj(hit)] : [];
+    }
+    const words = q.toLowerCase().split(/\s+/).filter(Boolean);
+    const out = [];
+    for (const t of trusts) {
+      const name = t[1].toLowerCase();
+      if (words.every(w => name.includes(w))) {
+        out.push(toObj(t));
+        if (out.length >= (limit || 20)) break;
+      }
+    }
+    return out;
+  }
+
+  // Full school records for a trust (by UID), in name order. Throws if unknown.
+  async function trustSchools(uid) {
+    const [trust] = await searchTrusts(String(uid));
+    if (!trust) throw new LookupError(`No trust found with UID ${uid}.`, "notfound");
+    const schools = (await Promise.all(trust.urns.map(byURN))).filter(Boolean);
+    schools.sort((a, b) => a.name.localeCompare(b.name, "en-GB"));
+    return { ...trust, schools };
+  }
+
   function meta() { return getJSON(DATA + "meta.json").catch(() => null); }
 
   // ── Shared profile ────────────────────────────────────────────────────────
@@ -238,7 +274,7 @@
 
   window.SchoolLookup = {
     PROFILE_KEY, DFE_FIELDS, CE_FIELDS, LookupError,
-    parseQuery, find, byURN, byLAESTAB, searchNames, meta,
+    parseQuery, find, byURN, byLAESTAB, searchNames, searchTrusts, trustSchools, meta,
     loadProfile, saveProfile, clearProfile, applyTo, differs, websiteHref, formatDate
   };
 })();

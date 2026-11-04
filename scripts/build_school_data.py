@@ -14,6 +14,9 @@ Output (default docs/schools/):
                      (open schools first), used for DfE number (LAESTAB) lookups
   names.json         open schools only: [URN, name, town, postcode, LAESTAB],
                      loaded on demand for search by name
+  trusts.json        trusts (GIAS "Trusts (code)" group UID and name) with the
+                     URNs of their open establishments: [[UID, name, [URN, ...]], ...]
+                     sorted by name, loaded on demand
 
 Which establishments are included:
   * every establishment that is not closed (open, proposed to open/close);
@@ -200,6 +203,19 @@ def build(csv_text, links_text, out_dir, source_date):
     )
     dump("names.json", names)
 
+    # Trust index: open establishments only
+    trusts = {}
+    for urn, rec in records.items():
+        if rec.get("s") == "Closed" or not rec.get("trc"):
+            continue
+        t = trusts.setdefault(str(rec["trc"]), [str(rec["trc"]), rec.get("tr", ""), []])
+        t[2].append(urn)
+    trust_list = sorted(
+        ([uid, name, sorted(urns)] for uid, name, urns in trusts.values()),
+        key=lambda x: (x[1].lower(), x[0]),
+    )
+    dump("trusts.json", trust_list)
+
     counts = {}
     for rec in records.values():
         counts[rec.get("s", "Unknown")] = counts.get(rec.get("s", "Unknown"), 0) + 1
@@ -212,6 +228,7 @@ def build(csv_text, links_text, out_dir, source_date):
         "closedIncludedSince": cutoff,
         "shards": SHARDS,
         "counts": counts,
+        "trusts": len(trust_list),
         "total": len(records),
     })
 
