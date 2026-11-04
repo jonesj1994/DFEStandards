@@ -27,9 +27,9 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v6
         with:
           python-version: "3.12"
 
@@ -86,7 +86,7 @@ jobs:
         id: pr
         if: steps.dfe.outputs.status == 'changed'
         continue-on-error: true
-        uses: peter-evans/create-pull-request@v7
+        uses: peter-evans/create-pull-request@v8
         with:
           branch: guidance-update/dfe-standards
           delete-branch: true
@@ -100,7 +100,7 @@ jobs:
           steps.dfe.outputs.status == 'needs-review' ||
           steps.ce.outputs.status != 'same' ||
           (steps.dfe.outputs.status == 'changed' && steps.pr.outcome != 'success')
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         env:
           DFE_STATUS: ${{ steps.dfe.outputs.status }}
           CE_STATUS: ${{ steps.ce.outputs.status }}
