@@ -172,7 +172,9 @@ function renderView() {
 // Dashboard
 function renderDashboard() {
   const totalItems = STANDARDS_DATA.reduce((n, c) => n + c.items.length, 0);
-  const allRatings = Object.values(state.ratings);
+  // Count only standards that are in the current data. Saved state can still hold
+  // ratings for standards GOV.UK has since removed, and those must not be counted.
+  const allRatings = STANDARDS_DATA.flatMap(c => c.items.map(i => state.ratings[i.id] || "Not Set"));
   const met = allRatings.filter(r => r === "Met" || r === "Green").length;
   const pct = Math.round((met / totalItems) * 100);
 
@@ -199,6 +201,7 @@ function renderDashboard() {
   return `
   <div style="max-width:900px">
     <h2 style="margin-top:0">Overview</h2>
+    ${typeof STANDARDS_META !== "undefined" && STANDARDS_META.lastUpdated ? `<p class="guidance-date">Guidance last updated on GOV.UK: <strong>${escHtml(formatUkDate(STANDARDS_META.lastUpdated))}</strong> &middot; <a class="guidance-link" href="${escAttr(STANDARDS_INDEX_URL)}" target="_blank" rel="noopener">View on GOV.UK &#8599;</a></p>` : ""}
     ${state.schoolName ? `<p style="color:#505a5f;font-size:14px">School: <strong>${escHtml(state.schoolName)}</strong>${state.schoolURN ? ` &nbsp;|&nbsp; URN: <strong>${escHtml(state.schoolURN)}</strong>` : ""}</p>` : `<p style="color:#505a5f;font-size:13px"><a href="#" data-view="school-info">Add school information</a></p>`}
     <div style="display:flex;align-items:center;gap:24px;margin:16px 0;padding:16px;background:#fff;border-radius:6px;box-shadow:0 1px 3px rgba(0,0,0,0.1)">
       <div style="flex:1">
@@ -332,8 +335,32 @@ function renderSummary() {
         <tbody>${rows}</tbody>
       </table>
     </div>
-    <p style="font-size:12px;color:#505a5f">★ = Core standard (target 2030)</p>
+    <p style="font-size:12px;color:#505a5f">★ = Core standard (one of the 6 core standards DfE expects schools and colleges to be working towards by ${coreYear()})</p>
   </div>`;
+}
+
+// "2026-09-16" -> "16 September 2026" (UK format, no time zone shifting)
+function formatUkDate(iso) {
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso || "");
+  if (!m) return iso || "";
+  const months = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+  return `${parseInt(m[3], 10)} ${months[parseInt(m[2], 10) - 1]} ${m[1]}`;
+}
+
+function coreYear() {
+  return (typeof STANDARDS_META !== "undefined" && STANDARDS_META.coreDeadlineYear) || 2030;
+}
+
+// Wording follows the GOV.UK index page and the "When to meet" text on each core page.
+function coreNote(cat) {
+  const y = coreYear();
+  if (cat.id === "filtering-monitoring") {
+    return `Core standard. Schools and colleges have a statutory duty under Keeping children safe in education (KCSIE) to have appropriate filtering and monitoring in place. GOV.UK says you <strong>should already be meeting</strong> each of these standards, not waiting until ${y}.`;
+  }
+  if (cat.id === "cyber-security") {
+    return `Core standard. GOV.UK links these standards to the KCSIE duty to have appropriate cyber security measures, and for most of them says you <strong>should already be meeting</strong> them (or act as soon as possible). They are still one of the 6 core standards to be working towards by ${y}.`;
+  }
+  return `Core standard. DfE expects schools and colleges to be working towards meeting this by <strong>${y}</strong>. Each standard below also has its own "When to meet" timing, and some should already be met.`;
 }
 
 // Category view
@@ -390,6 +417,8 @@ function renderCategory(catId) {
     <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px">
       <h2 style="margin:0">${escHtml(cat.title)}</h2>${core}
     </div>
+    <p style="margin:0 0 12px"><a class="guidance-link" href="${escAttr(cat.url || STANDARDS_INDEX_URL)}" target="_blank" rel="noopener">View the official DfE guidance on GOV.UK${cat.govukTitle ? `: ${escHtml(cat.govukTitle)}` : ""} &#8599;</a>${cat.lastUpdated ? `<span class="guidance-date"> &middot; page last updated ${escHtml(formatUkDate(cat.lastUpdated))}</span>` : ""}</p>
+    ${cat.isCore ? `<div class="core-note">${coreNote(cat)}</div>` : ""}
     <div class="dash-stats" style="margin-bottom:20px">
       ${s.Red ? `<span class="stat-chip red">Red: ${s.Red}</span>` : ""}
       ${s.Amber ? `<span class="stat-chip amber">Amber: ${s.Amber}</span>` : ""}

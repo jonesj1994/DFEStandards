@@ -154,8 +154,19 @@ function importFromExcel(file, callback) {
         const rows = XLSX.utils.sheet_to_json(ws, { header: 1 });
         // Data rows start at index 3 (0=title, 1=blank, 2=headers, 3+=data)
         const dataRows = rows.slice(3);
+        // Match each row to a standard by its title (column B), including titles used
+        // in older versions of the app, so older exports still import correctly after
+        // GOV.UK adds, removes or reorders standards. Rows whose title matches no
+        // current standard (e.g. a standard GOV.UK has removed) are skipped.
+        const norm = s => String(s || "").toLowerCase().replace(/[‘’]/g, "'").replace(/\s+/g, " ").trim();
+        const byTitle = {};
+        cat.items.forEach(item => {
+          [item.title, ...(item.previousTitles || [])].forEach(t => { byTitle[norm(t)] = item; });
+        });
         dataRows.forEach((row, idx) => {
-          const item = cat.items[idx];
+          const title = norm(row[1]);
+          // Fall back to position only when the row has no title at all.
+          const item = title ? byTitle[title] : cat.items[idx];
           if (!item) return;
           imported.notes[item.id] = row[2] ? String(row[2]) : "";
           imported.recommendations[item.id] = row[3] ? String(row[3]) : "";

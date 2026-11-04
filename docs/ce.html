@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Cyber Essentials Tracker</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+<div id="app">
+  <nav id="sidebar">
+    <div class="sidebar-logo">Cyber Essentials Tracker</div>
+    <ul class="sidebar-nav" id="sidebar-nav">
+      <li><a href="index.html" class="home-link">&#8592; All trackers</a></li>
+      <li><a href="#" data-view="dashboard" class="active">&#9632; Dashboard</a></li>
+      <li><a href="#" data-view="org">&#9632; Organisation &amp; Certification</a></li>
+      <li><a href="#" data-view="summary">&#9632; Summary &amp; Actions</a></li>
+      <hr style="border-color:rgba(255,255,255,0.1);margin:6px 0;">
+      <!-- Control areas injected by ce-app.js -->
+    </ul>
+  </nav>
+
+  <div id="main">
+    <header id="topbar">
+      <button id="menu-toggle" aria-label="Toggle menu">&#9776;</button>
+      <h1 id="topbar-title">Cyber Essentials</h1>
+      <span id="save-indicator">&#10003; Saved</span>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;">
+        <button class="btn btn-secondary btn-sm" id="btn-import">&#8593; Import Excel</button>
+        <button class="btn btn-success btn-sm" id="btn-export">&#8595; Export Excel</button>
+      </div>
+      <input type="file" id="file-input" accept=".xlsx" style="display:none" />
+    </header>
+    <main id="content"></main>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<script src="ce-data.js"></script>
+<script src="ce-app.js"></script>
+</body>
+</html>

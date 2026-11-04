@@ -3,51 +3,90 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>DfE Standards Tracker</title>
+  <title>School Compliance Trackers</title>
   <link rel="stylesheet" href="style.css" />
+  <style>
+    .home-header { background: var(--dfe-navy); color: #fff; padding: 40px 24px 32px; }
+    .home-header h1 { margin: 0 0 8px; font-size: 28px; }
+    .home-header p { margin: 0; color: rgba(255,255,255,0.8); font-size: 16px; max-width: 640px; }
+    .home-wrap { max-width: 960px; margin: 0 auto; }
+    .home-grid {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 20px; padding: 32px 16px;
+    }
+    .tracker-card {
+      background: #fff; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.12);
+      padding: 24px; text-decoration: none; color: inherit; display: flex; flex-direction: column;
+      border-top: 6px solid var(--accent); transition: box-shadow 0.15s, transform 0.15s;
+    }
+    .tracker-card:hover, .tracker-card:focus-visible { box-shadow: 0 6px 16px rgba(0,0,0,0.15); transform: translateY(-2px); }
+    .tracker-card h2 { margin: 0 0 8px; font-size: 20px; color: var(--dfe-navy); }
+    .tracker-card p { margin: 0 0 16px; font-size: 14px; color: #505a5f; line-height: 1.5; flex: 1; }
+    .tracker-card ul { margin: 0 0 20px; padding-left: 18px; font-size: 13px; color: #0b0c0c; line-height: 1.7; }
+    .tracker-progress { font-size: 13px; color: #505a5f; margin-bottom: 14px; min-height: 18px; }
+    .tracker-card .btn { align-self: flex-start; background: var(--accent); color: #fff; }
+    .home-footer { padding: 0 16px 32px; font-size: 12px; color: #505a5f; }
+    .home-footer a { color: var(--dfe-blue); }
+  </style>
 </head>
 <body>
-<div id="app">
+  <header class="home-header">
+    <div class="home-wrap">
+      <h1>School Compliance Trackers</h1>
+      <p>Choose a framework to assess your school or college against. Progress saves in this browser, and each tracker exports to Excel.</p>
+    </div>
+  </header>
 
-  <!-- Sidebar -->
-  <nav id="sidebar">
-    <div class="sidebar-logo">DfE Standards Tracker</div>
-    <ul class="sidebar-nav" id="sidebar-nav">
-      <li><a href="#" data-view="dashboard" class="active">&#9632; Dashboard</a></li>
-      <li><a href="#" data-view="school-info">&#9632; School Info</a></li>
-      <li><a href="#" data-view="summary">&#9632; Summary</a></li>
-      <hr style="border-color:rgba(255,255,255,0.1);margin:6px 0;">
-      <!-- Category nav items injected by app.js -->
-    </ul>
-  </nav>
+  <main class="home-wrap">
+    <div class="home-grid">
+      <a class="tracker-card" href="dfe.html" style="--accent: var(--dfe-blue)">
+        <h2>DfE Digital &amp; Technology Standards</h2>
+        <p>Rate your school or college against the Department for Education's digital and technology standards, including the six core standards.</p>
+        <ul>
+          <li>12 standard areas, RAG rated</li>
+          <li>Notes, recommendations and ownership</li>
+          <li>School details looked up by URN</li>
+        </ul>
+        <div class="tracker-progress" id="progress-dfe"></div>
+        <span class="btn">Open DfE tracker &#8594;</span>
+      </a>
 
-  <!-- Main area -->
-  <div id="main">
-    <header id="topbar">
-      <button id="menu-toggle" aria-label="Toggle menu">&#9776;</button>
-      <h1 id="topbar-title">Dashboard</h1>
-      <span id="save-indicator">&#10003; Saved</span>
-      <div style="display:flex;gap:8px;flex-wrap:wrap;">
-        <button class="btn btn-secondary btn-sm" id="btn-import">&#8593; Import Excel</button>
-        <button class="btn btn-success btn-sm" id="btn-export">&#8595; Export Excel</button>
-      </div>
-      <input type="file" id="file-input" accept=".xlsx" style="display:none" />
-    </header>
+      <a class="tracker-card" href="ce.html" style="--accent: var(--rag-green)">
+        <h2>Cyber Essentials</h2>
+        <p>Check readiness for Cyber Essentials certification against the NCSC's current requirements, with notes on how each applies in schools.</p>
+        <ul>
+          <li>Scope plus the five technical controls</li>
+          <li>Evidence, actions and owners</li>
+          <li>Certification and renewal dates</li>
+        </ul>
+        <div class="tracker-progress" id="progress-ce"></div>
+        <span class="btn">Open Cyber Essentials tracker &#8594;</span>
+      </a>
+    </div>
 
-    <main id="content">
-      <!-- Views rendered here by app.js -->
-    </main>
-  </div>
+    <p class="home-footer">
+      Sources:
+      <a href="https://www.gov.uk/guidance/meeting-digital-and-technology-standards-in-schools-and-colleges" target="_blank" rel="noopener">DfE digital and technology standards (GOV.UK)</a> ·
+      <a href="https://www.ncsc.gov.uk/cyberessentials/overview" target="_blank" rel="noopener">Cyber Essentials (NCSC)</a>.
+      Data is stored only in your browser. Export to Excel to keep a copy or share it.
+    </p>
+  </main>
 
-</div>
-
-<div id="toast"></div>
-
-<!-- Libraries -->
-<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-<!-- App -->
-<script src="data.js"></script>
-<script src="export.js"></script>
-<script src="app.js"></script>
+  <script>
+    // Show saved progress on each card, if any
+    function progress(key, field, done) {
+      try {
+        const s = JSON.parse(localStorage.getItem(key) || "null");
+        if (!s || !s[field]) return "";
+        // Recommended (rec-*) Cyber Essentials items are not assessed
+        const v = Object.entries(s[field]).filter(([k]) => !k.startsWith("rec-")).map(([, x]) => x);
+        const n = v.filter(x => done.includes(x)).length;
+        const started = v.filter(x => x !== "Not Set").length;
+        return started ? `In progress: ${n} of ${v.length} met` : "";
+      } catch (e) { return ""; }
+    }
+    document.getElementById("progress-dfe").textContent = progress("dfe_tracker_v1", "ratings", ["Met", "Green"]);
+    document.getElementById("progress-ce").textContent = progress("ce_tracker_v1", "status", ["Met", "N/A"]);
+  </script>
 </body>
 </html>
