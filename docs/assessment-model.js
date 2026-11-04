@@ -95,6 +95,9 @@
   }
 
   const str = v => (v == null ? "" : String(v).trim());
+  // Free text (notes, actions, owner) is kept exactly as typed, so a tracker
+  // can restore it from a snapshot without changing it
+  const txt = v => (v == null ? "" : String(v));
 
   // ── Building snapshots ────────────────────────────────────────────────────
   function emptySnapshot(frameworkId) {
@@ -129,7 +132,7 @@
       snap.assessmentDate = str(s.assessmentDate);
       const r = s.ratings || {}, n = s.notes || {}, a = s.recommendations || {}, o = s.ownership || {};
       items.forEach(i => {
-        snap.items[i.id] = { status: validStatus(f, r[i.id]), notes: str(n[i.id]), actions: str(a[i.id]), owner: str(o[i.id]) };
+        snap.items[i.id] = { status: validStatus(f, r[i.id]), notes: txt(n[i.id]), actions: txt(a[i.id]), owner: txt(o[i.id]) };
       });
     } else {
       const org = s.org || {};
@@ -145,10 +148,86 @@
       };
       const st = s.status || {}, ev = s.evidence || {}, ac = s.actions || {}, ow = s.owner || {};
       items.forEach(i => {
-        snap.items[i.id] = { status: validStatus(f, st[i.id]), notes: str(ev[i.id]), actions: str(ac[i.id]), owner: str(ow[i.id]) };
+        snap.items[i.id] = { status: validStatus(f, st[i.id]), notes: txt(ev[i.id]), actions: txt(ac[i.id]), owner: txt(ow[i.id]) };
       });
     }
     return snap;
+  }
+
+  // The inverse of fromTrackerState: turn a snapshot back into the parts of a
+  // tracker's saved state that the snapshot holds. The snapshot is validated
+  // first, so items that are no longer in the framework are dropped and every
+  // current item is present (missing ones are "Not Set" and blank).
+  // Returns { state, problems }. Fields the snapshot does not hold (for example
+  // the DfE tracker's address, phone and website) are not included, so the
+  // caller can keep its own values for them.
+  // Throws an Error with code "wrong-framework" if the snapshot is for the
+  // other tracker, so a Cyber Essentials file is never loaded as DfE (or the
+  // other way round).
+  function toTrackerState(frameworkId, raw) {
+    const f = framework(frameworkId);
+    if (raw && raw.framework && raw.framework !== frameworkId && FRAMEWORKS[raw.framework]) {
+      const e = new Error(`this file is a ${FRAMEWORKS[raw.framework].label} export, not ${f.label}. ` +
+        `Open it in the ${FRAMEWORKS[raw.framework].shortLabel} tracker instead.`);
+      e.code = "wrong-framework";
+      e.fileFramework = raw.framework;
+      throw e;
+    }
+    const v = validate(raw);
+    if (!v.snapshot) throw new Error("the assessment in this file could not be read (" + v.problems.join("; ") + ")");
+    const snap = v.snapshot;
+    const sc = snap.school;
+    const items = f.categories().flatMap(c => c.items);
+    const get = id => snap.items[id] || { status: "Not Set", notes: "", actions: "", owner: "" };
+    let state;
+    if (frameworkId === "dfe") {
+      state = {
+        schoolName: sc.name, schoolURN: sc.urn, schoolDfENumber: sc.dfeNumber, schoolTrust: sc.trust,
+        schoolType: sc.type, schoolPhase: sc.phase, schoolLA: sc.la, schoolPupils: sc.pupils,
+        assessorName: snap.assessor, assessmentDate: snap.assessmentDate,
+        ratings: {}, notes: {}, recommendations: {}, ownership: {}
+      };
+      items.forEach(i => {
+        const d = get(i.id);
+        state.ratings[i.id] = d.status; state.notes[i.id] = d.notes;
+        state.recommendations[i.id] = d.actions; state.ownership[i.id] = d.owner;
+      });
+    } else {
+      const c = snap.certification || {};
+      state = {
+        org: {
+          orgName: sc.name, orgURN: sc.urn, orgDfENumber: sc.dfeNumber, orgTrust: sc.trust, orgPupils: sc.pupils,
+          scopeDescription: c.scope || "", certLevel: c.level || "", certBody: c.body || "", certNumber: c.number || "",
+          certDate: c.certifiedOn || "", renewalDate: c.renewalDue || "",
+          assessorName: snap.assessor, assessmentDate: snap.assessmentDate
+        },
+        status: {}, evidence: {}, actions: {}, owner: {}
+      };
+      items.forEach(i => {
+        const d = get(i.id);
+        state.status[i.id] = d.status; state.evidence[i.id] = d.notes;
+        state.actions[i.id] = d.actions; state.owner[i.id] = d.owner;
+      });
+    }
+    return { state, problems: v.problems.filter(p => !/^no school name or URN/.test(p)) };
+  }
+
+  // Read a tracker's own export back in from its hidden "_assessment" sheet.
+  // Returns:
+  //   { state, problems }        the sheet was read (see toTrackerState)
+  //   { state: null, problems }  the sheet is there but damaged: use the visible sheets
+  //   null                       no hidden sheet (an older export): use the visible sheets
+  // Throws for a file made by the other tracker (code "wrong-framework").
+  function readTrackerFile(XLSX, wb, frameworkId) {
+    let raw;
+    try { raw = readSnapshotSheet(XLSX, wb); }
+    catch (e) { return { state: null, problems: ["the hidden assessment sheet in this file is damaged, so the visible sheets were used"] }; }
+    if (!raw) return null;
+    try { return toTrackerState(frameworkId, raw); }
+    catch (e) {
+      if (e.code === "wrong-framework") throw e;
+      return { state: null, problems: [e.message + ", so the visible sheets were used"] };
+    }
   }
 
   function validStatus(f, v) {
@@ -175,7 +254,7 @@
     Object.entries(raw.items || {}).forEach(([id, v]) => {
       if (!known.has(id)) { unknown++; return; }
       v = v || {};
-      snap.items[id] = { status: validStatus(f, v.status), notes: str(v.notes), actions: str(v.actions), owner: str(v.owner) };
+      snap.items[id] = { status: validStatus(f, v.status), notes: txt(v.notes), actions: txt(v.actions), owner: txt(v.owner) };
     });
     if (unknown) problems.push(`${unknown} item(s) are no longer in the current ${f.shortLabel} and were ignored`);
     if (raw.framework === "cyber-essentials") {
@@ -321,7 +400,7 @@
 
   window.AssessmentModel = {
     SCHEMA_VERSION, SNAPSHOT_SHEET, FRAMEWORKS, framework,
-    emptySnapshot, fromTrackerState, validate, schoolKey, snapshotKey,
+    emptySnapshot, fromTrackerState, toTrackerState, readTrackerFile, validate, schoolKey, snapshotKey,
     summarise, certificationStatus, writeSnapshotSheet, readSnapshotSheet, parseDate
   };
 })();

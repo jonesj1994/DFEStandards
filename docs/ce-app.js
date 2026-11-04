@@ -378,37 +378,75 @@ function ceExport() {
   toast("Exported: " + file);
 }
 
+// Newer exports carry a hidden "_assessment" sheet with the whole assessment
+// (see assessment-model.js), so they are restored exactly from that. Older
+// exports, or a damaged hidden sheet, are read from the visible sheets. A DfE
+// standards export is refused. Nothing is changed unless the whole file reads.
 function ceImport(file) {
   const reader = new FileReader();
   reader.onload = e => {
     try {
       const wb = XLSX.read(new Uint8Array(e.target.result), { type: "array" });
-      if (wb.Sheets.Info) {
-        XLSX.utils.sheet_to_json(wb.Sheets.Info, { header: 1 }).forEach(r => {
-          const f = CE_ORG_FIELDS.find(([, label]) => label === r[0]);
-          if (f) ce.org[f[0]] = r[1] != null ? String(r[1]) : "";
-        });
+      // Hidden sheet first. This throws for a DfE standards file.
+      const hidden = window.AssessmentModel ? AssessmentModel.readTrackerFile(XLSX, wb, "cyber-essentials") : null;
+      let next, found, notes = [];
+      if (hidden && hidden.state) {
+        // Keep settings that are not part of the assessment (e.g. profileKeptURN)
+        next = { ...hidden.state, org: { ...ce.org, ...hidden.state.org } };
+        found = ceAllItems().length;
+        notes = hidden.problems;
+      } else {
+        const v = ceReadVisibleSheets(wb);
+        if (!v.found) {
+          if (ceLooksLikeDfE(wb)) throw new Error("this file is a DfE digital and technology standards export, not Cyber Essentials readiness. Open it in the DfE standards tracker instead.");
+          throw new Error("no Cyber Essentials sheets found in this file");
+        }
+        next = v.state;
+        found = v.found;
+        notes = hidden ? hidden.problems : [];
       }
-      let found = 0;
-      CE_DATA.forEach(cat => {
-        const ws = wb.Sheets[ceSheetName(cat)];
-        if (!ws) return;
-        XLSX.utils.sheet_to_json(ws, { header: 1 }).slice(3).forEach(r => {
-          const item = cat.items.find(i => i.title === r[1]) || cat.items[Number(r[0]) - 1];
-          if (!item) return;
-          found++;
-          ce.status[item.id] = CE_STATUSES.includes(r[3]) ? r[3] : "Not Set";
-          ce.evidence[item.id] = r[4] != null ? String(r[4]) : "";
-          ce.actions[item.id] = r[5] != null ? String(r[5]) : "";
-          ce.owner[item.id] = r[6] != null ? String(r[6]) : "";
-        });
-      });
-      if (!found) throw new Error("no Cyber Essentials sheets found in this file");
+      ce = next;
       ceSave(); ceRender();
-      toast(`Imported ${found} requirements.`);
+      toast(`Imported ${found} requirements.` + (notes.length ? " Note: " + notes.join("; ") + "." : ""));
     } catch (err) { toast("Import failed: " + err.message); }
   };
   reader.readAsArrayBuffer(file);
+}
+
+// A DfE standards tracker export without the hidden sheet (older files)
+function ceLooksLikeDfE(wb) {
+  const a1 = wb.Sheets.Info && wb.Sheets.Info.A1 ? String(wb.Sheets.Info.A1.v || "") : "";
+  return /digital (&|and) technology standards/i.test(a1);
+}
+
+// Read an export's visible sheets into a copy of the current state, so a file
+// that fails part-way leaves the tracker as it was. Returns { state, found }.
+function ceReadVisibleSheets(wb) {
+  const s = {
+    org: { ...ce.org }, status: { ...ce.status }, evidence: { ...ce.evidence },
+    actions: { ...ce.actions }, owner: { ...ce.owner }
+  };
+  if (wb.Sheets.Info) {
+    XLSX.utils.sheet_to_json(wb.Sheets.Info, { header: 1 }).forEach(r => {
+      const f = CE_ORG_FIELDS.find(([, label]) => label === r[0]);
+      if (f) s.org[f[0]] = r[1] != null ? String(r[1]) : "";
+    });
+  }
+  let found = 0;
+  CE_DATA.forEach(cat => {
+    const ws = wb.Sheets[ceSheetName(cat)];
+    if (!ws) return;
+    XLSX.utils.sheet_to_json(ws, { header: 1 }).slice(3).forEach(r => {
+      const item = cat.items.find(i => i.title === r[1]) || cat.items[Number(r[0]) - 1];
+      if (!item) return;
+      found++;
+      s.status[item.id] = CE_STATUSES.includes(r[3]) ? r[3] : "Not Set";
+      s.evidence[item.id] = r[4] != null ? String(r[4]) : "";
+      s.actions[item.id] = r[5] != null ? String(r[5]) : "";
+      s.owner[item.id] = r[6] != null ? String(r[6]) : "";
+    });
+  });
+  return { state: s, found };
 }
 
 // ── Init ───────────────────────────────────────────────────────────────────

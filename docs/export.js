@@ -110,6 +110,10 @@ function exportToExcel(state) {
 }
 
 // ── Import ─────────────────────────────────────────────────────────────────
+// Newer exports carry a hidden "_assessment" sheet with the whole assessment as
+// JSON (see assessment-model.js), so they are restored exactly from that.
+// Older exports, or a file whose hidden sheet is damaged, are read from the
+// visible sheets instead. A Cyber Essentials export is refused.
 function importFromExcel(file, callback) {
   const reader = new FileReader();
   reader.onload = e => {
@@ -117,87 +121,139 @@ function importFromExcel(file, callback) {
       const data = new Uint8Array(e.target.result);
       const wb = XLSX.read(data, { type: "array" });
 
-      const imported = {
-        schoolName: "",
-        schoolURN: "",
-        schoolDfENumber: "",
-        schoolTrust: "",
-        schoolPupils: "",
-        schoolPhase: "",
-        schoolType: "",
-        schoolLA: "",
-        schoolAddress: "",
-        schoolPhone: "",
-        schoolWebsite: "",
-        assessorName: "",
-        assessmentDate: "",
-        ratings: {},
-        notes: {},
-        recommendations: {},
-        ownership: {}
-      };
+      // Hidden sheet first. This throws for a Cyber Essentials file.
+      const hidden = window.AssessmentModel ? AssessmentModel.readTrackerFile(XLSX, wb, "dfe") : null;
 
-      // Try Info sheet
-      if (wb.SheetNames.includes("Info")) {
-        const ws = wb.Sheets["Info"];
-        const rows = XLSX.utils.sheet_to_json(ws, { header: 1 });
-        rows.forEach(row => {
-          if (!row[0]) return;
-          const key = String(row[0]).toLowerCase();
-          const val = row[1] ? String(row[1]) : "";
-          // Specific labels first, so "Number of Pupils" or "School Type" are not
-          // mistaken for the school name
-          if (key.startsWith("dfe number") || key.includes("laestab")) imported.schoolDfENumber = val;
-          else if (key === "trust") imported.schoolTrust = val;
-          else if (key.includes("pupils")) imported.schoolPupils = val;
-          else if (key.includes("type")) imported.schoolType = val;
-          else if (key.includes("school") || key.includes("college")) imported.schoolName = val;
-          else if (key === "urn") imported.schoolURN = val;
-          else if (key.includes("phase")) imported.schoolPhase = val;
-          else if (key.includes("local authority")) imported.schoolLA = val;
-          else if (key.includes("address")) imported.schoolAddress = val;
-          else if (key.includes("phone")) imported.schoolPhone = val;
-          else if (key.includes("website")) imported.schoolWebsite = val;
-          else if (key.includes("assessor")) imported.assessorName = val;
-          else if (key.includes("date")) imported.assessmentDate = val;
-        });
+      // The visible sheets are always read: they hold the address, phone and
+      // website (not in the hidden sheet), and everything else for older files.
+      const visible = readVisibleSheets(wb);
+
+      let imported, notes = [];
+      if (hidden && hidden.state) {
+        imported = {
+          ...hidden.state,
+          schoolAddress: visible.imported.schoolAddress,
+          schoolPhone: visible.imported.schoolPhone,
+          schoolWebsite: visible.imported.schoolWebsite
+        };
+        notes = hidden.problems;
+      } else {
+        if (!visible.matched) {
+          if (looksLikeCyberEssentials(wb)) {
+            throw new Error("this file is a Cyber Essentials readiness export, not DfE digital and technology standards. Open it in the Cyber Essentials tracker instead.");
+          }
+          throw new Error("no DfE standards sheets were found in this file. Choose an Excel file exported from this tracker.");
+        }
+        imported = visible.imported;
+        notes = hidden ? hidden.problems : [];
       }
 
-      // Per-category sheets: match by sheet name to category title
-      STANDARDS_DATA.forEach(cat => {
-        const sheetName = cat.title.replace(/[\/\\*?\[\]:]/g, "").substring(0, 31);
-        const ws = wb.Sheets[sheetName];
-        if (!ws) return;
-
-        const rows = XLSX.utils.sheet_to_json(ws, { header: 1 });
-        // Data rows start at index 3 (0=title, 1=blank, 2=headers, 3+=data)
-        const dataRows = rows.slice(3);
-        // Match each row to a standard by its title (column B), including titles used
-        // in older versions of the app, so older exports still import correctly after
-        // GOV.UK adds, removes or reorders standards. Rows whose title matches no
-        // current standard (e.g. a standard GOV.UK has removed) are skipped.
-        const norm = s => String(s || "").toLowerCase().replace(/[‘’]/g, "'").replace(/\s+/g, " ").trim();
-        const byTitle = {};
-        cat.items.forEach(item => {
-          [item.title, ...(item.previousTitles || [])].forEach(t => { byTitle[norm(t)] = item; });
-        });
-        dataRows.forEach((row, idx) => {
-          const title = norm(row[1]);
-          // Fall back to position only when the row has no title at all.
-          const item = title ? byTitle[title] : cat.items[idx];
-          if (!item) return;
-          imported.notes[item.id] = row[2] ? String(row[2]) : "";
-          imported.recommendations[item.id] = row[3] ? String(row[3]) : "";
-          const rag = row[4] ? String(row[4]) : "Not Set";
-          imported.ratings[item.id] = ["Red","Amber","Green","Met","Not Set"].includes(rag) ? rag : "Not Set";
-          imported.ownership[item.id] = row[5] ? String(row[5]) : "";
-        });
-      });
-
       callback(imported);
+      if (notes.length) showToast("Data imported. Note: " + notes.join("; ") + ".");
     } catch (err) {
       showToast("Import failed: " + err.message);
     }
   };
   reader.readAsArrayBuffer(file);
+}
+
+// A Cyber Essentials tracker export without the hidden sheet (older files)
+function looksLikeCyberEssentials(wb) {
+  const ws = wb.Sheets["Info"];
+  if (!ws) return false;
+  const a1 = ws["A1"] && String(ws["A1"].v || "");
+  return /cyber essentials/i.test(a1);
+}
+
+// Read an export's visible sheets (the only option for files made before the
+// hidden sheet was added). Returns { imported, matched } where matched is the
+// number of standards found.
+function readVisibleSheets(wb) {
+  const imported = {
+    schoolName: "",
+    schoolURN: "",
+    schoolDfENumber: "",
+    schoolTrust: "",
+    schoolPupils: "",
+    schoolPhase: "",
+    schoolType: "",
+    schoolLA: "",
+    schoolAddress: "",
+    schoolPhone: "",
+    schoolWebsite: "",
+    assessorName: "",
+    assessmentDate: "",
+    ratings: {},
+    notes: {},
+    recommendations: {},
+    ownership: {}
+  };
+  // Start every current standard as blank, so standards missing from an older
+  // file show as Not Set rather than keeping values from before the import
+  STANDARDS_DATA.forEach(cat => cat.items.forEach(item => {
+    imported.ratings[item.id] = "Not Set";
+    imported.notes[item.id] = "";
+    imported.recommendations[item.id] = "";
+    imported.ownership[item.id] = "";
+  }));
+
+  // Try Info sheet
+  if (wb.SheetNames.includes("Info")) {
+    const ws = wb.Sheets["Info"];
+    const rows = XLSX.utils.sheet_to_json(ws, { header: 1 });
+    rows.forEach(row => {
+      if (!row[0]) return;
+      const key = String(row[0]).toLowerCase();
+      const val = row[1] ? String(row[1]) : "";
+      // Specific labels first, so "Number of Pupils" or "School Type" are not
+      // mistaken for the school name
+      if (key.startsWith("dfe number") || key.includes("laestab")) imported.schoolDfENumber = val;
+      else if (key === "trust") imported.schoolTrust = val;
+      else if (key.includes("pupils")) imported.schoolPupils = val;
+      else if (key.includes("type")) imported.schoolType = val;
+      else if (key.includes("school") || key.includes("college")) imported.schoolName = val;
+      else if (key === "urn") imported.schoolURN = val;
+      else if (key.includes("phase")) imported.schoolPhase = val;
+      else if (key.includes("local authority")) imported.schoolLA = val;
+      else if (key.includes("address")) imported.schoolAddress = val;
+      else if (key.includes("phone")) imported.schoolPhone = val;
+      else if (key.includes("website")) imported.schoolWebsite = val;
+      else if (key.includes("assessor")) imported.assessorName = val;
+      else if (key.includes("date")) imported.assessmentDate = val;
+    });
+  }
+
+  let matched = 0;
+  // Per-category sheets: match by sheet name to category title
+  STANDARDS_DATA.forEach(cat => {
+    const sheetName = cat.title.replace(/[\/\\*?\[\]:]/g, "").substring(0, 31);
+    const ws = wb.Sheets[sheetName];
+    if (!ws) return;
+
+    const rows = XLSX.utils.sheet_to_json(ws, { header: 1 });
+    // Data rows start at index 3 (0=title, 1=blank, 2=headers, 3+=data)
+    const dataRows = rows.slice(3);
+    // Match each row to a standard by its title (column B), including titles used
+    // in older versions of the app, so older exports still import correctly after
+    // GOV.UK adds, removes or reorders standards. Rows whose title matches no
+    // current standard (e.g. a standard GOV.UK has removed) are skipped.
+    const norm = s => String(s || "").toLowerCase().replace(/[‘’]/g, "'").replace(/\s+/g, " ").trim();
+    const byTitle = {};
+    cat.items.forEach(item => {
+      [item.title, ...(item.previousTitles || [])].forEach(t => { byTitle[norm(t)] = item; });
+    });
+    dataRows.forEach((row, idx) => {
+      const title = norm(row[1]);
+      // Fall back to position only when the row has no title at all.
+      const item = title ? byTitle[title] : cat.items[idx];
+      if (!item) return;
+      matched++;
+      imported.notes[item.id] = row[2] ? String(row[2]) : "";
+      imported.recommendations[item.id] = row[3] ? String(row[3]) : "";
+      const rag = row[4] ? String(row[4]) : "Not Set";
+      imported.ratings[item.id] = ["Red","Amber","Green","Met","Not Set"].includes(rag) ? rag : "Not Set";
+      imported.ownership[item.id] = row[5] ? String(row[5]) : "";
+    });
+  });
+  return { imported, matched };
 }
