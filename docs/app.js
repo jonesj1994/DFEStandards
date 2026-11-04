@@ -390,6 +390,10 @@ function renderCategory(catId) {
     <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px">
       <h2 style="margin:0">${escHtml(cat.title)}</h2>${core}
     </div>
+    <p style="margin:0 0 12px"><a class="guidance-link" href="${escAttr(cat.url || STANDARDS_INDEX_URL)}" target="_blank" rel="noopener">View the official DfE guidance on GOV.UK &#8599;</a></p>
+    ${cat.isCore ? `<div class="core-note">${cat.id === "filtering-monitoring"
+      ? "Core standard. DfE expects schools and colleges to meet the filtering and monitoring standards <strong>now</strong>, not by 2030."
+      : "Core standard. DfE expects schools and colleges to be working towards meeting this by <strong>2030</strong>."}</div>` : ""}
     <div class="dash-stats" style="margin-bottom:20px">
       ${s.Red ? `<span class="stat-chip red">Red: ${s.Red}</span>` : ""}
       ${s.Amber ? `<span class="stat-chip amber">Amber: ${s.Amber}</span>` : ""}

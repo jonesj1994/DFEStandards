@@ -1,330 +1,350 @@
+// Generated from the Excel template. Guidance text is verbatim from that file.
+// To refresh: update the template, then run: python3 scripts/gen_data.py ..
+const STANDARDS_INDEX_URL = "https://www.gov.uk/guidance/meeting-digital-and-technology-standards-in-schools-and-colleges";
 const STANDARDS_DATA = [
   {
-    id: "broadband",
-    title: "Broadband",
-    isCore: true,
-    items: [
+    "id": "broadband",
+    "title": "Broadband",
+    "isCore": true,
+    "url": "https://www.gov.uk/guidance/meeting-digital-and-technology-standards-in-schools-and-colleges/broadband-internet-standards-for-schools-and-colleges",
+    "items": [
       {
-        id: "broadband-1",
-        title: "Have full fibre broadband connection with appropriate speeds",
-        description: "Schools and colleges should have a full fibre broadband connection. The minimum speed requirements are: primary schools - 100 Mbps, secondary schools - 1 Gbps, colleges - 1 Gbps. You should work with your local authority or trust to find the best solution for your setting."
+        "id": "broadband-1",
+        "title": "Have full fibre broadband connection with appropriate speeds",
+        "description": "Full fibre services provide the capacity and speed needed for effective use of online learning tools. Getting the fastest speed you can afford enables teachers to make full use of online resources as integral parts of teaching and learning, saves money by using cloud-based solutions instead of on-site technical infrastructure, and provides flexibility to future proof schools as demand increases.\n\nPrimary schools should have: Minimum 100Mbps download speed, Minimum 30Mbps upload speed.\n\nSecondary schools, all-through schools and FE colleges should have: Connection with capacity to deliver 1Gbps download and upload speed.\n\nBroadband should be provided using a full fibre connection (sometimes described as leased line or FTTP - Fibre to the Premises). Note: Copper connections do not meet this standard.\n\nYou should implement this standard as soon as you can, usually at the end of any existing contract term or as soon as full fibre is available. Ensure any new contracts or extensions using non-full fibre types provide opportunity to change to fibre services when available.\n\nSpeed may vary depending on: Internal network cabling and switches, Internal network equipment such as routers and wireless access points. See related standards on network cabling, switching and wireless."
       },
       {
-        id: "broadband-2",
-        title: "Build resilience into your broadband connection",
-        description: "You should have a backup broadband connection in case your primary connection fails. This could be a second fixed-line connection, a 4G/5G mobile connection, or a satellite connection. You should test your backup connection regularly to make sure it works."
+        "id": "broadband-2",
+        "title": "Build resilience into your broadband connection",
+        "description": "With increasing reliance on internet-based services, broadband internet is an essential service. You should ensure appropriate measures are in place to mitigate against a single point of failure.\n\nResilient services should be implemented alongside, or as soon as possible after a new connection is installed.\n\nThis standard requires a combination of: Multiple broadband connection services of different service types (for example, a leased line combined with FTTP or FTTP combined with low Earth orbit satellite), Multiple routers and appropriate associated router configuration to provide automatic failover to backup services as and when required, Redundant power options on core active network equipment.\n\nYou should investigate which backup internet services are available and implement appropriate systems. Your broadband provider will be able to advise on possible solutions and costs.\n\nPrimary and backup broadband connections must not be the same type as each other, ideally from different providers. This is important for business continuity because if primary connection fails, backup will take over as it's a separate connection."
       },
       {
-        id: "broadband-3",
-        title: "Have appropriate safeguarding measures in place",
-        description: "You must have appropriate safeguarding measures in place on your broadband connection. This includes filtering and monitoring to protect pupils from harmful online content. You should work with your local authority or trust to make sure your safeguarding measures meet the required standards."
+        "id": "broadband-3",
+        "title": "Have appropriate safeguarding measures in place",
+        "description": "It's essential that children are safeguarded from potentially harmful and inappropriate online material. An effective whole school approach to online safety empowers a school to protect and educate students and staff in their use of technology, and establishes ways to identify, intervene in, and escalate any concerns.\n\nYou should already be meeting this standard as part of ongoing safeguarding requirements as set out in statutory safeguarding guidance on Keeping Children Safe in Education.\n\nYou should talk to your supplier or in-house support team to ensure you have: A content filtering system in place which meets the requirements outlined in the online safety section of Keeping Children Safe in Education (paragraphs 123-135), A firewall as part of your internet and network system (this could be an on-premises device directly protecting your network and managed by the school, or an 'edge' service provided and managed by your supplier or in-house support team).\n\nSee the Filtering and Monitoring standards for more detailed requirements on safeguarding measures."
       }
     ]
   },
   {
-    id: "cloud-solution",
-    title: "Cloud Solution",
-    isCore: false,
-    items: [
+    "id": "cloud-solution",
+    "title": "Cloud Solution",
+    "isCore": false,
+    "url": "https://www.gov.uk/guidance/meeting-digital-and-technology-standards-in-schools-and-colleges/cloud-solution-standards-for-schools-and-colleges",
+    "items": [
       {
-        id: "cloud-1",
-        title: "Use cloud solutions as an alternative to locally-hosted systems",
-        description: "You should consider using cloud solutions instead of locally-hosted systems where possible. Cloud solutions can offer benefits such as lower upfront costs, easier maintenance, and better accessibility. You should assess the benefits and risks of cloud solutions before making a decision."
+        "id": "cloud-1",
+        "title": "Use cloud solutions as an alternative to locally-hosted systems",
+        "description": "Using cloud solutions reduces the need for local servers and can: Support your overall school strategy, Allow you to take advantage of low-cost or free cloud services, Save money by reducing onsite equipment and energy costs and the need for support and licensing, Improve safety and security by increasing resilience to cyber attacks, Improve reliability and business continuity, Save time by allowing users to work more flexibly and collaboratively, Outsource hardware and software updating and maintenance.\n\nMany schools use a hybrid model with some cloud solutions running alongside onsite servers. The more cloud solutions you use, the more your school will benefit. Local servers may still be needed for some systems such as access control (door security), building management, or cashless catering.\n\nBefore moving to cloud: Understand the software, devices and data you currently use and what you use them for, Consider the types of data you need to import and export easily from the cloud, Ask your IT support about free cloud services your school can benefit from. Use this information to assess where you can replace servers with cloud solutions including files, documents and shared folders.\n\nCloud solutions need reliable broadband with capacity to support your needs - check you meet broadband internet, network switching, network cabling and wireless network standards. Training users will ensure they are confident using solutions correctly and help realise the benefits."
       },
       {
-        id: "cloud-2",
-        title: "Cloud solutions must follow data protection legislation",
-        description: "Any cloud solutions you use must comply with data protection legislation, including the UK General Data Protection Regulation (UK GDPR) and the Data Protection Act 2018. You should carry out a data protection impact assessment before using any new cloud solution."
+        "id": "cloud-2",
+        "title": "Cloud solutions must follow data protection legislation",
+        "description": "You must comply with data protection legislation. Responsible bodies must seek assurance from cloud solution and IT support providers that data is being handled legally. Your IT support should consult with your DPO on data protection issues such as data retention and sharing.\n\nYour DPO should carry out Data Protection Impact Assessments (DPIA) for any cloud solutions that store personal and/or sensitive personal data (special category data). Check whether data you want to store and process in the cloud is personal and/or sensitive personal data. If so, you might need extra security measures such as encryption, password protection, or more restricted access.\n\nAll systems must follow NCSC cloud security principles. Make sure: Data processing by third parties is covered by appropriate contract, There is a user account creation, approval and removal process that complies with data protection legislation, There is a data sharing agreement with your cloud solution provider, Roles and responsibilities for dealing with data breach are clearly documented.\n\nData should be stored and processed in UK or EU, unless you have confirmed any international transfer complies with UK GDPR. Ask your provider about this.\n\nYour data sharing agreement needs to state that cloud solution provider will share information promptly if there is a data breach. This lets the data controller take necessary actions.\n\nYou should already be meeting this standard in accordance with data protection legislation."
       },
       {
-        id: "cloud-3",
-        title: "Cloud solutions should use ID and access management tools",
-        description: "Cloud solutions should use identity and access management (IAM) tools to control who can access your data and systems. This includes using multi-factor authentication (MFA) and role-based access control (RBAC) to ensure that only authorised users can access your systems."
+        "id": "cloud-3",
+        "title": "Cloud solutions should use ID and access management tools",
+        "description": "Many cloud solutions work independently and need multiple logins and passwords. To meet data protection and safeguarding obligations, use a central ID and access management tool. This provides: One centrally managed account with one login for each user so users don't need multiple passwords, Simplified login organisation and management when users join or leave, Access management based on groups so right people get access to right tools.\n\nMake sure your IT support: Assesses your existing or potential cloud solutions and works with you to choose appropriate ID management system, The system is used to secure all current and future cloud solutions and systems (including curriculum tools).\n\nTo meet this standard you should: Test it with all systems and make sure this is the only way staff and students can log on, Have agreed, documented processes in place to manage addition and removal of users, Create roles that ensure all types of users have right levels of access to right systems, Make sure your IT support has separate, secure access to your cloud solution, independent of the ID management system.\n\nYou should meet this standard as soon as you can. It helps keep your data and systems secure. Check you meet the cyber security standards for schools and colleges."
       },
       {
-        id: "cloud-4",
-        title: "Cloud solutions should work on a range of devices and be available when needed",
-        description: "Cloud solutions should be accessible from a range of devices, including laptops, tablets, and smartphones. They should be available when needed, with minimal downtime. You should check the availability and performance of cloud solutions before signing any contracts."
+        "id": "cloud-4",
+        "title": "Cloud solutions should work on a range of devices and be available when needed",
+        "description": "Good access and availability will make it easy for users to work with data using different systems, from anywhere and from a range of devices. Poor or unreliable availability could have significant impact on running your school.\n\nBefore entering cloud solutions agreement, make sure you understand how and when it will need to be accessed by users. When procuring cloud solutions make sure published availability targets meet your needs. Trial cloud solutions before committing to buy to ensure performance meets expectations.\n\nAvailability targets may appear misleading. Cloud solutions run 24/7. Less than 1% difference in cloud availability can significantly affect downtime: 99% availability = approximately 7 hours downtime per month, 99.9% availability = approximately 45 minutes downtime per month, 99.99% availability = approximately 5 minutes downtime per month.\n\nTo meet this standard: Make sure you can easily access data from cloud solution in a way which meets your and your users' needs, Allow easy but secure access from a range of devices, ask your cloud provider about secure access to their services, Make sure data used in cloud solution is portable and allows for: Secure encrypted transfer, Data export to open standard or commonly used format (e.g. CSV, ODT files), Data links through secure, documented APIs, Timely process for data transfer if you end the contract."
       },
       {
-        id: "cloud-5",
-        title: "Make sure that appropriate data backup provision is in place",
-        description: "You should make sure that appropriate data backup provision is in place for any cloud solutions you use. This includes regular backups of your data, and testing your backups to make sure they can be restored. You should also make sure that your data can be exported from the cloud solution if needed."
+        "id": "cloud-5",
+        "title": "Make sure that appropriate data backup provision is in place",
+        "description": "The most common risk of cloud data loss is accidental or deliberate data deletion by users. Although data loss by cloud providers is uncommon, it can happen. Loss of data can lead to data breach requiring notification to authorities, and may obstruct critical business operations.\n\nCloud providers will only hold backup data for limited period (could be as little as 30 days). This depends on your service level agreement. Your DPO should know which data is critical and how long different types should be kept for.\n\nWorking with your DPO and IT support, understand your cloud provider's backup processes and policies. Ask: What data do they backup? Where is it held (for UK GDPR compliance)? How long is data held for? How frequently are backups made?\n\nTo meet this standard identify the data backup provision you need for each solution based on the data it will store. Consider: Its sensitivity, Its importance to normal operations, The impact if it were unavailable temporarily or permanently, How long you could be without the data before it becomes an issue, Balancing cost against need - frequent backups are more expensive so consider cost against age of data you recover from backup, For critical data use the 3-2-1 rule: at least 3 copies, on 2 devices and 1 offsite.\n\nThird party solutions and plug-ins are available for cloud solutions that don't meet your data backup needs. Discuss this with your cloud solution provider. You should already be meeting this standard to help safeguard, protect and secure your data and systems."
       }
     ]
   },
   {
-    id: "cyber-security",
-    title: "Cyber Security",
-    isCore: true,
-    items: [
+    "id": "cyber-security",
+    "title": "Cyber Security",
+    "isCore": true,
+    "url": "https://www.gov.uk/guidance/meeting-digital-and-technology-standards-in-schools-and-colleges/cyber-security-standards-for-schools-and-colleges",
+    "items": [
       {
-        id: "cyber-1",
-        title: "Conduct a cyber risk assessment annually and review every term",
-        description: "You should conduct a cyber risk assessment at least once a year and review it every term. The assessment should identify the cyber risks facing your school or college and the controls you have in place to manage those risks. You should use the assessment to prioritise your cyber security improvements."
+        "id": "cyber-1",
+        "title": "Conduct a cyber risk assessment annually and review every term",
+        "description": "This is one of the 6 core standards to be met by 2030. Cyber incidents and attacks have significant operational and financial impacts. These incidents will often be an intentional and unauthorised attempt to access, change or damage data and digital technology.\n\nThe SLT digital lead and IT support should: Review digital technology assets and any related cyber security risk, Check all digital technology is licensed, supported and updated, Complete a record of processing activities (ROPA) for all new and current systems storing or processing personal and sensitive personal data, Assess staff access and permissions to systems and data, and check password policies, Check email is set up to be secure and reduces risk of third parties sending imitation emails.\n\nKeep documentation on your network up to date including: Network diagrams, Changes that are made, Settings and IP addressing information, Level of logging required to help identify source of any cyber incident or attack.\n\nUnderstand the current risk by: Understanding what the greatest cyber risks are and their likelihood and impact, Capturing how many cyber incidents or attacks have already occurred, Identifying any student or staff behaviour that may expose the school to cyber incidents, Testing your cyber resilience using NCSC's online tool.\n\nCreate a risk management process and cyber response plan: Create simple reporting structure for cyber risks to be captured, escalated and actioned, Capture cyber risks in the risk register and place into regularly tested business continuity plan, Maintain documentation in at least one or more diverse locations (cloud or hard copy), Flag any risks or issues to governors or trustees, Put a cyber response plan in place (condition of RPA cover).\n\nYou should complete any risk assessments as soon as possible and repeat them every year or in the event of: Significant change to your network, systems or data, A cyber incident or attack, Changes to funding or support arrangements."
       },
       {
-        id: "cyber-2",
-        title: "Create and implement a cyber awareness plan for students and staff",
-        description: "You should create and implement a cyber awareness plan for students and staff. This should include training on how to recognise and respond to cyber threats, such as phishing emails and ransomware. You should also make sure that students and staff know how to report cyber incidents."
+        "id": "cyber-2",
+        "title": "Create and implement a cyber awareness plan for students and staff",
+        "description": "An acceptable use policy describes what a person on the network can or cannot do when using digital technology. Anyone who has access to the school or college network or data needs to be made aware of, and sign up to, the acceptable use policy including guests and supply teachers.\n\nThe SLT digital lead should work with IT support, designated safeguarding lead and DPO to create and update the acceptable use policy. If you use a student contract, this should include relevant sections of the acceptable use policy.\n\nTraining students and staff in cyber security is vital for maintaining safety and security. Cyber training should be given at least annually, or more regularly if there is a known cyber risk. Training is required for: Students, Staff, At least one current governor or trustee, Anyone else with a login who may need more focused training.\n\nTraining should be age-appropriate and suited to your school's risks, but should generally include: Methods hackers use for tricking people including phishing, Password security, Online safety, Social engineering, Physical security of devices (not leaving laptops unlocked and unattended), Risks of using removable storage media such as USBs, Multi-factor authentication, How to report a cyber incident or attack, How to report a personal data breach, Data protection for all staff with enhanced training for those exposed to higher risk data."
       },
       {
-        id: "cyber-3",
-        title: "Secure digital technology and data with anti-malware and a firewall",
-        description: "You should secure your digital technology and data with anti-malware software and a firewall. Anti-malware software should be installed on all devices and kept up to date. Your firewall should be configured to block unauthorised access to your network and systems."
+        "id": "cyber-3",
+        "title": "Secure digital technology and data with anti-malware and a firewall",
+        "description": "Firewall requirements: Protect digital technology with correctly configured boundary firewall or software firewall including protection against denial of service attacks, Keep boundary firewall firmware up to date on supported versions (checked termly), Make sure all external connections to network run through the firewall, Change default administrator password and restrict remote access to only those who need it, Protect access with multi-factor authentication where available and prevent access from internet except to those maintaining the firewall, Actively monitor firewall traffic and switch on firewall alerts to detect suspicious activity, Block inbound unauthenticated connections by default, Document and review why inbound traffic has been permitted through firewall (termly minimum with SLT digital lead sign-off), Keep firewall rules to absolute minimum with each rule documented and subject to risk assessment, Enable software firewall for digital technology used outside of school such as at home or on public wifi, Consider VPN to encrypt data sent and received by a device.\n\nAnti-Malware Software should: Scan web pages as they are being used, Have centralized monitoring console to allow IT support to intervene if anti-malware fails or doesn't update, Scan files and applications upon access when downloaded or opened locally or from network folder, Scan attachments on incoming and outgoing emails for malware, Send malware alerts to IT support who will investigate, Prevent access to potentially malicious websites.\n\nSecurity Checks: Check downloads for malware before individuals can store or install them, Check and approve all current and future applications to ensure they don't pose security risk, Maintain current list of approved applications on contracts register, Remove unnecessary software according to organizational need, Only install applications that can be verified as coming from known supplier, Document how digital technology is set up including which security features are enabled or disabled, Review and manage browser settings to ensure highest protection is enabled and users cannot change settings to install extensions or bypass security, Check email is setup to be secure and reduces risk of third parties sending imitation emails."
       },
       {
-        id: "cyber-4",
-        title: "Control and secure user accounts and access privileges",
-        description: "You should control and secure user accounts and access privileges. This includes using strong passwords, multi-factor authentication (MFA), and role-based access control (RBAC). You should also make sure that user accounts are disabled or deleted when staff leave your school or college."
+        "id": "cyber-4",
+        "title": "Control and secure user accounts and access privileges",
+        "description": "Passwords: IT support should: Enforce password strength at system level (NCSC suggest machine generated passwords or three random word system), Immediately change any passwords that have been compromised or suspected of compromise, Protect all passwords (allow no more than 10 guesses in 5 minutes, or lock devices after no more than 10 unsuccessful attempts).\n\nOn networking devices and servers: Use password or PIN of at least 6 characters to physically access network switches and boot-up settings (password must only be used for this device), Agree process with SLT on securing access to key system passwords and PINs in event of emergency or if IT support unavailable.\n\nFor younger children, users with SEND, or those with English as additional language, consider: Other means of logging on other than passwords (e.g. PIN code), Separate account accessed by teacher using student's login so student can still be identified (should follow filtering and monitoring standards).\n\nMulti-Factor Authentication (MFA) should include at least 2 of: Password, Text message with code to mobile device (staff only), Automated phone call with code, Secure portable device such as mobile phone or tablet for staff, Security key or device used to authenticate logins, Known or trusted account where second party authenticates another's credentials, Biometric test (may need biometric policy depending on data storage).\n\nAccount Management: IT support should: Disable accounts as soon as someone leaves, Create and manage process with HR and finance team to deal with joiners, leavers, and role changes, Consider tools that link to MIS to automatically create or delete user accounts, Make sure accounts are set up so users only have access to data and systems they need, Apply MFA to any accounts and cloud-based applications for staff working remotely, Disable remote access when not required and enable only by authorized staff, Use enhanced security such as MFA where staff handle confidential, personal or sensitive personal data, Review accounts with finance team every term to identify missed changes, Ensure global or administrative accounts are not used for routine business, Agree process for handling administrative accounts so SLT or trustee approves changes before IT support can action, Make sure SLT have access to dedicated administrative account for emergencies."
       },
       {
-        id: "cyber-5",
-        title: "License digital technology and keep it up to date",
-        description: "You should make sure that all digital technology is properly licensed and kept up to date. This includes operating systems, applications, and firmware. You should have a process for applying security patches and updates in a timely manner."
+        "id": "cyber-5",
+        "title": "License digital technology and keep it up to date",
+        "description": "Licensing: All software needs to be licensed and eligible for security updates. You should remove unlicensed software or take steps to license it.\n\nIT support should check that: Operating systems and firmware on digital technology are kept up to date, Updates are issued in timely manner that doesn't impact teaching and learning, License expiry dates are recorded in contracts register by business professionals or finance team and unlicensed software is removed, Business professionals or finance team have been informed about license end dates so they can budget for renewal costs, Digital technology end-of-support dates are captured in asset register.\n\nSecurity Updates: IT support must complete security updates (patching) to operating systems, applications and firmware including configuration changes within 14 days of release where vulnerability is: Described as high risk or worse, Has Common Vulnerability Scoring System (CVSSv3) score of 7 or above.\n\nThe CVSSv3 is security industry standard for measuring danger of a vulnerability. Score is number from 1 to 10 where 10 means most easily exploitable.\n\nIT support also needs to: Make sure security updates are applied on time (consider using supported third-party patch management tool to automate), Isolate devices where high risk patches are unavailable (remove from network or separate from higher risk systems and data).\n\nOccasionally DfE may issue instructions on security updates. SLT digital lead will inform IT support. IT support should then apply these updates within 5 working days of notification.\n\nAn alternative to licensing software is to use cloud service. These are usually subscription based and supplier is responsible for licensing and updating. You should ask your DPO to undertake DPIA if storing or processing personal or sensitive personal data."
       },
       {
-        id: "cyber-6",
-        title: "Develop and implement a plan to back up your data and review this every year",
-        description: "You should develop and implement a plan to back up your data and review it every year. The plan should include details of what data is backed up, how often, and where it is stored. You should also test your backups regularly to make sure they can be restored."
+        "id": "cyber-6",
+        "title": "Develop and implement a plan to back up your data and review this every year",
+        "description": "Analyse where you are now: It's useful to understand your current backup plan. SLT digital lead should ask IT support: What data is currently being backed up, how often, how old it is and how it's being backed up including data stored on all cloud services (store in information asset register using DfE information asset register template), What information is not being backed up, How often they test data restoration to check backups are successful, How long restoration will take and when last test restoration was completed, How many copies are being kept and where they are located, How your backups may be affected in event of incident or attack.\n\nPlan and action how to backup and restore your data: SLT digital lead should work with business professionals or finance team, designated safeguarding lead, DPO and IT support to identify: What data you backup including what critical data and systems are needed to function in disaster situation, How long you can go without specific systems and data and how up to date they need to be to determine priority of recovery, Process for students and staff to delete or archive data annually (speeds up recovery times).\n\nMake sure IT support understand: What critical data and systems are needed to function as school in disaster, What data needs to be backed up and where it's located including all cloud services, Who is responsible for backing up and maintaining backups, Where backed up data is held, including whether on-site, cloud, or combination, What system you will use to make sure backups are complete and working.\n\nConsider 3-2-1 rule for critical data: At least 3 copies of data, On at least 2 different types of storage media, At least 1 copy stored off-site or in cloud.\n\nTest backup and restoration processes regularly (at least annually) to ensure: Backups are complete and not corrupted, Restoration process works and data can be recovered, Recovery time objectives can be met, Staff know their roles in backup and recovery process."
+      },
+      {
+        "id": "cyber-7",
+        "title": "Report cyber attacks",
+        "description": "When to report: You should report cyber incidents and attacks when they: Result in unauthorized access to systems or data, Cause disruption to school or college operations, Involve theft or loss of data, Could affect personal data (potential data breach), Are attempted ransomware attacks, Involve compromise of critical systems.\n\nInternal reporting: The SLT digital lead should: Have clear process for staff to report cyber incidents, Ensure all staff know how to report incidents, Document all cyber incidents in incident log, Inform relevant stakeholders including SLT, governors, DPO as appropriate, Assess impact and coordinate response, Review incidents to identify lessons learned.\n\nExternal reporting: You must report certain incidents to external bodies: Report to Information Commissioner's Office (ICO) within 72 hours if personal data breach, Report serious cyber incidents to National Cyber Security Centre (NCSC) via their reporting service, If you have RPA cover, report to DfE as per RPA conditions, Report to police if criminal activity is suspected, Report to Action Fraud for fraud or financially motivated cybercrime.\n\nThe cyber response plan should include: Clear escalation procedures, Contact details for external reporting bodies, Decision tree for when to report externally, Template communications for different scenarios, Roles and responsibilities during incident response.\n\nAfter reporting: Follow up with external bodies as required, Implement remediation actions, Update risk assessments and security measures, Communicate with affected parties as appropriate, Document the incident and response for future reference."
       }
     ]
   },
   {
-    id: "digital-accessibility",
-    title: "Digital Accessibility",
-    isCore: false,
-    items: [
+    "id": "digital-accessibility",
+    "title": "Digital Accessibility",
+    "isCore": false,
+    "url": "https://www.gov.uk/guidance/meeting-digital-and-technology-standards-in-schools-and-colleges/digital-accessibility-standards",
+    "items": [
       {
-        id: "accessibility-1",
-        title: "Include digital accessibility in relevant strategies and policies",
-        description: "You should include digital accessibility in your relevant strategies and policies. This includes your digital technology strategy, your equality and diversity policy, and your special educational needs and disability (SEND) policy. You should make sure that your digital technology is accessible to all students and staff, including those with disabilities."
+        "id": "accessibility-1",
+        "title": "Include digital accessibility in relevant strategies and policies",
+        "description": "Digital accessibility means making digital products, content and services accessible and usable for all. Everyone should be able to access the same information and use equipment, regardless of their needs and situation. 1 in 5 people have a disability in the UK, but accessibility applies to all.\n\nInclude accessible digital technology in your wider policies and strategies. These could be your: Digital technology strategy, Curriculum policy, SEND policy, Safeguarding policies, Communication policies.\n\nWork with students, staff and parents to identify their digital accessibility needs. When reviewing your policies and strategies, SLT and digital lead should work with relevant groups such as: SEND leads, Special Educational Needs Coordinators (SENCo), Curriculum leads, IT support, Parent/carer representatives.\n\nSLT should identify which strategies and policies you need to review and how you'll include digital accessibility in them. When you next review those strategies and policies, include: The accessibility needs of the school or college community, How you intend to meet these needs (this could include using accessibility features on existing systems or implementing new tools and services), How you'll make all communications and content, including your school or college website, accessible.\n\nMake sure everyone knows how to use accessibility features to meet their needs and those of others. Digital accessibility should be actively addressed and included in your next policy and strategy review.\n\nWhen digital accessibility is included in policies and strategies, this can help you: Meet legal obligations under Equality Act 2010, Provide equity of access for as many people as possible, Support students with SEND to access curriculum more effectively, Create more inclusive learning environment, Reduce barriers to learning, communication and access to information."
       },
       {
-        id: "accessibility-2",
-        title: "Hardware and software should support the use of accessibility features",
-        description: "The hardware and software you use should support the use of accessibility features. This includes screen readers, magnification software, and alternative input devices. You should test your hardware and software to make sure that accessibility features work correctly."
+        "id": "accessibility-2",
+        "title": "Hardware and software should support the use of accessibility features",
+        "description": "Digital accessibility features are often included in existing devices and operating systems. These features will remove barriers to accessing teaching, learning and school or college operations.\n\nSLT should make sure new and existing hardware, software and digital services: Are accessible or have accessibility features included, Can provide equity of access, Are set up to work with assistive technology and audio-visual equipment, Remain safe and secure when accessibility features are enabled (accessibility features should not be blocked by generic security policies), Consider accessibility needs when using IT in exams.\n\nSLT should work with those responsible for: IT support and your digital strategy (as key decision makers they should include digital accessibility in their technology strategy, procurement and support), Special educational needs and disabilities (to make sure any assistive technologies used are compatible with chosen hardware and software), Procurement including digital licensing (to make sure any hardware and software bought has digital accessibility as part of their design or features), Curriculum planning and delivery (to make sure all students can access curriculum with help of digital accessibility tools when needed), Supporting student welfare (to make sure students' needs are understood and used for procurement and training).\n\nYou should provide training for staff when required to do so. Training should cover: How to use built-in accessibility features, How to support others in using them, Understanding of different accessibility needs, How to create accessible content and materials, Which assistive technologies are available and how to use them.\n\nConsider these standards when reviewing your digital technology: Laptops, desktops and tablets standards (devices should meet educational needs and support accessibility), Filtering and monitoring standards (systems should not unreasonably impact accessibility needs or block assistive technologies)."
       },
       {
-        id: "accessibility-3",
-        title: "Communications should be accessible to all",
-        description: "Your communications should be accessible to all students, staff, and parents. This includes making sure that your website, emails, and other communications are accessible to people with disabilities. You should follow the Web Content Accessibility Guidelines (WCAG) 2.1 AA standard for your website and digital communications."
+        "id": "accessibility-3",
+        "title": "Communications should be accessible to all",
+        "description": "Making communications accessible can support students, staff, parents, and carers. It can assist those with additional needs like special educational needs, disabilities, and English as an additional language (EAL).\n\nWebsites should be accessible for everyone. Consider accessibility when commissioning or building a website. Website accessibility is a legal requirement under the Public Sector Bodies (Websites and Mobile Applications) Accessibility Regulations 2018. Websites should meet WCAG 2.1 AA standards as a minimum.\n\nYou could look at alternative formats for all communications, including: Email attachments (ensure PDFs and documents are accessible), Text messages (keep language simple and clear), Social media posts (use alt text for images, captions for videos), School newsletters (offer in different formats if needed), Parent letters (consider translation services for EAL families), Student reports (ensure readable by screen readers), Learning materials (provide in multiple formats where appropriate).\n\nAdditionally, you should make sure that: There is understanding of accessibility and its importance throughout the school or college, Staff are trained on accessibility and can write and access content in an accessible format, Staff know who to contact to help them make things accessible (this may be the SENCo, IT support or the SLT digital lead), Content is created with accessibility in mind from the start, not added as an afterthought.\n\nBest practices for accessible content: Use plain English and avoid jargon where possible, Use clear headings and structure in documents, Ensure good color contrast (minimum 4.5:1 for normal text), Provide text alternatives (alt text) for images, Make sure documents can be read by screen readers, Use accessible fonts and appropriate font sizes, Avoid using color alone to convey information, Ensure videos have captions and transcripts, Keep sentences and paragraphs short and clear, Use bullet points and lists to break up text.\n\nSLT should lead and include staff involved in digital communication and its content."
       }
     ]
   },
   {
-    id: "digital-leadership",
-    title: "Digital Leadership",
-    isCore: true,
-    items: [
+    "id": "digital-leadership",
+    "title": "Digital Leadership",
+    "isCore": true,
+    "url": "https://www.gov.uk/guidance/meeting-digital-and-technology-standards-in-schools-and-colleges/digital-leadership-and-governance-standards",
+    "items": [
       {
-        id: "leadership-1",
-        title: "Assign a senior leadership team (SLT) member to be responsible for digital technology",
-        description: "You should assign a member of your senior leadership team (SLT) to be responsible for digital technology. This person should have overall responsibility for your digital technology strategy and its implementation. They should also be responsible for ensuring that your digital technology meets the required standards."
+        "id": "leadership-1",
+        "title": "Assign a senior leadership team (SLT) member to be responsible for digital technology",
+        "description": "This is one of the 6 core standards to be met by 2030. The SLT digital lead is the person in the senior leadership team who is responsible for digital technology. This role has strategic oversight of digital technology and ensures up-to-date information on the school's digital technology is available to support decision making.\n\nThe SLT digital lead should: Have strategic oversight of digital technology across the school or college, Understand the needs of your school or college and how technology can support them, Be able to commission technology services that meet your needs, Understand current and future digital technology requirements, Be part of relevant meetings where digital technology is discussed (e.g. SLT meetings, governor meetings, budget planning), Be able to advise on digital technology matters and their implications, Report to your board of trustees or governing body on digital technology matters regularly, Work closely with IT support (whether internal or external), Coordinate with other key roles such as business manager, data protection officer, designated safeguarding lead.\n\nThis role should be clearly defined in job descriptions and understood across the organization. The SLT digital lead needs appropriate time, resources and authority to carry out this role effectively.\n\nGoverning bodies and proprietors should: Ensure the SLT digital lead has appropriate time and resources, Receive regular reports on digital technology matters, Understand the strategic importance of digital technology, Support investment in technology infrastructure and training, Challenge and scrutinize technology decisions appropriately.\n\nThe SLT digital lead doesn't need to be a technical expert but should understand how technology supports the school's strategic aims and how to work effectively with IT support and other stakeholders."
       },
       {
-        id: "leadership-2",
-        title: "Keep registers relating to hardware and systems up to date",
-        description: "You should keep registers relating to your hardware and systems up to date. This includes an asset register of all hardware and software, and a network diagram showing how your systems are connected. You should review and update these registers regularly."
+        "id": "leadership-2",
+        "title": "Keep registers relating to hardware and systems up to date",
+        "description": "By including digital technology in these documents, schools and colleges will know what contracts, digital technology and data they have, and when they need to be reviewed.\n\nContracts Register should include but not limited to: Contract name and description, Supplier details and contact information, Contract start and end dates, Contract value and payment terms, Notice periods for termination or renewal, Service level agreements (SLAs), Key terms and conditions, Contract owner within school, Review dates, Any dependencies or related contracts.\n\nYou can record your contracts using the DfE contracts register template. Commercial and procurement information should be updated by the business or finance team, and IT support should update technical information. This contract register must be kept up to date.\n\nAsset Register is a log of all physical digital technology and tools within the school and should detail: Device type (laptop, desktop, tablet, server, network equipment), Make and model, Serial number or asset tag, Location, Date of purchase, Warranty expiry date, End of support date, Assigned user (if applicable), Operating system and key software, Status (in use, spare, decommissioned).\n\nInformation Asset Register should record: What data you hold, Where it is stored, Who has access to it, What it is used for, How long it should be retained, Its sensitivity level, Any processing activities, Legal basis for processing, Any data sharing arrangements.\n\nYou can record your information assets using the DfE information asset register template. Keeping these registers up to date: Helps with budget planning and procurement, Supports cyber security by knowing what you have, Assists with compliance (data protection, software licensing), Enables effective disaster recovery planning, Helps identify what needs replacing or upgrading, Supports audits and inspections."
       },
       {
-        id: "leadership-3",
-        title: "Include digital technology within disaster recovery and business continuity plans",
-        description: "You should include digital technology within your disaster recovery and business continuity plans. This includes making sure that you have a plan for restoring your digital technology in the event of a major incident, such as a fire, flood, or cyber attack. You should test your plans regularly to make sure they work."
+        "id": "leadership-3",
+        "title": "Include digital technology within disaster recovery and business continuity plans",
+        "description": "Schools and colleges need to plan for how they will respond to significant disruption to their technology. This could be caused by: Cyber attacks or security incidents, Hardware failures, Natural disasters affecting buildings or infrastructure, Supplier or service provider failures, Power outages, Internet connection failures.\n\nThe disaster recovery and business continuity plan should include: Clear definition of what a 'disaster' looks like for your school, Identification of critical systems and data needed to function, Recovery time objectives (how quickly systems need to be restored), Recovery point objectives (how much data loss is acceptable), Roles and responsibilities during an incident, Communication plans (internal and external), Alternative working arrangements if technology is unavailable, Supplier contact details and escalation procedures, Testing schedule for the plan.\n\nThe SLT digital lead will be responsible for this standard but needs input from: Operational team (finance, IT support, estate management), Teaching and other admin staff to understand risks and actions to avoid them, Designated safeguarding lead (advise on safeguarding needs in event of disaster), Data protection officer (advice for mitigating data risks and emergency responses), Governors or trust leadership (review, support and challenge these plans and provide sign-off), Any outsourced services or suppliers (e.g. MIS, broadband, cloud services) to understand their protocols and include in plans.\n\nThe plan should be: Documented and easily accessible (including offline copies), Tested regularly (at least annually) through desktop exercises or simulations, Reviewed and updated after any test or actual incident, Communicated to all relevant staff, Aligned with wider school business continuity planning.\n\nConsider dependencies: What systems depend on each other? What happens if specific systems are unavailable? What workarounds exist? What minimum technology is needed to continue teaching and learning?"
       },
       {
-        id: "leadership-4",
-        title: "Have a digital technology strategy that is reviewed every year",
-        description: "You should have a digital technology strategy that is reviewed every year. The strategy should set out your vision for digital technology and how you plan to achieve it. It should be aligned with your school or college's overall strategy and the DfE's digital and technology standards."
+        "id": "leadership-4",
+        "title": "Have a digital technology strategy that is reviewed every year",
+        "description": "Schools and colleges should have a 2-year digital technology strategy in place. This should be reviewed at least once a year to ensure it remains relevant and aligned with the school's broader strategic aims.\n\nYour digital technology strategy should include: Vision for using digital technology in your school or college, How technology will support teaching, learning and school operations, Current state assessment (where you are now), Future requirements and priorities (where you want to be), Gap analysis (what needs to change), Budget and procurement plans, Timeline for implementation, Risk management approach, Success metrics and how you'll measure progress, Roles and responsibilities, Training and professional development needs.\n\nThe strategy should address: Infrastructure (broadband, networks, devices, servers), Software and cloud services, Cyber security and online safety, Data management and protection, Digital accessibility and inclusion, Staff and student digital skills, How technology supports curriculum delivery, Administrative and operational systems, Disaster recovery and business continuity, Sustainability and environmental impact.\n\nCreating the strategy: The SLT digital lead should lead the development with input from: Teaching staff (understand how technology supports learning), IT support (technical feasibility and requirements), Business/finance team (budget and value for money), SEND lead (accessibility requirements), Designated safeguarding lead (online safety), Data protection officer (data protection requirements), Students (their needs and experiences), Governors/trustees (strategic oversight and approval).\n\nReviewing the strategy: Review at least annually or when: There are significant changes to school circumstances, New technologies become available, After major incidents or challenges, Following Ofsted or other inspections, When budgets change significantly, In response to changing educational requirements.\n\nThe strategy should link to: School development plan, SEND strategy, Safeguarding policies, Teaching and learning policies, Data protection policies, Other relevant school strategies."
       }
     ]
   },
   {
-    id: "filtering-monitoring",
-    title: "Filtering and Monitoring",
-    isCore: true,
-    items: [
+    "id": "filtering-monitoring",
+    "title": "Filtering and Monitoring",
+    "isCore": true,
+    "url": "https://www.gov.uk/guidance/meeting-digital-and-technology-standards-in-schools-and-colleges/filtering-and-monitoring-standards-for-schools-and-colleges",
+    "items": [
       {
-        id: "filtering-1",
-        title: "Identify and assign roles and responsibilities to manage your filtering and monitoring systems",
-        description: "You should identify and assign roles and responsibilities to manage your filtering and monitoring systems. This includes nominating a designated safeguarding lead (DSL) who is responsible for overseeing your filtering and monitoring provision. You should make sure that all staff with responsibilities for filtering and monitoring have the necessary training and support."
+        "id": "filtering-1",
+        "title": "Identify and assign roles and responsibilities to manage your filtering and monitoring systems",
+        "description": "The SLT is responsible for: Buying filtering and monitoring systems, Documenting decisions on what is blocked or allowed and why, Reviewing the effectiveness of your provision, Overseeing reports, Making sure all staff understand their role, are appropriately trained, follow policies and procedures, and act on reports and concerns.\n\nSenior leaders should work closely with governors or proprietors, the DSL and IT support in all aspects of filtering and monitoring.\n\nYour DSL should lead on safeguarding and online safety including: Checking relevant reports, Responding to safeguarding concerns identified by filtering and monitoring, Providing governors with assurance that systems are working effectively and reviewed regularly.\n\nYour IT support (in-house or third-party) have technical responsibility for: Maintaining filtering and monitoring systems, Providing filtering and monitoring reports, Completing actions following concerns or system checks. They should work with SLT and DSL to help buy systems, identify risk, carry out reviews and checks."
       },
       {
-        id: "filtering-2",
-        title: "Review your filtering and monitoring provision at least once a year",
-        description: "You should review your filtering and monitoring provision at least once a year. The review should assess whether your provision is meeting the safeguarding needs of your school or college and whether it is compliant with the relevant legislation and guidance. You should use the review to identify and implement improvements."
+        "id": "filtering-2",
+        "title": "Review your filtering and monitoring provision at least once a year",
+        "description": "A review should be carried out to identify current provision, gaps, and specific needs. You need to understand: How students' risk profile could inform your approach (age, SEND, EAL), What your filtering system currently blocks or allows, Technical limitations, Any outside safeguarding influences such as county lines, Any relevant safeguarding reports or serious incidents, The digital resilience of your students, Teaching requirements (RSHE, PSHE curriculum), How your school uses technology including BYOD and generative AI tools, What related policies are in place, What checks are currently taking place and how actions are handled, Any technical setup recommendations.\n\nFollowing system or equipment changes, you should seek assurance that all filtering and monitoring solutions will continue to work on all school-managed devices.\n\nThe review should take place at least once every academic year or when: A safeguarding risk is identified, There is a change in working practice like remote access or BYOD, New technology is introduced, Major software updates occur, Changes to technical configuration of network and devices."
       },
       {
-        id: "filtering-3",
-        title: "Have an active and well-managed filtering system",
-        description: "You should have an active and well-managed filtering system that blocks access to harmful online content. Your filtering system should be appropriate for the age and needs of your students and should be regularly reviewed and updated. You should also make sure that your filtering system does not block access to legitimate educational content."
+        "id": "filtering-3",
+        "title": "Have an active and well-managed filtering system",
+        "description": "Your filtering provider must: Be a member of Internet Watch Foundation (IWF), Be signed up to Counter-Terrorism Internet Referral Unit (CTIRU), Regularly update blocklists based on information from IWF and CTIRU. Schools must ensure these blocklists are included and cannot disable them or remove items.\n\nYour filtering system should be active, up to date and applied to all: School-managed devices including those taken off-site, Unmanaged devices under BYOD schemes, Guests who have access to the school internet.\n\nCheck with your provider that your filtering system: Identifies and appropriately filters all internet feeds including backup connections, Is appropriate for the age and ability of users, Is suitable for educational settings, Identifies multilingual web content, images, common misspellings and abbreviations, Provides alerts when web content of concern has been blocked, Blocks technologies that allow users to bypass filtering such as VPNs, proxy services and end-to-end encryption.\n\nYour filtering system should allow you to identify as a minimum: Device name or ID, IP address, and where possible the individual, Time and date of attempted access, The search term or content being blocked.\n\nSearch engines should have safe search enabled by default or use a child-friendly search engine. Make sure users cannot download additional browsers or unauthorised plugins."
       },
       {
-        id: "filtering-4",
-        title: "Have effective monitoring strategies that meet the safeguarding needs of your school or college",
-        description: "You should have effective monitoring strategies that meet the safeguarding needs of your school or college. This includes monitoring the online activity of students to identify and respond to potential safeguarding concerns. Your monitoring strategies should be proportionate, transparent, and compliant with data protection legislation."
+        "id": "filtering-4",
+        "title": "Have effective monitoring strategies that meet the safeguarding needs of your school or college",
+        "description": "All staff should conduct in-person monitoring if in a room with students on devices, as part of wider classroom supervision. Technical monitoring solutions may be needed to reduce identified risks.\n\nYour monitoring plan should include how you will monitor students when using school-managed devices connected to the internet. This could include: Device monitoring using device management software, In-person monitoring in the classroom, Network monitoring using log files of internet traffic and web access.\n\nAs a minimum, your monitoring plan should include weekly monitoring reports highlighting incidents. It should also include immediate reports when an incident is classed as high-risk, for example those of a malicious, technical or safeguarding nature.\n\nMake sure that everyone using your school's network knows that filtering and monitoring processes are in place. Technical monitoring systems should notify users that the device is being monitored.\n\nYour monitoring plan should include how you communicate with staff about accepted ways of responding to incidents including: How to deal with incidents, Who should lead on any actions, When incidents should be acted on in line with your school's policy.\n\nThere should be a documented process for recording incidents that includes what action was taken and the outcomes.\n\nDevice monitoring should ensure: Monitoring systems work as expected both on-site and off-site, Reporting on student device activity is provided, Staff receive safeguarding training including online safety, Safeguarding concerns are recorded and reported to the DSL, Monitoring data is in a format staff can understand, Users are identifiable to the school so concerns can be traced back to individuals."
       }
     ]
   },
   {
-    id: "laptops-desktops-tablets",
-    title: "Laptops, Desktops, Tablets",
-    isCore: false,
-    items: [
+    "id": "laptops-desktops-tablets",
+    "title": "Laptops, Desktops, Tablets",
+    "isCore": false,
+    "url": "https://www.gov.uk/guidance/meeting-digital-and-technology-standards-in-schools-and-colleges/laptop-desktop-and-tablet-standards",
+    "items": [
       {
-        id: "devices-1",
-        title: "Make sure devices meet the needs of your school or college",
-        description: "You should make sure that the devices you provide meet the needs of your school or college. This includes making sure that devices are suitable for the educational purposes they are intended for, and that they are accessible to all students and staff. You should consult with teachers and students when selecting devices."
+        "id": "devices-1",
+        "title": "Make sure devices meet the needs of your school or college",
+        "description": "The SLT digital lead should assess how devices will support the needs of students and staff, based on the school's digital technology strategy. They should look at: How devices are being used, Who uses them, Where they are being kept, What they are being used for.\n\nThis will help identify: The number of devices needed, The type of devices that are most suitable, Whether devices should be shared or allocated to individuals, How devices will be kept secure, How they will be maintained and supported.\n\nConsider how devices will support: Curriculum planning and delivery, Data and financial management, Flexible and cross-site working, Student needs based on age, curriculum, physical requirements and learning styles.\n\nThe SLT digital lead should work with IT support to assess security and technical requirements of devices. This will help determine whether they need to buy new devices or if they can repurpose existing ones."
       },
       {
-        id: "devices-2",
-        title: "Make sure devices are safe and secure",
-        description: "You should make sure that all devices are safe and secure. This includes installing anti-malware software and keeping it up to date, enabling device encryption, and using mobile device management (MDM) software to manage and secure devices. You should also make sure that devices are physically secure."
+        "id": "devices-2",
+        "title": "Make sure devices are safe and secure",
+        "description": "Keep devices safe and secure to protect users, the network and data. This will: Make it easier to apply security and safeguarding policies, Reduce the risk of cyber incidents or attacks, Protect against loss or theft, Make it easier to manage devices centrally.\n\nIT support should work with the SLT digital lead to ensure all devices: Use anti-virus and anti-malware software as required, Use firewalls as required, Are connected to secure networks using VLANs where appropriate, Use device management systems, Have controls on what can be installed, Can be remotely wiped if lost or stolen, Are kept locked when not in use, Have security patches applied regularly.\n\nDevices should be reviewed once a year to take account of any changes to minimum requirements."
       },
       {
-        id: "devices-3",
-        title: "Make sure devices meet or exceed the minimum requirements",
-        description: "You should make sure that devices meet or exceed the minimum requirements set out in the DfE's digital and technology standards. This includes minimum requirements for processing power, memory, storage, and display resolution. You should review the minimum requirements regularly and update your devices as needed."
+        "id": "devices-3",
+        "title": "Make sure devices meet or exceed the minimum requirements",
+        "description": "All devices should meet or exceed these minimum requirements:\n\nOperating Systems: Should be enterprise or education-grade, specifically designed for professional use (not Home versions).\n\nSupport and Security Patches: New laptops and desktops should have 5 years of manufacturer support and security patches. New tablets should have 3 years of manufacturer support and security patches.\n\nWarranty: Laptops and desktops should have 3 years warranty. Tablets should have 2 years warranty.\n\nWireless Connectivity: Devices should support the Wi-Fi standard 802.11ac Wave 2 as a minimum. It is recommended that devices meet Wi-Fi 6 (802.11ax).\n\nScreen Size: Tablet devices should have a minimum 9.7 inch screen.\n\nDevices should be reviewed at least once a year to take into account any changes to the minimum requirements set out in this standard.\n\nLaptops, desktops and tablets should be replaced or upgraded now if they do not meet the operating system requirements of this standard."
       },
       {
-        id: "devices-4",
-        title: "Make sure devices are energy efficient, and they are bought and disposed of sustainably",
-        description: "You should make sure that devices are energy efficient and that they are bought and disposed of sustainably. This includes looking for devices with good energy efficiency ratings and considering the environmental impact of your purchasing decisions. You should also make sure that devices are disposed of responsibly at the end of their life."
+        "id": "devices-4",
+        "title": "Make sure devices are energy efficient, and they are bought and disposed of sustainably",
+        "description": "Taking an energy efficient approach to buying, setting up, using and disposal of devices will help with cost savings and sustainability.\n\nFor existing devices: Switch off devices when not in use, Automatically power off when not needed out of hours, Only use the tools and software needed, Check existing devices before buying new ones to see if they can be repurposed.\n\nFor new devices: All new devices should be rated with a low energy certification, Consider refurbished devices where appropriate.\n\nWhen disposing of devices you must: Meet Waste Electrical and Electronic Equipment (WEEE) regulations, Meet data protection requirements, Obtain certificates for WEEE disposal and destruction of data, Follow NCSC guidance on secure sanitisation of storage media, Update your IT asset register with any changes.\n\nThe SLT digital lead should review the use of both existing and new devices. They should work with business professionals or the finance team to consider energy efficiency when investing in new devices."
       }
     ]
   },
   {
-    id: "network-cabling",
-    title: "Network Cabling",
-    isCore: false,
-    items: [
+    "id": "network-cabling",
+    "title": "Network Cabling",
+    "isCore": false,
+    "url": "https://www.gov.uk/guidance/meeting-digital-and-technology-standards-in-schools-and-colleges/network-cabling-standards-for-schools-and-colleges",
+    "items": [
       {
-        id: "cabling-1",
-        title: "Use the right type and grade of cabling",
-        description: "You should use the right type and grade of cabling for your network. For most schools and colleges, this will be Cat6 or Cat6A cabling, which supports speeds of up to 10 Gbps. You should avoid using older cabling standards such as Cat5 or Cat5e, which may not support the speeds required for modern digital technology."
+        "id": "cabling-1",
+        "title": "Use the right type and grade of cabling",
+        "description": "For copper cabling: Use Category 6A (Cat 6A) or better for all new installations. This supports speeds up to 10 Gigabit and is suitable for Power over Ethernet (PoE) applications. Cat 6A provides better performance and future-proofing than older standards.\n\nFor optical fibre cabling: Use 16-core multi-mode OM4 fibre as a minimum for backbone connections between buildings or between floors. OM4 fibre supports 10 Gigabit speeds up to 400 metres. For longer distances over 400 metres, consider single-mode fibre which can support much longer runs.\n\nAll cabling should: Meet manufacturer specifications and industry standards, Be properly terminated and tested after installation, Be suitable for current bandwidth needs and allow for future growth, Be installed in accordance with building regulations and fire safety requirements."
       },
       {
-        id: "cabling-2",
-        title: "Have cabling professionally installed with proper documentation",
-        description: "You should have your cabling professionally installed by a qualified installer. The installer should provide you with documentation of the installation, including a cable schedule, floor plans showing cable routes, and test results for each cable. You should keep this documentation up to date as you make changes to your network."
+        "id": "cabling-2",
+        "title": "Have cabling professionally installed with proper documentation",
+        "description": "Cabling installation should be carried out by qualified professionals who can: Follow manufacturer guidelines and industry best practices, Ensure proper cable management using appropriate trays and conduits, Maintain required separation from power cables to avoid interference, Test all cable runs after installation to verify performance, Provide certification that installation meets required standards.\n\nDocumentation should include: Cable route plans showing where cables run, Labeling of all cables at both ends for easy identification, Testing certificates confirming performance, As-built drawings showing final installation, Location of patch panels and termination points.\n\nGood cable management: Allows for future additions and modifications, Protects cables from physical damage, Improves airflow in equipment rooms, Makes troubleshooting easier, Maintains the performance characteristics of the cabling."
       },
       {
-        id: "cabling-3",
-        title: "Plan for future cabling needs",
-        description: "You should plan for your future cabling needs. This includes considering how your network may need to grow or change in the future, and making sure that your cabling infrastructure can support those changes. You should also consider the impact of any planned building works on your cabling infrastructure."
+        "id": "cabling-3",
+        "title": "Plan for future cabling needs",
+        "description": "When installing or upgrading cabling: Consider future expansion and increased bandwidth requirements, Install spare capacity in cable trays and conduits, Use structured cabling approach with central patch panels, Document everything for future reference and troubleshooting, Consider the lifespan of the cabling (typically 15-20 years for copper).\n\nFuture-proofing considerations: Allow for growth in number of devices, Plan for increased bandwidth demands, Consider emerging technologies like Wi-Fi 7, Leave space for additional cables in trays and conduits, Use higher grade cabling than minimum requirements where budget allows."
       }
     ]
   },
   {
-    id: "network-switching",
-    title: "Network Switching",
-    isCore: true,
-    items: [
+    "id": "network-switching",
+    "title": "Network Switching",
+    "isCore": true,
+    "url": "https://www.gov.uk/guidance/meeting-digital-and-technology-standards-in-schools-and-colleges/network-switching-standards-for-schools-and-colleges",
+    "items": [
       {
-        id: "switching-1",
-        title: "Make sure switches meet performance requirements",
-        description: "You should make sure that your network switches meet the performance requirements for your school or college. This includes making sure that switches can handle the volume of network traffic and support the speeds required for modern digital technology. You should review your switching infrastructure regularly and upgrade switches as needed."
+        "id": "switching-1",
+        "title": "Make sure switches meet performance requirements",
+        "description": "Network switches should provide: Minimum 1 Gigabit Ethernet ports for user connections to ensure adequate speed for modern applications and devices, 10 Gigabit uplink ports to core switches to prevent bottlenecks in the network backbone, Power over Ethernet (PoE) capability on switches where needed to power devices such as wireless access points, IP phones, and cameras without separate power supplies.\n\nSwitches should have: Sufficient switching capacity (backplane bandwidth) to handle traffic from all ports simultaneously without bottlenecks, Support for Quality of Service (QoS) to prioritize critical traffic such as voice and video, VLAN capability to segment the network for security and performance, Support for jumbo frames if using applications that benefit from larger packet sizes.\n\nConsider future needs when sizing switches: Plan for growth in number of connected devices, Allow for increased bandwidth requirements, Consider consolidation opportunities."
       },
       {
-        id: "switching-2",
-        title: "Have switches that can be centrally managed and monitored",
-        description: "You should have network switches that can be centrally managed and monitored. This allows you to configure and monitor your switches from a central location, making it easier to manage your network and respond to problems. You should use a network management system (NMS) to monitor your switches."
+        "id": "switching-2",
+        "title": "Have switches that can be centrally managed and monitored",
+        "description": "Switches should be managed devices (not unmanaged consumer switches) that provide: Central management capability through a network management system, SNMP (Simple Network Management Protocol) or equivalent monitoring to track performance and issues, Port-level control and monitoring to manage individual connections, Traffic monitoring capabilities to understand network usage patterns.\n\nManagement features should include: Configuration backup and restore to protect against failures, Ability to update firmware centrally across multiple switches, Alert notifications for issues such as port failures or unusual traffic, Remote management access for IT support (with appropriate security), Port mirroring capability for network troubleshooting and monitoring.\n\nCentralized management: Reduces administrative overhead, Ensures consistent configuration across all switches, Makes troubleshooting faster and easier, Provides visibility into network performance."
       },
       {
-        id: "switching-3",
-        title: "Secure network switches",
-        description: "You should secure your network switches to prevent unauthorised access. This includes changing default passwords, disabling unused ports, and using network access control (NAC) to control which devices can connect to your network. You should also make sure that your switches are kept up to date with the latest firmware."
+        "id": "switching-3",
+        "title": "Secure network switches",
+        "description": "Network switches should have security features enabled including: Port security to prevent unauthorized devices connecting, DHCP snooping to prevent rogue DHCP servers, Dynamic ARP inspection to prevent ARP spoofing attacks, MAC address filtering where appropriate to control which devices can connect.\n\nAccess control should include: Access Control Lists (ACLs) to control traffic flow, Secure management protocols (SSH instead of Telnet, HTTPS instead of HTTP), Changed default administrator credentials on all switches, Role-based access control for different administrative levels.\n\nSecurity maintenance requires: Regular security updates and firmware patches, Network segmentation using VLANs to isolate different types of traffic, Disabling unused ports to prevent unauthorized access, Regular security audits and configuration reviews, Documentation of security settings and changes."
       },
       {
-        id: "switching-4",
-        title: "Build resilience into your switching infrastructure",
-        description: "You should build resilience into your switching infrastructure to minimise the impact of switch failures. This includes using redundant switches and links, and configuring your network to automatically reroute traffic in the event of a failure. You should test your resilience measures regularly to make sure they work."
+        "id": "switching-4",
+        "title": "Build resilience into your switching infrastructure",
+        "description": "Network resilience features should include: Redundant power supplies in core and distribution switches to maintain operation if one power supply fails, Link aggregation to combine multiple connections for increased bandwidth and redundancy, Spanning Tree Protocol (STP) or equivalent to prevent network loops and provide automatic failover.\n\nFor larger deployments consider: Switch stacking capability to manage multiple switches as a single unit, Redundant uplinks from distribution to core switches, Hot-swappable components to replace failed parts without downtime, Environmental monitoring for temperature and power issues.\n\nResilience planning should: Identify single points of failure in the network, Have backup configurations stored securely off-site, Test failover procedures regularly, Document the network topology and dependencies, Have spare switches or components available for critical locations."
       }
     ]
   },
   {
-    id: "servers-storage",
-    title: "Servers and Storage",
-    isCore: false,
-    items: [
+    "id": "servers-storage",
+    "title": "Servers and Storage",
+    "isCore": false,
+    "url": "https://www.gov.uk/guidance/meeting-digital-and-technology-standards-in-schools-and-colleges/servers-and-storage-standards-for-schools-and-colleges",
+    "items": [
       {
-        id: "servers-1",
-        title: "Build redundancy into servers and storage so your systems keep running",
-        description: "You should build redundancy into your servers and storage to make sure your systems keep running in the event of a hardware failure. This includes using redundant power supplies, hard drives, and network connections. You should also consider using virtualisation to make it easier to recover from hardware failures."
+        "id": "servers-1",
+        "title": "Build redundancy into servers and storage so your systems keep running",
+        "description": "Servers should have redundant components to avoid single points of failure: Redundant power supplies so server continues if one supply fails, RAID (Redundant Array of Independent Disks) configuration for storage so data remains accessible if a disk fails, Redundant network connections to maintain connectivity if one link fails.\n\nAdditional resilience measures: Uninterruptible Power Supply (UPS) to keep servers running during power outages and allow graceful shutdown, Regular monitoring of hardware health to identify failing components before they cause outages, Predictive failure alerts from monitoring systems, Hot-swap capability to replace failed components without shutting down the server.\n\nService agreements: Have Service Level Agreements (SLAs) with suppliers that specify response and repair times, Maintain support contracts that cover hardware replacement, Schedule regular maintenance windows for updates and testing, Test backup and recovery procedures regularly."
       },
       {
-        id: "servers-2",
-        title: "Keep servers and storage secure",
-        description: "You should keep your servers and storage secure to prevent unauthorised access. This includes changing default passwords, applying security patches and updates in a timely manner, and using access controls to limit who can access your servers and storage. You should also make sure that your servers and storage are physically secure."
+        "id": "servers-2",
+        "title": "Keep servers and storage secure",
+        "description": "Security requirements for servers: Use secure, supported operating systems that receive regular security updates, Apply security updates and patches promptly (within 14 days for high-risk vulnerabilities), Install and maintain anti-malware protection on all servers, Implement strong access controls and authentication (use Multi-Factor Authentication for administrative access).\n\nData protection: Encrypt sensitive data both at rest and in transit, Implement comprehensive audit logging of access and changes, Use secure protocols for remote access (SSH, VPN, etc), Physical security measures to prevent unauthorized access to server hardware.\n\nAccess management: Principle of least privilege - users should only have access they need, Separate administrative accounts from regular user accounts, Regular reviews of who has access to what, Disable or remove accounts when no longer needed, Strong password policies for all accounts.\n\nSecurity monitoring: Monitor logs for suspicious activity, Keep security software and definitions up to date, Regular security assessments and vulnerability scans, Incident response procedures documented and tested."
       },
       {
-        id: "servers-3",
-        title: "Make servers and storage energy efficient",
-        description: "You should make your servers and storage as energy efficient as possible. This includes using energy-efficient hardware, consolidating servers using virtualisation, and turning off servers and storage when they are not needed. You should also consider using cloud solutions as an alternative to locally-hosted servers and storage."
+        "id": "servers-3",
+        "title": "Make servers and storage energy efficient",
+        "description": "Energy efficiency measures: Choose energy-efficient server hardware with good Energy Star or similar ratings, Use virtualization to consolidate multiple services onto fewer physical servers, Configure power management settings to reduce consumption during low usage, Implement efficient cooling systems in server rooms.\n\nCapacity planning: Regularly review server utilization to identify underused systems, Consolidate services where appropriate to reduce the number of physical servers, Right-size servers for their workload - don't over-provision, Monitor power usage to identify inefficient systems.\n\nConsider cloud alternatives: Evaluate whether cloud services could be more efficient and cost-effective for some workloads, Cloud providers typically have more efficient infrastructure at scale, Balance on-premises and cloud services based on needs.\n\nLifecycle management: Decommission and properly dispose of unused or end-of-life servers, Keep an inventory of all servers and their purpose, Plan for regular refresh cycles, Dispose of equipment according to WEEE regulations."
       },
       {
-        id: "servers-4",
-        title: "Make sure servers and storage are kept in a suitable environment",
-        description: "You should make sure that your servers and storage are kept in a suitable environment. This includes making sure that the server room or data centre is kept at the right temperature and humidity, has adequate ventilation, and is protected from fire and flooding. You should also make sure that access to the server room or data centre is restricted to authorised personnel."
+        "id": "servers-4",
+        "title": "Make sure servers and storage are kept in a suitable environment",
+        "description": "Environmental requirements for server rooms: Temperature control: Maintain between 18-27°C for optimal equipment performance and longevity, Humidity control: Keep between 40-60% relative humidity to prevent static and condensation, Clean, stable power supply with protection against surges and outages, Adequate cooling systems sized for the heat load of the equipment.\n\nPhysical security: Restricted access to authorized personnel only using access control systems, CCTV monitoring of server room entrances and interior if handling sensitive data, Fire suppression system appropriate for electronic equipment (not water-based), Environmental monitoring with alerts for temperature, humidity, water leaks.\n\nLayout and access: Proper equipment racks to organize servers and networking equipment, Adequate space for maintenance access around equipment, Good cable management to improve airflow and accessibility, Clear labeling of equipment and cables, Emergency procedures clearly posted, Maintenance lighting separate from always-on equipment lighting.\n\nMonitoring: Temperature and humidity sensors with alerting, Power monitoring to track usage and identify issues, Door access logging, Regular checks of environmental conditions."
       }
     ]
   },
   {
-    id: "it-support",
-    title: "IT Support",
-    isCore: false,
-    items: [
+    "id": "it-support",
+    "title": "IT Support",
+    "isCore": false,
+    "url": "https://www.gov.uk/guidance/meeting-digital-and-technology-standards-in-schools-and-colleges/it-support-standards-for-schools-and-colleges",
+    "items": [
       {
-        id: "support-1",
-        title: "Make sure IT support helps you meet the digital and technology standards",
-        description: "You should make sure that your IT support helps you meet the DfE's digital and technology standards. This includes making sure that your IT support provider understands the standards and can help you implement them. You should include the standards in any contracts or service level agreements with your IT support provider."
+        "id": "support-1",
+        "title": "Make sure IT support helps you meet the digital and technology standards",
+        "description": "Your IT support team should have the necessary qualifications and experience to understand the standards and help your school or college meet them.\n\nYour SLT digital lead should assess whether your IT support needs any relevant professional memberships or certifications – for example, an Information Technology Infrastructure Library (ITIL) certification for individuals, or Cyber Essentials certification for companies.\n\nThis may depend on the scale of your school or college's support needs.\n\nYour SLT digital lead should understand IT support's role in helping you meet the digital and technology standards."
       },
       {
-        id: "support-2",
-        title: "Establish what IT support you need",
-        description: "You should establish what IT support you need to run your school or college effectively. This includes considering the size and complexity of your IT infrastructure, the technical skills of your staff, and the level of support you need to meet the DfE's digital and technology standards. You should document your IT support requirements and review them regularly."
+        "id": "support-2",
+        "title": "Establish what IT support you need",
+        "description": "Your senior leadership team (SLT) digital lead should work with relevant staff, including your business manager and other SLT members to establish what IT support you need.\n\nThis should include exceptional times such as the start of the academic year, exam periods or cyber security incidents.\n\nConsider:\n• Understanding the day-to-day technology needs of your staff and students\n• Making sure your technology supports teaching and learning\n• Aligning IT support with the needs of your digital technology strategy\n• Considering any planned technology upgrades and improvements\n\nIT support may be internal (staff members), external (third-party provider), or hybrid (mix of both)."
       },
       {
-        id: "support-3",
-        title: "Set clear expectations with your IT support service",
-        description: "You should set clear expectations with your IT support service. This includes agreeing on service level agreements (SLAs) that specify how quickly problems will be resolved, and making sure that your IT support provider understands your priorities. You should review the performance of your IT support service regularly."
+        "id": "support-3",
+        "title": "Set clear expectations with your IT support service",
+        "description": "It's important to have clear expectations about how quickly issues are resolved, how they are prioritised and how they will be escalated.\n\nSet clear expectations for IT support's responsiveness to ensure capacity in times of high demand, for example during exam periods or at the start of the year.\n\nRequirements:\n• Clear expectations about issue resolution speed\n• Prioritization criteria for support requests\n• Escalation procedures\n• How support requests should be logged and managed\n• Capacity planning for peak periods"
       },
       {
-        id: "support-4",
-        title: "Establish effective logging and management of support requests",
-        description: "You should establish effective logging and management of support requests. This includes using a help desk system to log and track support requests, and making sure that all support requests are resolved in a timely manner. You should use data from the help desk system to identify recurring problems and improve your IT infrastructure."
+        "id": "support-4",
+        "title": "Establish effective logging and management of support requests",
+        "description": "There should be clear guidance about how support requests should be logged and managed.\n\nRequirements:\n• System for logging all support requests\n• Clear categorization and prioritization\n• Tracking of request status\n• Documentation of resolutions\n• Reporting capabilities for analysis\n\nThis helps ensure:\n• Accountability for issue resolution\n• Visibility of support performance\n• Identification of recurring issues\n• Evidence for annual reviews"
       },
       {
-        id: "support-5",
-        title: "Review your IT support annually",
-        description: "You should review your IT support at least once a year. The review should assess whether your IT support is meeting your needs and helping you meet the DfE's digital and technology standards. You should use the review to identify improvements and update your IT support arrangements as needed."
+        "id": "support-5",
+        "title": "Review your IT support annually",
+        "description": "The guidance recommends an annual review as part of the organisation's strategy review as set out in the digital leadership and governance standard.\n\nThe formal review should be led by the SLT digital lead and check:\n• What support you have\n• How well it's performing\n• Whether contracts and resources still offer value for money (value for money does not always mean the lowest cost!)\n\nThe findings should be documented by the SLT digital lead and shared with SLT, the school business manager and governors or proprietors.\n\nThis review helps ensure IT support continues to meet the school's evolving needs and strategic objectives."
       }
     ]
   },
   {
-    id: "wireless-network",
-    title: "Wireless Network",
-    isCore: true,
-    items: [
+    "id": "wireless-network",
+    "title": "Wireless Network",
+    "isCore": true,
+    "url": "https://www.gov.uk/guidance/meeting-digital-and-technology-standards-in-schools-and-colleges/wireless-network-standards-for-schools-and-colleges",
+    "items": [
       {
-        id: "wireless-1",
-        title: "Make sure your wireless network meets performance requirements",
-        description: "You should make sure that your wireless network meets the performance requirements for your school or college. This includes making sure that your wireless network can handle the volume of devices and traffic, and supports the speeds required for modern digital technology. You should review your wireless network regularly and upgrade it as needed."
+        "id": "wireless-1",
+        "title": "Make sure your wireless network meets performance requirements",
+        "description": "Wireless standard: Use Wi-Fi 6 (802.11ax) for all new access point deployments as it provides better performance, capacity and efficiency. Existing systems should meet at least 802.11ac Wave 2 standard as a minimum.\n\nPerformance requirements: Adequate bandwidth to support the number of concurrent users in each area, Support for multiple SSIDs (network names) to separate different user groups, Band steering to automatically move devices to the best frequency (2.4GHz or 5GHz), Seamless roaming support so users can move around campus without disconnecting, Quality of Service (QoS) to prioritize important traffic like voice and video.\n\nCapacity planning: Design for peak usage scenarios not just average, Consider that many users now have multiple wireless devices, Plan for growth in number of devices and bandwidth requirements, Regular speed testing across all areas to verify performance.\n\nModern Wi-Fi 6 features: Better handling of many devices in same area (important for classrooms), More efficient use of spectrum means faster speeds for all devices, Improved battery life for connected devices, Better performance in areas with interference."
       },
       {
-        id: "wireless-2",
-        title: "Make sure you have full wireless coverage across your school or college site",
-        description: "You should make sure that you have full wireless coverage across your school or college site. This includes making sure that all classrooms, common areas, and outdoor spaces have adequate wireless coverage. You should carry out a wireless site survey to identify any areas with poor coverage and address them."
+        "id": "wireless-2",
+        "title": "Make sure you have full wireless coverage across your school or college site",
+        "description": "Coverage requirements: Full wireless coverage in all teaching and learning spaces, Coverage in administrative and staff areas, Outdoor coverage in areas where devices will be used (courtyards, outdoor learning spaces), No dead zones where users cannot get signal.\n\nSignal quality: Minimum signal strength of -67 dBm or better in all areas where devices will be used, Overlap between access points to ensure smooth roaming, Consideration of building materials that may block or weaken signals (metal, concrete).\n\nSite survey: Conduct a professional wireless site survey before deployment to: Identify optimal access point locations, Determine how many access points are needed, Account for sources of interference, Plan for future expansion.\n\nCoverage testing: Regular testing after installation to verify coverage meets requirements, Test from user perspective at desk/seating height not just standing, Use heat mapping tools to visualize coverage, Re-test after any building changes or furniture moves, Capacity testing to ensure performance under load.\n\nHigh-density areas: Classrooms, halls, and assembly areas need special consideration for high device counts, May need multiple access points to serve one large space, Consider both coverage and capacity requirements."
       },
       {
-        id: "wireless-3",
-        title: "Make sure your wireless network is centrally managed",
-        description: "You should make sure that your wireless network is centrally managed. This allows you to configure and monitor your wireless network from a central location, making it easier to manage and troubleshoot. You should use a wireless network management system to monitor the performance and security of your wireless network."
+        "id": "wireless-3",
+        "title": "Make sure your wireless network is centrally managed",
+        "description": "Central management: Use a wireless controller (hardware or cloud-based) to manage all access points from single interface, Consistent configuration across all access points, Easy deployment of changes to all or selected access points, Centralized visibility into network performance and issues.\n\nManagement capabilities: Configuration backup and restore to protect against failures and enable easy recovery, Push firmware updates to all access points simultaneously, Monitor performance and usage across the entire wireless network, User and device visibility to see who and what is connected, Traffic monitoring and reporting for capacity planning and troubleshooting.\n\nAdditional features: Guest network capability for visitors without giving access to internal network, Rogue access point detection to identify unauthorized wireless networks, Automatic channel optimization to reduce interference, Centralized logging and alerting for security and troubleshooting.\n\nCloud vs on-premises: Cloud management: Access from anywhere, automatic updates, typically subscription-based, On-premises controller: Local control, may require manual updates, typically capital expense, Choice depends on school's needs, IT capabilities and preferences."
       },
       {
-        id: "wireless-4",
-        title: "Make sure your wireless network is secure",
-        description: "You should make sure that your wireless network is secure. This includes using WPA3 encryption, changing default passwords, and using network access control (NAC) to control which devices can connect to your network. You should also make sure that your wireless network is segmented to separate staff and student traffic."
+        "id": "wireless-4",
+        "title": "Make sure your wireless network is secure",
+        "description": "Encryption and authentication: Use WPA3 encryption for all new deployments (strongest available), Minimum WPA2 encryption for existing networks (WEP and WPA are no longer secure), Use 802.1X authentication with certificates for staff access (enterprise authentication), Pre-shared key for students if 802.1X not feasible, but rotate keys regularly.\n\nNetwork segmentation: Separate guest network that is isolated from internal network and cannot see other devices, Staff and student networks on different VLANs with appropriate access controls, Administrative management VLAN separate from user networks, IoT devices on separate network with restricted access.\n\nSecurity measures: Change all default passwords and administrative credentials, Disable old insecure protocols (WEP, WPA, WPS), Use strong passwords/passphrases for any pre-shared keys, Hide SSID broadcast if appropriate (though not a strong security measure alone), Disable rogue AP detection and alerting to identify unauthorized networks.\n\nMonitoring and auditing: Regular security audits of wireless configuration, Monitor for unauthorized access attempts, Keep access point firmware up to date with security patches, Review who has access and what they can access, MAC address filtering can be used but should not be relied on as primary security, Regular penetration testing of wireless security.\n\nPhysical security: Secure access points to prevent tampering or theft, Place where difficult to access but still providing good coverage, Consider hardened access points for outdoor locations."
       }
     ]
   }
