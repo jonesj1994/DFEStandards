@@ -98,6 +98,13 @@ function exportToExcel(state) {
   const date = new Date().toISOString().slice(0, 10);
   const filename = `DfE_Standards_Assessment${school}_${date}.xlsx`;
 
+  // Hidden "_assessment" sheet with the full assessment as JSON, so the trust
+  // overview can import this file exactly (see assessment-model.js). Never let
+  // it stop the export.
+  try {
+    if (window.AssessmentModel) AssessmentModel.writeSnapshotSheet(XLSX, wb, AssessmentModel.fromTrackerState("dfe", state));
+  } catch (e) { console.warn("Assessment sheet not added:", e); }
+
   XLSX.writeFile(wb, filename);
   showToast("Exported: " + filename);
 }
