@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Trust Overview</title>
+  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="trust.css" />
+</head>
+<body>
+<a class="skip-link" href="#content">Skip to main content</a>
+<div id="app">
+  <nav id="sidebar" aria-label="Trust overview">
+    <div class="sidebar-logo">Trust Overview</div>
+    <ul class="sidebar-nav" id="sidebar-nav">
+      <li><a href="index.html" class="home-link">&#8592; All trackers</a></li>
+      <li><a href="#" data-view="overview" class="active">&#9632; Trust overview</a></li>
+      <li><a href="#" data-view="import">&#9632; Import school files</a></li>
+      <li><a href="#" data-view="trust">&#9632; Choose trust</a></li>
+      <li><a href="#" data-view="about">&#9632; About this data</a></li>
+    </ul>
+  </nav>
+
+  <div id="main">
+    <header id="topbar">
+      <button id="menu-toggle" aria-label="Show or hide the menu" aria-controls="sidebar">&#9776;</button>
+      <h1 id="topbar-title">Trust overview</h1>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;">
+        <button class="btn btn-secondary btn-sm" id="btn-clear" type="button">&#10005; Clear imported data</button>
+        <button class="btn btn-success btn-sm" id="btn-export" type="button">&#8595; Export trust Excel</button>
+      </div>
+    </header>
+    <main id="content" tabindex="-1">
+      <p>Loading&hellip;</p>
+    </main>
+  </div>
+</div>
+
+<div id="toast" role="status" aria-live="polite"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<script src="school-lookup.js"></script>
+<script src="data.js"></script>
+<script src="ce-data.js"></script>
+<script src="assessment-model.js"></script>
+<script src="trust-sources.js"></script>
+<script src="trust-app.js"></script>
+</body>
+</html>
