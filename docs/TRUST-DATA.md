@@ -77,7 +77,13 @@ Both trackers' Excel exports include a hidden sheet named `_assessment`:
 | 2… | one chunk of the snapshot JSON | | |
 
 Chunks are at most 30,000 characters (Excel's cell limit is 32,767). Import
-prefers this sheet. If it is missing (older exports) or damaged, import reads
+prefers this sheet, both in the trust view and in each tracker's own **Import
+Excel** button. The trackers use `AssessmentModel.toTrackerState(framework,
+snapshot)` (the inverse of `fromTrackerState`) through `readTrackerFile`, which
+restores every status, note, action, owner and the school and certification
+fields exactly, drops item ids that are no longer in the framework, and
+refuses a file made by the other tracker. The DfE tracker's address, phone and
+website are not in the snapshot, so they are read from the visible Info sheet. If it is missing (older exports) or damaged, import reads
 the visible sheets instead, matching rows by the standard's title (current or
 previous titles from `scripts/gen_data_govuk.py`'s `ID_MAP`), then by row number.
 
@@ -122,6 +128,15 @@ itself, so a source only has to store and return records.
 Things to decide before going online: who can read every school's data, how
 long it is kept, and recording it in the trust's data protection records. The
 snapshots contain no pupil data, but notes can name staff.
+
+## Linking to a trust
+
+`trust.html?trust=<GIAS group UID>` opens the overview with that trust
+selected, replacing any trust chosen before (imported files are kept). An
+unknown UID shows a message and leaves the saved trust as it was. The address
+is kept in step (`history.replaceState`) when the trust is changed on the page.
+A trust's schools load in the background, one request per URN shard, and the
+page fills in as they arrive.
 
 ## Privacy
 

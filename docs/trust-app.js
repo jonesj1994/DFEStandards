@@ -21,6 +21,7 @@
     schoolKey: null,          // drill-down school
     viewing: {},              // framework -> record key shown in the drill-down (older versions)
     trust: null,              // { uid, name, schools: [...] } from GIAS
+    trustLoading: null,       // { uid, name, loaded, total } while a trust's schools load
     trustError: "",
     records: [],              // from the source
     lastImport: [],           // results of the most recent import
@@ -74,11 +75,12 @@
     const n = new Date();
     return (n.getFullYear() - d.getUTCFullYear()) * 12 + (n.getMonth() - d.getUTCMonth()) - (n.getDate() < d.getUTCDate() ? 1 : 0);
   }
-  // Newest first: export time, then assessment date, then import time
+  // Newest first: export time, then assessment date, then import time. The
+  // record key breaks any tie, so the order never depends on import order.
   function newer(a, b) {
-    const k = r => [r.snapshot.exportedAt || "", r.snapshot.assessmentDate || "", r.provenance.importedAt || ""];
+    const k = r => [r.snapshot.exportedAt || "", r.snapshot.assessmentDate || "", r.provenance.importedAt || "", r.key || ""];
     const ka = k(a), kb = k(b);
-    for (let i = 0; i < 3; i++) if (ka[i] !== kb[i]) return ka[i] > kb[i] ? -1 : 1;
+    for (let i = 0; i < ka.length; i++) if (ka[i] !== kb[i]) return ka[i] > kb[i] ? -1 : 1;
     return 0;
   }
 
@@ -92,6 +94,27 @@
     { sev: 0, id: "good", label: "Green / Met", cls: "green" }
   ];
   const gridCats = f => f.categories().filter(c => !f.assessed || f.assessed(c));
+
+  // ── GIAS names for imported schools ──────────────────────────────────────
+  // Schools that are not in the selected trust (or every school, when no trust
+  // is selected) are named from the GIAS register when their URN is known, so a
+  // row's name never depends on which file was imported first. Until a lookup
+  // finishes, or when GIAS has no record, the newest file's name is used.
+  const giasByUrn = new Map();   // urn -> GIAS record, or null if GIAS has none
+  async function lookupImportedNames() {
+    if (!SL || !SL.byURN) return;
+    const urns = Array.from(new Set(app.records.map(r => urnOf(r.snapshot.school.urn)).filter(u => u && !giasByUrn.has(u))));
+    if (!urns.length) return;
+    let changed = false;
+    await Promise.all(urns.map(async u => {
+      try {
+        const rec = await SL.byURN(u);
+        giasByUrn.set(u, rec || null);
+        if (rec) changed = true;
+      } catch (e) { /* offline: keep the file's name and try again next time */ }
+    }));
+    if (changed) { refreshSchools(); renderKeepFocus(); }
+  }
 
   // ── Building the school list ─────────────────────────────────────────────
   // Rows are the selected trust's open academies (from GIAS) plus any school in
@@ -112,15 +135,18 @@
         byName.set(normName(s.name), row);
       });
     }
-    app.records.forEach(rec => {
+    // Newest first, so a row's details come from its newest file whatever the
+    // order the files were imported in
+    app.records.slice().sort(newer).forEach(rec => {
       const sc = rec.snapshot.school;
       let row = byUrn.get(urnOf(sc.urn)) || (sc.dfeNumber && byDfe.get(dfeNoOf(sc.dfeNumber))) || (!sc.urn && byName.get(normName(sc.name)));
       if (!row) {
         const key = AM.schoolKey(sc);
         row = rows.get(key);
         if (!row) {
+          const g = giasByUrn.get(urnOf(sc.urn));
           row = {
-            key, urn: urnOf(sc.urn), dfeNumber: sc.dfeNumber, name: sc.name || "(no school name)", phase: sc.phase,
+            key, urn: urnOf(sc.urn), dfeNumber: sc.dfeNumber, name: (g && g.name) || sc.name || "(no school name)", phase: sc.phase,
             pupils: sc.pupils, type: sc.type, la: sc.la, trust: sc.trust, inTrust: !app.trust, outside: !!app.trust,
             gias: null, records: { dfe: [], "cyber-essentials": [] }
           };
@@ -219,6 +245,26 @@
     rendering = true;
     try { renderNow(); } finally { rendering = false; }
   }
+  // Re-render without losing the user's place (used when data arrives in the
+  // background: trust schools loading, GIAS names found)
+  function renderKeepFocus() {
+    const el = document.activeElement;
+    const id = el && el.id && document.getElementById("content").contains(el) ? el.id : "";
+    const sel = id && typeof el.selectionStart === "number" ? [el.selectionStart, el.selectionEnd] : null;
+    render();
+    if (!id) return;
+    const again = document.getElementById(id);
+    if (again) {
+      again.focus({ preventScroll: true });
+      if (sel) try { again.setSelectionRange(sel[0], sel[1]); } catch (e) { /* not a text input */ }
+    }
+  }
+  let softTimer = null;
+  function renderSoon() {
+    if (softTimer) return;
+    softTimer = setTimeout(() => { softTimer = null; renderKeepFocus(); }, 150);
+  }
+
   function renderNow() {
     const views = { overview: viewOverview, import: viewImport, trust: viewTrust, about: viewAbout, school: viewSchool };
     const titles = { overview: "Trust overview", import: "Import school files", trust: "Choose trust", about: "About this data", school: "School detail" };
@@ -233,12 +279,27 @@
     bind();
   }
 
+  function loadingLine() {
+    const l = app.trustLoading;
+    if (!l) return "";
+    const n = app.trust && app.trust.uid === l.uid ? app.trust.schools.length : 0;
+    return `<p class="small privacy-note" role="status" style="margin-top:0">
+      Loading ${l.name ? esc(l.name) : "the trust"}'s schools from the GIAS register${l.total ? ` (${pct(l.loaded, l.total)}%, ${plural(n, "school")} so far)` : ""}…
+      You can carry on using the page. Schools outside the trust are worked out once loading finishes.</p>`;
+  }
+
   function trustLine() {
+    if (app.trustLoading && !(app.trust && app.trust.uid === app.trustLoading.uid)) {
+      return `<p class="small muted" style="margin-top:0">Trust: <strong style="color:#0b0c0c">${esc(app.trustLoading.name || "GIAS group UID " + app.trustLoading.uid)}</strong>.</p>${loadingLine()}`;
+    }
     if (app.trust) {
       return `<p class="small muted" style="margin-top:0">Trust: <strong style="color:#0b0c0c">${esc(app.trust.name)}</strong> (GIAS group UID ${esc(app.trust.uid)}),
-        ${plural(app.trust.schools.length, "open academy", "open academies")}. <a href="#" data-view="trust">Change trust</a></p>`;
+        ${app.trustLoading ? "" : plural(app.trust.schools.length, "open academy", "open academies") + "."} <a href="#" data-view="trust">Change trust</a></p>${loadingLine()}`;
     }
-    return `<p class="small muted" style="margin-top:0">${app.trustError ? esc(app.trustError) + " " : "No trust selected, so the view shows every school in the imported files. "}<a href="#" data-view="trust">Choose a trust</a> to see which academies have not sent an assessment yet.</p>`;
+    if (app.trustError) {
+      return `<div class="warn-note" role="alert">${esc(app.trustError)} <a href="#" data-view="trust">Choose a trust</a>. Until then, the view shows every school in the imported files.</div>`;
+    }
+    return `<p class="small muted" style="margin-top:0">No trust selected, so the view shows every school in the imported files. <a href="#" data-view="trust">Choose a trust</a> to see which academies have not sent an assessment yet.</p>`;
   }
 
   // ── Overview ─────────────────────────────────────────────────────────────
@@ -503,6 +564,7 @@
     for (const r of results) if (r.ok) await source.saveSnapshot(r.record);
     app.records = await source.listSnapshots(null);
     refreshSchools();
+    lookupImportedNames();
 
     // Flag duplicates and schools outside the selected trust
     results.forEach(r => {
@@ -553,7 +615,8 @@
       : ts.results ? (ts.results.length ? `<ul class="trust-results">${ts.results.map(t => `<li><button type="button" class="btn btn-secondary" data-trust="${esc(t.uid)}">${esc(t.name)} <span class="small muted">UID ${esc(t.uid)} · ${plural(t.urns.length, "school")}</span></button></li>`).join("")}</ul>`
         : `<p class="small">No trust found. Try fewer words, or the trust's GIAS group UID.</p>`) : "";
     const current = app.trust ? `<h3>${esc(app.trust.name)}</h3>
-      <p class="small muted">GIAS group UID ${esc(app.trust.uid)} · ${plural(app.trust.schools.length, "open academy", "open academies")}.
+      ${loadingLine()}
+      <p class="small muted">GIAS group UID ${esc(app.trust.uid)} · ${plural(app.trust.schools.length, "open academy", "open academies")}${app.trustLoading ? " so far" : ""}.
         <button type="button" class="btn btn-secondary btn-sm" id="btn-trust-clear">Stop using this trust</button></p>
       <div class="card table-wrap"><table class="summary-table">
         <thead><tr><th>School</th><th>URN</th><th>DfE number</th><th>Phase</th><th>Pupils</th></tr></thead>
@@ -563,7 +626,8 @@
       <h2 style="margin-top:0">Choose trust</h2>
       <p class="small muted">Search the DfE's Get Information About Schools (GIAS) register by trust name or group UID. The overview then lists every open academy in the trust,
         so you can see which have not sent an assessment. You can also skip this and work from the imported files alone.</p>
-      ${app.trustError ? `<div class="warn-note">${esc(app.trustError)}</div>` : ""}
+      ${app.trustError ? `<div class="warn-note" role="alert">${esc(app.trustError)}</div>` : ""}
+      ${app.trust ? "" : loadingLine()}
       <form id="trust-form" class="lookup-row" style="flex-wrap:wrap">
         <div class="form-field" style="flex:1;margin:0;min-width:200px">
           <label for="trust-q">Trust name or GIAS group UID</label>
@@ -587,19 +651,63 @@
     if (first) first.focus();
   }
 
-  async function selectTrust(uid, quiet) {
+  // Select a trust by GIAS group UID. The overview is shown straight away and
+  // fills in as the trust's schools load, so a large trust does not block the
+  // page. opts.quiet: no toast or navigation (start-up). opts.fromLink: the
+  // UID came from a trust.html?trust= link.
+  let trustToken = 0;
+  async function selectTrust(uid, opts) {
+    opts = opts || {};
+    uid = String(uid == null ? "" : uid).trim();
+    const token = ++trustToken;
+    const settings = loadSettings();
+    app.trustError = "";
+    app.trustLoading = { uid, name: opts.name || (settings.trustUid === uid ? settings.trustName : "") || "", loaded: 0, total: 0 };
+    if (app.trust && app.trust.uid !== uid) app.trust = null;
+    refreshSchools();
+    if (!opts.quiet) navigate("overview"); else renderSoon();
+    const keepOpen = s => !s.isClosed;
     try {
-      const t = await SL.trustSchools(uid);
-      app.trust = { uid: t.uid, name: t.name, schools: t.schools.filter(s => !s.isClosed) };
-      app.trustError = "";
+      if (!/^\d+$/.test(uid)) throw new SL.LookupError("not a GIAS group UID", "notfound");
+      const t = await SL.trustSchools(uid, partial => {
+        if (token !== trustToken) return;
+        app.trust = { uid: partial.uid, name: partial.name, schools: partial.schools.filter(keepOpen) };
+        app.trustLoading = { uid, name: partial.name, loaded: partial.loaded, total: partial.total };
+        refreshSchools();
+        renderSoon();
+      });
+      if (token !== trustToken) return;
+      app.trust = { uid: t.uid, name: t.name, schools: t.schools.filter(keepOpen) };
+      app.trustLoading = null;
       saveSettings();
+      setTrustInUrl(t.uid);
       refreshSchools();
-      if (!quiet) { toast(`Using ${t.name}.`); navigate("overview"); }
+      renderKeepFocus();
+      if (!opts.quiet) toast(`Using ${t.name}.`);
     } catch (e) {
+      if (token !== trustToken) return;
       app.trust = null;
-      app.trustError = `The trust's school list could not be loaded (${e.message}).`;
-      if (!quiet) render();
+      app.trustLoading = null;
+      if (e.code === "notfound") {
+        app.trustError = opts.fromLink
+          ? `The link you followed is for GIAS group UID "${uid}", but no open trust with that UID is in the GIAS register. The link may be mistyped, or the trust may have closed or merged.`
+          : `No trust found with GIAS group UID ${uid}.`;
+      } else {
+        app.trustError = `The trust's school list could not be loaded (${e.message}). Check your internet connection and try again.`;
+      }
+      refreshSchools();
+      renderKeepFocus();
     }
+  }
+
+  // Keep trust.html?trust=<UID> in step with the selected trust, so the address
+  // can be bookmarked or shared. Other parts of the address are kept.
+  function setTrustInUrl(uid) {
+    try {
+      const u = new URL(window.location.href);
+      if (uid) u.searchParams.set("trust", uid); else u.searchParams.delete("trust");
+      if (u.href !== window.location.href) history.replaceState(history.state, "", u.href);
+    } catch (e) { /* very old browser: the address just isn't updated */ }
   }
 
   // ── School drill-down ────────────────────────────────────────────────────
@@ -813,9 +921,17 @@
 
     // Trust
     on("trust-form", "submit", e => { e.preventDefault(); searchTrust(document.getElementById("trust-q").value); });
-    c.querySelectorAll("[data-trust]").forEach(b => b.addEventListener("click", () => selectTrust(b.dataset.trust)));
+    c.querySelectorAll("[data-trust]").forEach(b => b.addEventListener("click", () => {
+      const hit = (app.trustSearch.results || []).find(t => t.uid === b.dataset.trust);
+      selectTrust(b.dataset.trust, { name: hit ? hit.name : "" });
+    }));
     c.querySelectorAll("[data-trust-name]").forEach(b => b.addEventListener("click", () => searchTrust(b.dataset.trustName)));
-    on("btn-trust-clear", "click", () => { app.trust = null; saveSettings(); refreshSchools(); render(); toast("Trust cleared. Showing all imported schools."); });
+    on("btn-trust-clear", "click", () => {
+      trustToken++; // stop any trust that is still loading
+      app.trust = null; app.trustLoading = null; app.trustError = "";
+      saveSettings(); setTrustInUrl(""); refreshSchools(); render();
+      toast("Trust cleared. Showing all imported schools.");
+    });
 
     // Drill-down versions
     c.querySelectorAll("[data-view-version]").forEach(b => b.addEventListener("click", () => {
@@ -854,16 +970,29 @@
   });
 
   // ── Start ────────────────────────────────────────────────────────────────
+  // A trust.html?trust=<GIAS group UID> link selects that trust, replacing any
+  // trust chosen before (imported files are kept). Otherwise the saved trust is
+  // used. The page is shown straight away and the trust's schools fill in.
   (async function init() {
     const settings = loadSettings();
+    let linked = null;
+    try { linked = new URL(window.location.href).searchParams.get("trust"); } catch (e) { /* ignore */ }
+    if (linked != null) linked = linked.trim();
     await source.ready();
     try { app.records = await source.listSnapshots(null); } catch (e) { app.records = []; }
-    if (settings.trustUid && SL && SL.trustSchools) await selectTrust(settings.trustUid, true);
     refreshSchools();
-    if (!app.records.length && !app.trust) app.view = "import";
+    const uid = linked || settings.trustUid;
+    if (!app.records.length && !uid) app.view = "import";
     render();
+    lookupImportedNames();
+    if (linked != null && !linked) {
+      app.trustError = `The link you followed has no trust UID in it.`;
+      render();
+    } else if (uid && SL && SL.trustSchools) {
+      selectTrust(uid, { quiet: true, fromLink: !!linked });
+    }
   })();
 
   // For tests and future sources
-  window.TrustApp = { app, source, refresh: async () => { app.records = await source.listSnapshots(null); refreshSchools(); render(); } };
+  window.TrustApp = { app, source, selectTrust, refresh: async () => { app.records = await source.listSnapshots(null); refreshSchools(); render(); } };
 })();

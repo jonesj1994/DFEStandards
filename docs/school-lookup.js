@@ -199,11 +199,41 @@
   }
 
   // Full school records for a trust (by UID), in name order. Throws if unknown.
-  async function trustSchools(uid) {
+  // The URNs are grouped by shard so each shard file is requested once, all in
+  // parallel (and reused from the cache if already loaded). A large trust can
+  // need dozens of shards, so onProgress(partial) is called as each one
+  // arrives, with partial = { uid, name, urns, schools (so far, name order),
+  // loaded, total } (shard counts), letting the page show schools as they come in.
+  async function trustSchools(uid, onProgress) {
     const [trust] = await searchTrusts(String(uid));
     if (!trust) throw new LookupError(`No trust found with UID ${uid}.`, "notfound");
-    const schools = (await Promise.all(trust.urns.map(byURN))).filter(Boolean);
-    schools.sort((a, b) => a.name.localeCompare(b.name, "en-GB"));
+    const byShard = new Map();
+    trust.urns.forEach(u => {
+      const urn = String(parseInt(u, 10));
+      const k = String(urn % SHARDS).padStart(2, "0");
+      if (!byShard.has(k)) byShard.set(k, []);
+      byShard.get(k).push(urn);
+    });
+    const schools = [];
+    const byName = (a, b) => a.name.localeCompare(b.name, "en-GB");
+    let loaded = 0;
+    await Promise.all(Array.from(byShard, async ([k, urns]) => {
+      let found;
+      try {
+        const shard = await getJSON(DATA + "urn/" + k + ".json");
+        found = urns.map(u => (shard[u] ? normalise(u, shard[u]) : null));
+      } catch (e) {
+        // Local data unavailable: look each school up one by one (archived service)
+        found = await Promise.all(urns.map(u => byURN(u).catch(() => null)));
+      }
+      found.forEach(s => { if (s) schools.push(s); });
+      loaded++;
+      if (onProgress) {
+        try { onProgress({ ...trust, schools: schools.slice().sort(byName), loaded, total: byShard.size }); }
+        catch (e) { /* a display problem must not stop the load */ }
+      }
+    }));
+    schools.sort(byName);
     return { ...trust, schools };
   }
 
