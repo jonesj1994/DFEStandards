@@ -83,6 +83,24 @@
     .warn-box ul { margin: 0 0 10px; padding-left: 20px; }
     .finder-source { font-size: 12px; color: #505a5f; margin: 14px 0 0; }
     .finder-source a { color: var(--dfe-blue); }
+    /* ── School / trust tabs ── */
+    .area-tabs { display: flex; gap: 4px; flex-wrap: wrap; }
+    .area-tab {
+      font: inherit; font-size: 15px; font-weight: 600; cursor: pointer;
+      padding: 10px 18px; border: none; border-radius: 6px 6px 0 0;
+      background: #dee0e2; color: var(--dfe-navy);
+    }
+    .area-tab:hover { background: #cfd2d4; }
+    .area-tab[aria-selected="true"] { background: var(--dfe-navy); color: #fff; }
+    .area-tab:focus-visible { outline: 3px solid #ffdd00; outline-offset: 0; box-shadow: inset 0 -4px 0 #0b0c0c; }
+    .area-tabs + .finder { border-top-left-radius: 0; }
+    .finder[hidden] { display: none; }
+    .finder + .finder { border-top-left-radius: 0; }
+    .trust-names { margin: 0 0 14px; padding-left: 20px; font-size: 14px; line-height: 1.6; }
+    .trust-names li { overflow-wrap: anywhere; }
+    .btn-lg { font-size: 16px; padding: 12px 20px; text-decoration: none; }
+    a.btn { text-decoration: none; }
+
     .visually-hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 
     @media (max-width: 600px) {
@@ -104,7 +122,12 @@
 
   <main class="home-wrap">
     <div class="finder-wrap">
-      <section class="finder" aria-labelledby="finder-title">
+      <!-- Switch between the school area and the trust area (ARIA tabs pattern) -->
+      <div class="area-tabs" role="tablist" aria-label="Who is using these trackers">
+        <button type="button" role="tab" class="area-tab" id="tab-school" aria-selected="true" aria-controls="panel-school" tabindex="0">I'm a school</button>
+        <button type="button" role="tab" class="area-tab" id="tab-trust" aria-selected="false" aria-controls="panel-trust" tabindex="-1">I'm a trust</button>
+      </div>
+      <section class="finder" id="panel-school" role="tabpanel" aria-labelledby="tab-school">
         <h2 id="finder-title">Find your school</h2>
         <p class="finder-intro">Look up your school once and its details will be filled in for you in both trackers.</p>
         <form id="finder-form" novalidate>
@@ -120,6 +143,24 @@
         <ul class="finder-results" id="finder-results" aria-label="Matching schools"></ul>
         <div class="school-card" id="school-card"></div>
         <p class="finder-source" id="finder-source"></p>
+      </section>
+
+      <section class="finder" id="panel-trust" role="tabpanel" aria-labelledby="tab-trust" hidden>
+        <h2 id="trust-title">Find your trust</h2>
+        <p class="finder-intro">For multi-academy trusts. Each school fills in its trackers and selects <strong>Export Excel</strong>, then sends the files to the trust. The trust imports them all on the Trust Overview page to see every academy together.</p>
+        <form id="trust-form" novalidate>
+          <label for="trust-input">Trust name or group UID</label>
+          <p class="finder-hint" id="trust-hint">For example "Aspire Community Trust" or 16748</p>
+          <div class="finder-row">
+            <input type="text" id="trust-input" name="trust" autocomplete="off" spellcheck="false"
+                   aria-describedby="trust-hint trust-status" maxlength="120" />
+            <button type="submit" class="btn btn-primary" id="trust-btn">Search</button>
+          </div>
+        </form>
+        <div class="finder-status" id="trust-status" role="status" aria-live="polite"></div>
+        <ul class="finder-results" id="trust-results" aria-label="Matching trusts"></ul>
+        <div class="school-card" id="trust-card"></div>
+        <p class="finder-source">Trust membership comes from <a href="https://get-information-schools.service.gov.uk/" target="_blank" rel="noopener">Get Information About Schools</a> and counts open academies only.</p>
       </section>
     </div>
 
@@ -150,7 +191,7 @@
         <span class="btn">Open Cyber Essentials tracker &#8594;</span>
       </a>
 
-      <a class="tracker-card" href="trust.html" style="--accent: var(--dfe-navy)">
+      <a class="tracker-card" href="trust.html" id="trust-tile" style="--accent: var(--dfe-navy)">
         <h2>Trust Overview</h2>
         <p>For multi-academy trusts: bring together the tracker exports from each of your schools and see the whole trust at a glance.</p>
         <ul>
@@ -173,6 +214,7 @@
   </main>
 
   <script src="school-lookup.js"></script>
+  <script src="home-trust.js" defer></script>
   <script>
     const SL = window.SchoolLookup;
     const KEYS = { dfe: "dfe_tracker_v1", ce: "ce_tracker_v1" };
