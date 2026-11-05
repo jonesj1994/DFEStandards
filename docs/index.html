@@ -215,7 +215,7 @@
 
     <section class="home-area" id="registers" aria-labelledby="registers-title">
       <h2 class="home-area-title" id="registers-title">Registers</h2>
-      <p class="home-area-intro">The DfE standards ask schools to keep registers of their hardware and software up to date. Registers here are built around what the standards and Cyber Essentials need you to track.</p>
+      <p class="home-area-intro">The DfE standards and Cyber Essentials expect schools to keep records of their software, hardware, user accounts, backups and cyber incidents. Each register here is built around what those standards ask you to track.</p>
       <div class="home-grid">
         <a class="tracker-card" href="register.html" id="software-register-tile" style="--accent: #6f72af">
           <h3>Software Register</h3>
@@ -229,6 +229,54 @@
           <div class="tracker-progress" id="progress-register"></div>
           <span class="btn">Open software register &#8594;</span>
         </a>
+
+        <!-- TILE: hardware-register-tile (replace this whole block with a link card when the register is built) -->
+        <div class="tracker-card tracker-card-soon" id="hardware-register-tile" style="--accent: #1d70b8" aria-disabled="true">
+          <h3>Hardware and Asset Register <span class="soon-badge">Coming soon</span></h3>
+          <p>Record every device and piece of network equipment, with the details the DfE standards and Cyber Essentials ask for.</p>
+          <ul>
+            <li>Devices, network kit and where they are</li>
+            <li>Operating system support, warranty and replacement dates</li>
+            <li>Secure disposal and an Excel export</li>
+          </ul>
+        </div>
+        <!-- END TILE: hardware-register-tile -->
+
+        <!-- TILE: accounts-register-tile (replace this whole block with a link card when the register is built) -->
+        <div class="tracker-card tracker-card-soon" id="accounts-register-tile" style="--accent: #4c2c92" aria-disabled="true">
+          <h3>User Accounts and Access Privileges Register <span class="soon-badge">Coming soon</span></h3>
+          <p>Keep track of who has access to what, especially administrator and third-party accounts, and when access was last reviewed.</p>
+          <ul>
+            <li>Admin, staff, service and supplier accounts</li>
+            <li>MFA, separate admin accounts and leavers</li>
+            <li>Termly access reviews and an Excel export</li>
+          </ul>
+        </div>
+        <!-- END TILE: accounts-register-tile -->
+
+        <!-- TILE: backup-register-tile (replace this whole block with a link card when the register is built) -->
+        <div class="tracker-card tracker-card-soon" id="backup-register-tile" style="--accent: #00703c" aria-disabled="true">
+          <h3>Backup and Disaster Recovery Register <span class="soon-badge">Coming soon</span></h3>
+          <p>Record what is backed up, where and how often, and log restore tests, so you know you can recover after an incident.</p>
+          <ul>
+            <li>Backup coverage, including offline and cloud copies</li>
+            <li>Restore test log and recovery times</li>
+            <li>Disaster recovery contacts and an Excel export</li>
+          </ul>
+        </div>
+        <!-- END TILE: backup-register-tile -->
+
+        <!-- TILE: incident-log-tile (replace this whole block with a link card when the register is built) -->
+        <div class="tracker-card tracker-card-soon" id="incident-log-tile" style="--accent: #d4351c" aria-disabled="true">
+          <h3>Cyber Incident and Breach Log <span class="soon-badge">Coming soon</span></h3>
+          <p>Log cyber incidents and personal data breaches, the actions taken, and who was told and when.</p>
+          <ul>
+            <li>Incident timeline, impact and actions</li>
+            <li>ICO 72-hour and other reporting checks</li>
+            <li>Lessons learned and an Excel export</li>
+          </ul>
+        </div>
+        <!-- END TILE: incident-log-tile -->
       </div>
     </section>
 
@@ -263,5 +311,24 @@
   <script src="register-data.js"></script>
   <script src="home-trust.js" defer></script>
   <script src="home.js"></script>
+
+  <!-- REGISTER SLOT: hardware (add this register's home tile scripts here) -->
+
+  <!-- END REGISTER SLOT: hardware -->
+
+
+  <!-- REGISTER SLOT: accounts (add this register's home tile scripts here) -->
+
+  <!-- END REGISTER SLOT: accounts -->
+
+
+  <!-- REGISTER SLOT: backup (add this register's home tile scripts here) -->
+
+  <!-- END REGISTER SLOT: backup -->
+
+
+  <!-- REGISTER SLOT: incidents (add this register's home tile scripts here) -->
+
+  <!-- END REGISTER SLOT: incidents -->
 </body>
 </html>
