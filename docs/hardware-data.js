@@ -492,7 +492,8 @@
   // DfE template "Asset status" values
   const STATUS_WORDS = [
     [/^active|^in use/i, ST_IN_USE], [/repair/i, ST_REPAIR], [/broken/i, ST_BROKEN],
-    [/disposed of$|^disposed/i, ST_DISPOSED], [/decommis|to be disposed|due to be disposed|retired/i, ST_RETIRED],
+    // "To be disposed of" must be checked before "Disposed of"
+    [/decommis|to be disposed|due to be disposed|awaiting disposal|retired/i, ST_RETIRED], [/^disposed/i, ST_DISPOSED],
     [/lost|stolen/i, ST_LOST], [/spare|storage|stock/i, ST_SPARE]
   ];
   function matchStatus(v) {
