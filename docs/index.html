@@ -261,15 +261,18 @@
         <!-- END TILE: accounts-register-tile -->
 
         <!-- TILE: backup-register-tile (replace this whole block with a link card when the register is built) -->
-        <div class="tracker-card tracker-card-soon" id="backup-register-tile" style="--accent: #00703c" aria-disabled="true">
-          <h3>Backup and Disaster Recovery Register <span class="soon-badge">Coming soon</span></h3>
+        <a class="tracker-card" href="backup.html" id="backup-register-tile" style="--accent: #00703c">
+          <h3>Backup and Disaster Recovery Register</h3>
           <p>Record what is backed up, where and how often, and log restore tests, so you know you can recover after an incident.</p>
           <ul>
             <li>Backup coverage, including offline and cloud copies</li>
             <li>Restore test log and recovery times</li>
             <li>Disaster recovery contacts and an Excel export</li>
           </ul>
-        </div>
+          <div class="tracker-school" id="school-backup"></div>
+          <div class="tracker-progress" id="progress-backup"></div>
+          <span class="btn">Open backup register &#8594;</span>
+        </a>
         <!-- END TILE: backup-register-tile -->
 
         <!-- TILE: incident-log-tile (replace this whole block with a link card when the register is built) -->
@@ -331,7 +334,8 @@
 
 
   <!-- REGISTER SLOT: backup (add this register's home tile scripts here) -->
-
+  <script src="backup-data.js"></script>
+  <script src="backup-home.js"></script>
   <!-- END REGISTER SLOT: backup -->
 
 
