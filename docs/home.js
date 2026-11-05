@@ -47,6 +47,7 @@ function renderTrackerCards() {
     const tv = JSON.parse(localStorage.getItem("trust_view_settings_v1") || "{}");
     $("progress-trust").textContent = tv.trustName ? "Trust: " + tv.trustName : "";
   } catch (e) { /* ignore */ }
+  renderRegisterCard();
   const t = trackerSchools();
   ["dfe", "ce"].forEach(k => {
     $("school-" + k).innerHTML = t[k].name
@@ -54,8 +55,26 @@ function renderTrackerCards() {
   });
 }
 
+// Software register tile: "12 items · 2 need attention", worked out with the
+// same rules as the register page (register-data.js)
+function renderRegisterCard() {
+  const RM = window.RegisterModel;
+  if (!RM) return;
+  const r = RM.loadState();
+  if (!r.items.length) {
+    $("progress-register").textContent = "";
+    $("school-register").innerHTML = "";
+    return;
+  }
+  const s = RM.summarise(r);
+  $("progress-register").textContent = `${s.total} item${s.total === 1 ? "" : "s"} · ` +
+    (s.attention ? `${s.attention} need${s.attention === 1 ? "s" : ""} attention` : "nothing needs attention");
+  $("school-register").innerHTML = r.school.name
+    ? `School: <strong>${esc(r.school.name)}</strong>${r.school.urn ? " (URN " + esc(r.school.urn) + ")" : ""}` : "";
+}
+
 // ── Search ──────────────────────────────────────────────────────────────
-let shown = null;      // school currently shown in the card
+let shown = null;     // school currently shown in the card
 let busy = false;
 
 function setStatus(text, kind) {
