@@ -77,6 +77,23 @@
       }).catch(() => unwrap(fn(null)));
     }
 
+    function cleanRecord(r) {
+      if (!r || typeof r !== "object" || typeof r.key !== "string") return null;
+      const v = AM.validate(r.snapshot);
+      if (!v.snapshot) return null;
+      const p = r.provenance && typeof r.provenance === "object" ? r.provenance : {};
+      const s = x => (typeof x === "string" ? AM.limitText(x) : "");
+      return {
+        key: AM.snapshotKey(v.snapshot),
+        snapshot: v.snapshot,
+        provenance: {
+          fileName: s(p.fileName), importedAt: s(p.importedAt), parsedFrom: s(p.parsedFrom),
+          exportedAtSource: s(p.exportedAtSource),
+          warnings: Array.isArray(p.warnings) ? p.warnings.filter(w => typeof w === "string").map(AM.limitText) : []
+        }
+      };
+    }
+
     const source = {
       id: "browser",
       label: "This browser",
@@ -87,7 +104,9 @@
           if (!store) return { __req: { result: Array.from(memory.values()) } };
           return { __req: store.getAll() };
         }).then(rows => {
-          rows = rows || [];
+          // Re-check every stored record: browser storage can be edited, and an
+          // invalid record must never stop the trust page from loading
+          rows = (rows || []).map(cleanRecord).filter(Boolean);
           if (filter && filter.urns) {
             const want = new Set(filter.urns.map(String));
             rows = rows.filter(r => want.has(String(r.snapshot.school.urn)));
@@ -331,12 +350,11 @@
   // { fileName, ok, record?, error? }; never rejects.
   function parseFile(file) {
     return new Promise(resolve => {
-      if (!/\.xlsx$/i.test(file.name)) return resolve({ fileName: file.name, ok: false, error: "not an .xlsx file" });
-      if (file.size > 20 * 1024 * 1024) return resolve({ fileName: file.name, ok: false, error: "file is larger than 20 MB" });
+      try { AM.checkImportFile(file); } catch (err) { return resolve({ fileName: file.name, ok: false, error: err.message }); }
       const reader = new FileReader();
       reader.onload = e => {
         try {
-          const wb = XLSX.read(new Uint8Array(e.target.result), { type: "array", cellDates: false });
+          const wb = XLSX.read(new Uint8Array(e.target.result), AM.SAFE_XLSX_READ);
           resolve({ fileName: file.name, ok: true, record: parseWorkbook(wb, file.name, file.lastModified) });
         } catch (err) {
           resolve({ fileName: file.name, ok: false, error: err.message || String(err) });
