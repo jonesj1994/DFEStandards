@@ -80,14 +80,6 @@
       short: "NCSC: Principles for ransomware-resistant cloud backups",
       url: "https://www.ncsc.gov.uk/guidance/principles-for-ransomware-resistant-cloud-backups"
     },
-    "ncsc-small-business": {
-      short: "NCSC Small Business Guide: Backing up your data",
-      url: "https://www.ncsc.gov.uk/collection/small-business-guide/backing-your-data"
-    },
-    "ncsc-exercise": {
-      short: "NCSC: Exercise in a Box",
-      url: "https://www.ncsc.gov.uk/collection/exercise-in-a-box"
-    },
     "rpa-cyber": {
       short: "DfE Risk Protection Arrangement (RPA) membership rules, Cyber section: conditions of cover",
       url: "https://www.gov.uk/guidance/make-a-claim-through-the-risk-protection-arrangement-rpa"
@@ -304,7 +296,7 @@
       help: "The backup plan must be reviewed every year, or when systems change." },
     { key: "drPlanReviewed", label: "Disaster recovery plan last reviewed", type: "date", basis: "required", refs: ["dfe-continuity"],
       help: "Review and update every year, or when something significant changes." },
-    { key: "drPlanTested", label: "Disaster recovery plan last tested", type: "date", basis: "required", refs: ["dfe-continuity", "ncsc-exercise"],
+    { key: "drPlanTested", label: "Disaster recovery plan last tested", type: "date", basis: "required", refs: ["dfe-continuity", "dfe-backup"],
       help: "Test at least once a year, e.g. by simulating data loss. A DR exercise in the log also counts." },
     { key: "offlineLocation", label: "Where the offline backup copy is kept", type: "text", basis: "required", refs: ["dfe-backup", "ncsc-offline"],
       help: "e.g. \"Immutable cloud copy with the IT provider\" or \"Encrypted drive in the fire safe\". Never at anyone's home." },
@@ -616,8 +608,8 @@
       }
     }
 
-    // Restore testing
-    if (hasBackup || e.backedUp === SUPPLIER_DEFAULT) {
+    // Restore testing (skipped only when the row says it is not backed up)
+    if (e.backedUp !== "No") {
       const lr = lastRestore(e, log);
       const yearAgo = addMonths(t, -THRESHOLDS.restoreTestMaxMonths);
       const termAgo = addMonths(t, -THRESHOLDS.restoreTestWarnMonths);
@@ -663,6 +655,8 @@
     if (!e.lastReviewed) amber("review-overdue", "No review date recorded.");
     else if (e.lastReviewed < addMonths(t, -THRESHOLDS.reviewMonths)) amber("review-overdue", `Last reviewed on ${formatDate(e.lastReviewed)}, more than ${THRESHOLDS.reviewMonths} months ago.`);
 
+    // Red reasons first, so the most urgent are read first
+    reasons.sort((a, b) => (a.level === b.level ? 0 : a.level === "Red" ? -1 : 1));
     const rag = reasons.some(r => r.level === "Red") ? "Red" : reasons.length ? "Amber" : "Green";
     return { rag, reasons };
   }

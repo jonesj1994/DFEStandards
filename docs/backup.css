@@ -33,7 +33,7 @@ a.btn { text-decoration: none; }
 
 /* List */
 .bk-filters { display: grid; grid-template-columns: 2fr repeat(4, 1fr); gap: 10px; margin: 8px 0; }
-.bk-table-wrap { overflow-x: auto; }
+.bk-table-wrap { overflow-x: auto; position: relative; }
 .bk-table { min-width: 860px; }
 .bk-table th { padding: 0; }
 .bk-sort {
