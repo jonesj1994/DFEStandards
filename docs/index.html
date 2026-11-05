@@ -231,15 +231,18 @@
         </a>
 
         <!-- TILE: hardware-register-tile (replace this whole block with a link card when the register is built) -->
-        <div class="tracker-card tracker-card-soon" id="hardware-register-tile" style="--accent: #1d70b8" aria-disabled="true">
-          <h3>Hardware and Asset Register <span class="soon-badge">Coming soon</span></h3>
+        <a class="tracker-card" href="hardware.html" id="hardware-register-tile" style="--accent: #1d70b8">
+          <h3>Hardware and Asset Register</h3>
           <p>Record every device and piece of network equipment, with the details the DfE standards and Cyber Essentials ask for.</p>
           <ul>
             <li>Devices, network kit and where they are</li>
             <li>Operating system support, warranty and replacement dates</li>
             <li>Secure disposal and an Excel export</li>
           </ul>
-        </div>
+          <div class="tracker-school" id="school-hardware"></div>
+          <div class="tracker-progress" id="progress-hardware"></div>
+          <span class="btn">Open hardware register &#8594;</span>
+        </a>
         <!-- END TILE: hardware-register-tile -->
 
         <!-- TILE: accounts-register-tile (replace this whole block with a link card when the register is built) -->
@@ -313,7 +316,8 @@
   <script src="home.js"></script>
 
   <!-- REGISTER SLOT: hardware (add this register's home tile scripts here) -->
-
+  <script src="hardware-data.js"></script>
+  <script src="hardware-home.js"></script>
   <!-- END REGISTER SLOT: hardware -->
 
 
