@@ -245,16 +245,19 @@
         </a>
         <!-- END TILE: hardware-register-tile -->
 
-        <!-- TILE: accounts-register-tile (replace this whole block with a link card when the register is built) -->
-        <div class="tracker-card tracker-card-soon" id="accounts-register-tile" style="--accent: #4c2c92" aria-disabled="true">
-          <h3>User Accounts and Access Privileges Register <span class="soon-badge">Coming soon</span></h3>
+        <!-- TILE: accounts-register-tile (built: see accounts.html) -->
+        <a class="tracker-card" href="accounts.html" id="accounts-register-tile" style="--accent: #4c2c92">
+          <h3>User Accounts and Access Privileges Register</h3>
           <p>Keep track of who has access to what, especially administrator and third-party accounts, and when access was last reviewed.</p>
           <ul>
             <li>Admin, staff, service and supplier accounts</li>
             <li>MFA, separate admin accounts and leavers</li>
             <li>Termly access reviews and an Excel export</li>
           </ul>
-        </div>
+          <div class="tracker-school" id="school-accounts"></div>
+          <div class="tracker-progress" id="progress-accounts"></div>
+          <span class="btn">Open accounts register &#8594;</span>
+        </a>
         <!-- END TILE: accounts-register-tile -->
 
         <!-- TILE: backup-register-tile (replace this whole block with a link card when the register is built) -->
@@ -322,7 +325,8 @@
 
 
   <!-- REGISTER SLOT: accounts (add this register's home tile scripts here) -->
-
+  <script src="accounts-data.js"></script>
+  <script src="accounts-home.js"></script>
   <!-- END REGISTER SLOT: accounts -->
 
 
