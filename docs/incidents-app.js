@@ -347,7 +347,7 @@
       <div class="inc-two-col">
         <div><h3>This academic year (${esc(IM.academicYearLabel(t))}) by type</h3>
           <div class="card inc-table-wrap"><table class="summary-table"><thead><tr><th scope="col">Type</th><th scope="col">Incidents</th></tr></thead><tbody>${typeRows}</tbody></table></div>
-          <p class="inc-muted">${plural(thisYear.length, "incident")} this academic year, ${plural(pdbYear, "personal data breach")}${pdbYear === 1 ? "" : ""}, ${icoYear} reported to the ICO.</p></div>
+          <p class="inc-muted">${plural(thisYear.length, "incident")} this academic year, ${pdbYear} personal data breach${pdbYear === 1 ? "" : "es"},${icoYear} reported to the ICO.</p></div>
         <div><h3>Before you start</h3>${privacyNotice(true)}</div>
       </div>
       ${evidenceBlock()}

@@ -3,7 +3,7 @@
 #main, #content { min-width: 0; }
 .inc-page { max-width: 960px; min-width: 0; }
 .inc-page.inc-wide { max-width: 1200px; }
-.inc-page h2 { margin-top: 0; }
+.inc-page h2 { margin-top: 0; overflow-wrap: anywhere; }
 .inc-page h2:focus { outline: none; }
 .inc-muted { color: #505a5f; font-size: 13px; line-height: 1.5; }
 .inc-school { font-size: 14px; color: #505a5f; overflow-wrap: anywhere; }
@@ -52,7 +52,8 @@ a.btn { text-decoration: none; }
 
 /* List */
 .inc-filters { display: grid; grid-template-columns: 2fr repeat(4, 1fr); gap: 10px; margin: 8px 0; }
-.inc-table-wrap { overflow-x: auto; }
+/* position: relative keeps absolutely positioned hidden link text inside the scrolling box */
+.inc-table-wrap { overflow-x: auto; position: relative; }
 .inc-table { min-width: 900px; }
 .inc-table th { padding: 0; }
 .inc-sort {

@@ -307,12 +307,13 @@
     const m = DT_RE.exec(dt || "");
     return m ? `${m[3]}/${m[2]}/${m[1]} ${m[4]}:${m[5]}` : "";
   }
-  // "31 hours", "2 days 4 hours", "45 minutes"
+  // "31 hours", "45 minutes", "5 days 4 hours". Hours up to 4 days, so the
+  // whole 72-hour window reads in hours.
   function formatSpan(ms) {
     const mins = Math.max(0, Math.floor(ms / 60000));
     if (mins < 60) return `${mins} minute${mins === 1 ? "" : "s"}`;
     const hours = Math.floor(mins / 60);
-    if (hours < 48) return `${hours} hour${hours === 1 ? "" : "s"}`;
+    if (hours < 96) return `${hours} hour${hours === 1 ? "" : "s"}`;
     const d = Math.floor(hours / 24), h = hours % 24;
     return `${d} days` + (h ? ` ${h} hour${h === 1 ? "" : "s"}` : "");
   }
