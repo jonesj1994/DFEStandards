@@ -341,12 +341,12 @@
     cards.push(card(`Core standards (by ${year})`, dfeN
       ? `<div class="big">${t.coreAll} <small>of ${dfeN} assessed ${dfeN === 1 ? "school meets" : "schools meet"} all 6</small></div>
          ${bar(t.corePct)}
-         <div class="small muted">${t.coreDone} of ${t.coreItems} core standards rated Green or Met across the trust (${t.corePct}%).</div>`
+         <div class="small muted">${t.coreDone} of ${t.coreItems} core standards rated Green across the trust (${t.corePct}%).</div>`
       : `<div class="small muted">No DfE standards assessments imported yet.</div>`));
     cards.push(card("Filtering and monitoring met now", dfeN
       ? `<div class="big">${t.fmMet} <small>of ${dfeN} assessed</small></div>
          ${bar(pct(t.fmMet, dfeN), t.fmMet === dfeN ? "" : "var(--rag-amber)")}
-         <div class="small muted">Every filtering and monitoring standard rated Green or Met. Schools should already meet this (KCSIE).${N > dfeN ? ` ${plural(N - dfeN, "school")} not assessed.` : ""}</div>`
+         <div class="small muted">Every filtering and monitoring standard rated Green. Schools should already meet this (KCSIE).${N > dfeN ? ` ${plural(N - dfeN, "school")} not assessed.` : ""}</div>`
       : `<div class="small muted">No DfE standards assessments imported yet.</div>`));
     cards.push(card("Cyber Essentials readiness", ceN
       ? `<div class="big">${t.ceReady} <small>of ${ceN} assessed ready</small></div>
@@ -763,8 +763,8 @@
         · from ${esc(rec.provenance.fileName)} (${esc(rec.provenance.parsedFrom)})
         ${snap.frameworkVersion ? ` · ${f.id === "dfe" ? "GOV.UK guidance of " + esc(ukDate(snap.frameworkVersion)) : "NCSC " + esc(snap.frameworkVersion)}` : ""}</p>
       ${older}
-      <p class="small"><strong>${sum.totals.done} of ${sum.totals.items}</strong> ${f.id === "dfe" ? "standards Green or Met" : "assessed requirements Met or N/A"} (${sum.totals.pct}%).
-        ${f.id === "dfe" ? `Core standards: ${sum.core.categoriesMet} of ${sum.core.categories} areas fully Green or Met. Filtering and monitoring: <span class="rag-pill ${sum.filtering.cls}">${esc(sum.filtering.overall)}</span>`
+      <p class="small"><strong>${sum.totals.done} of ${sum.totals.items}</strong> ${f.id === "dfe" ? "standards rated Green" : "assessed requirements Met or N/A"} (${sum.totals.pct}%).
+        ${f.id === "dfe" ? `Core standards: ${sum.core.categoriesMet} of ${sum.core.categories} areas fully Green. Filtering and monitoring: <span class="rag-pill ${sum.filtering.cls}">${esc(sum.filtering.overall)}</span>`
           : `${sum.ready ? '<span class="tag ok">Ready to apply</span>' : '<span class="tag warn">Not ready yet</span>'}
              ${cert.level ? ` · Seeking ${esc(cert.level)}` : ""}${cert.renewalDue ? ` · Renewal ${cert.state === "overdue" ? `<strong style="color:var(--rag-red)">overdue since ${esc(ukDate(cert.renewalDue))}</strong>` : `due ${esc(ukDate(cert.renewalDue))}`}${cert.estimated ? " (estimated from certification date)" : ""}` : ""}`}
       </p>
@@ -820,9 +820,9 @@
       ["Schools with any assessment", t.total - t.none, t.total, ""],
       ["DfE standards assessed", t.dfe.length, t.total, ""],
       ["Cyber Essentials assessed", t.ce.length, t.total, ""],
-      ["Schools meeting all 6 core standards", t.coreAll, t.dfe.length, "Every core area Green or Met"],
-      ["Core standards Green or Met (all schools)", t.coreDone, t.coreItems, t.corePct + "%"],
-      ["Filtering and monitoring met now", t.fmMet, t.dfe.length, "Every filtering and monitoring standard Green or Met"],
+      ["Schools meeting all 6 core standards", t.coreAll, t.dfe.length, "Every core area Green"],
+      ["Core standards rated Green (all schools)", t.coreDone, t.coreItems, t.corePct + "%"],
+      ["Filtering and monitoring met now", t.fmMet, t.dfe.length, "Every filtering and monitoring standard Green"],
       ["Cyber Essentials ready", t.ceReady, t.ce.length, "Average " + t.ceAvg + "% of requirements Met or N/A"],
       ["Certificate renewals due within 90 days or overdue", t.renewals.length, t.ce.length, ""],
       [],

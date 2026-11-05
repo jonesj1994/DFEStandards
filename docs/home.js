@@ -41,7 +41,7 @@ function trackerSchools() {
 }
 
 function renderTrackerCards() {
-  $("progress-dfe").textContent = progress(KEYS.dfe, "ratings", ["Met", "Green"]);
+  $("progress-dfe").textContent = progress(KEYS.dfe, "ratings", ["Green", "Met"]); // "Met" = older saves, now Green
   $("progress-ce").textContent = progress(KEYS.ce, "status", ["Met", "N/A"]);
   try {
     const tv = JSON.parse(localStorage.getItem("trust_view_settings_v1") || "{}");
