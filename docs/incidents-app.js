@@ -1071,7 +1071,7 @@
   function importExcel(file) {
     try { AM.checkImportFile(file); }
     catch (err) { toast("Import failed: " + err.message); return; }
-    leaveEdit();
+    saveNow();
     const reader = new FileReader();
     reader.onload = async ev => {
       let parsed;
@@ -1092,6 +1092,7 @@
         choice = await ask("Import: merge or replace?", lines, [["Merge", "merge", "btn-primary"], ["Replace", "replace", "btn-danger"], ["Cancel", "cancel"]]);
       }
       if (choice === "cancel") return;
+      leaveEdit();
       applyImport(parsed.state, choice);
       view = "dashboard";
       render();
