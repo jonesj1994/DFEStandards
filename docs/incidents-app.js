@@ -16,6 +16,14 @@
   const CELL_CHUNK = 30000;                       // Excel cells hold at most 32,767 characters
   const MAX_HIDDEN_JSON = 5 * 1024 * 1024;
   const TICK_MS = 30000;                          // how often the ICO countdown refreshes
+  // Other registers' exports, recognised by their hidden sheet, so an import
+  // can say which page to use instead: [hidden sheet, register name]
+  const OTHER_EXPORTS = [
+    ["_software_register", "Software Register"],
+    ["_hardware_register", "Hardware and Asset Register"],
+    ["_accounts_register", "User Accounts and Access Privileges Register"],
+    ["_backup_register", "Backup and Disaster Recovery Register"]
+  ];
   const RAG_CLASS = { Red: "red", Amber: "amber", Green: "green" };
   const RAG_ORDER = { Red: 0, Amber: 1, Green: 2 };
   const VIEW_TITLES = {
@@ -983,8 +991,9 @@
       const f = AM.FRAMEWORKS[framework];
       throw new Error(`this file is a ${f.label} export, not an incident log. Open it in the ${f.shortLabel} tracker instead.`);
     }
-    if (sheet(wb, "_software_register") || /software register/i.test(title)) {
-      throw new Error("this file is a Software Register export, not an incident log. Open it on the Software Register page instead.");
+    const other = OTHER_EXPORTS.find(([s]) => sheet(wb, s));
+    if (other) {
+      throw new Error(`this file is a ${other[1]} export, not an incident log. Open it on the ${other[1]} page instead.`);
     }
     if (title && !/incident/i.test(title)) {
       throw new Error(`this file looks like a "${title}" export, not an incident log. Open it on the matching page instead.`);
