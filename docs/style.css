@@ -406,3 +406,17 @@ select.rag-select option[value="Met"]     { background: #eee; }
   z-index: 9999;
 }
 #toast.show { opacity: 1; }
+
+/* ── Rating key (DfE tracker) ── */
+.rag-key {
+  background: #fff;
+  border: 1px solid #e8e8e8;
+  border-radius: 6px;
+  padding: 10px 14px;
+  margin-bottom: 16px;
+  display: grid;
+  gap: 6px;
+  font-size: 13px;
+}
+.rag-key-row { display: flex; align-items: baseline; gap: 10px; }
+.rag-key-row .rag-pill { min-width: 64px; text-align: center; flex-shrink: 0; }

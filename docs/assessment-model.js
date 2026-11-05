@@ -67,10 +67,12 @@
       id: "dfe",
       label: "DfE digital and technology standards",
       shortLabel: "DfE standards",
-      statuses: ["Not Set", "Red", "Amber", "Green", "Met"],
-      done: ["Green", "Met"],
+      statuses: ["Not Set", "Red", "Amber", "Green"],
+      // Older files used a separate "Met" rating; it now counts as Green
+      aliases: { Met: "Green" },
+      done: ["Green"],
       open: ["Red", "Amber"],
-      severity: { Red: 4, Amber: 3, "Not Set": 2, Green: 1, Met: 0 },
+      severity: { Red: 4, Amber: 3, "Not Set": 2, Green: 1 },
       categories: () => (typeof STANDARDS_DATA !== "undefined" ? STANDARDS_DATA : []),
       version: () => (typeof STANDARDS_META !== "undefined" && STANDARDS_META.lastUpdated) || "",
       // Same rule as the DfE tracker's Summary sheet
@@ -78,11 +80,10 @@
         if (c.Red) return "Red";
         if (c.Amber) return "Amber";
         if (c["Not Set"]) return "Not Set";
-        if (c.Green) return "Green";
-        return "Met";
+        return "Green";
       },
       // Same CSS classes as the DfE tracker
-      cls(v) { return { Red: "red", Amber: "amber", Green: "green", Met: "met" }[v] || "not-set"; }
+      cls(v) { return { Red: "red", Amber: "amber", Green: "green" }[v] || "not-set"; }
     },
     "cyber-essentials": {
       id: "cyber-essentials",
@@ -256,6 +257,7 @@
 
   function validStatus(f, v) {
     v = str(v);
+    if (f.aliases && Object.prototype.hasOwnProperty.call(f.aliases, v)) v = f.aliases[v];
     return f.statuses.includes(v) ? v : "Not Set";
   }
 

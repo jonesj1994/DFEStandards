@@ -35,8 +35,22 @@ function defaultState() {
   };
 }
 
-// Declared before loadState() runs, because loadState() uses it
-const RAG_VALUES = ["Not Set", "Red", "Amber", "Green", "Met"];
+// Ratings. Declared before loadState() runs, because loadState() uses them.
+const RAG_VALUES = ["Not Set", "Red", "Amber", "Green"];
+
+// What each rating means. Shown as a key on every standard area page and in
+// the Excel export, so everyone rates the same way.
+const RAG_INFO = [
+  { value: "Not Set", label: "Not yet assessed", meaning: "This standard has not been assessed yet." },
+  { value: "Red", label: "Not met", meaning: "No provision is in place, or there are significant gaps." },
+  { value: "Amber", label: "Partly met", meaning: "Some provision is in place, or work to meet the standard is planned or in progress." },
+  { value: "Green", label: "Met", meaning: "The standard is fully met." }
+];
+
+// Older versions had a separate "Met" rating; it is now the same as Green
+function normaliseRating(val) {
+  return val === "Met" ? "Green" : val;
+}
 
 let state = loadState();
 
@@ -98,7 +112,13 @@ function loadState() {
         if (Object.prototype.hasOwnProperty.call(src, id) && ok(src[id])) out[field][id] = src[id];
       });
     };
-    pick("ratings", v => RAG_VALUES.includes(v));
+    // Ratings: older saves may hold "Met", which is now Green
+    const savedRatings = saved.ratings && typeof saved.ratings === "object" ? saved.ratings : {};
+    Object.keys(def.ratings).forEach(id => {
+      if (!Object.prototype.hasOwnProperty.call(savedRatings, id)) return;
+      const v = normaliseRating(savedRatings[id]);
+      if (RAG_VALUES.includes(v)) out.ratings[id] = v;
+    });
     ["notes", "recommendations", "ownership"].forEach(f => pick(f, v => typeof v === "string"));
     return out;
   } catch (e) {
@@ -160,17 +180,24 @@ function updateSidebarActive() {
 }
 
 // ── RAG helpers ────────────────────────────────────────────────────────────
+// (RAG_VALUES, RAG_INFO and normaliseRating are declared near the top of the
+// file, before loadState() runs.)
 
 function ragClass(val) {
   if (val === "Red") return "red";
   if (val === "Amber") return "amber";
   if (val === "Green") return "green";
-  if (val === "Met") return "met";
   return "not-set";
 }
 
+function ragKey() {
+  return `<div class="rag-key" role="note" aria-label="What the ratings mean">
+    ${RAG_INFO.map(r => `<div class="rag-key-row"><span class="rag-pill ${ragClass(r.value)}">${escHtml(r.value)}</span><span><strong>${escHtml(r.label)}</strong> – ${escHtml(r.meaning)}</span></div>`).join("")}
+  </div>`;
+}
+
 function categoryRagSummary(cat) {
-  const counts = { Red: 0, Amber: 0, Green: 0, Met: 0, "Not Set": 0 };
+  const counts = { Red: 0, Amber: 0, Green: 0, "Not Set": 0 };
   cat.items.forEach(item => {
     const r = state.ratings[item.id] || "Not Set";
     counts[r] = (counts[r] || 0) + 1;
@@ -183,8 +210,7 @@ function categoryOverallDot(cat) {
   if (s.Red > 0) return "red";
   if (s.Amber > 0) return "amber";
   if (s["Not Set"] > 0) return "not-set";
-  if (s.Green > 0) return "green";
-  return "met";
+  return "green";
 }
 
 // ── Sidebar nav ────────────────────────────────────────────────────────────
@@ -232,24 +258,23 @@ function renderDashboard() {
   // Count only standards that are in the current data. Saved state can still hold
   // ratings for standards GOV.UK has since removed, and those must not be counted.
   const allRatings = STANDARDS_DATA.flatMap(c => c.items.map(i => state.ratings[i.id] || "Not Set"));
-  const met = allRatings.filter(r => r === "Met" || r === "Green").length;
+  const met = allRatings.filter(r => r === "Green").length;
   const pct = Math.round((met / totalItems) * 100);
 
   const cards = STANDARDS_DATA.map(cat => {
     const s = categoryRagSummary(cat);
-    const catMet = s.Met + s.Green;
+    const catMet = s.Green;
     const catPct = Math.round((catMet / cat.items.length) * 100);
     const core = cat.isCore ? `<span class="core-badge" style="font-size:10px;margin-left:4px">CORE</span>` : "";
     return `
     <a class="dash-card" href="#" data-view="category" data-category="${cat.id}">
       <div class="dash-card-title">${escHtml(cat.title)}${core}</div>
       <div class="progress-bar-wrap"><div class="progress-bar-fill" style="width:${catPct}%"></div></div>
-      <div style="font-size:11px;color:#505a5f;margin-bottom:6px">${catMet} / ${cat.items.length} items met or green</div>
+      <div style="font-size:11px;color:#505a5f;margin-bottom:6px">${catMet} / ${cat.items.length} standards Green (met)</div>
       <div class="dash-stats">
         ${s.Red ? `<span class="stat-chip red">Red: ${s.Red}</span>` : ""}
         ${s.Amber ? `<span class="stat-chip amber">Amber: ${s.Amber}</span>` : ""}
         ${s.Green ? `<span class="stat-chip green">Green: ${s.Green}</span>` : ""}
-        ${s.Met ? `<span class="stat-chip met">Met: ${s.Met}</span>` : ""}
         ${s["Not Set"] ? `<span class="stat-chip not-set">Not Set: ${s["Not Set"]}</span>` : ""}
       </div>
     </a>`;
@@ -263,7 +288,7 @@ function renderDashboard() {
     ${state.schoolName ? `<p style="color:#505a5f;font-size:14px">School: <strong>${escHtml(state.schoolName)}</strong>${state.schoolURN ? ` &nbsp;|&nbsp; URN: <strong>${escHtml(state.schoolURN)}</strong>` : ""}</p>` : `<p style="color:#505a5f;font-size:13px"><a href="#" data-view="school-info">Add school information</a></p>`}
     <div style="display:flex;align-items:center;gap:24px;margin:16px 0;padding:16px;background:#fff;border-radius:6px;box-shadow:0 1px 3px rgba(0,0,0,0.1)">
       <div style="flex:1">
-        <div style="font-size:13px;color:#505a5f;margin-bottom:6px">Overall completion (Met + Green)</div>
+        <div style="font-size:13px;color:#505a5f;margin-bottom:6px">Overall completion (standards rated Green)</div>
         <div class="progress-bar-wrap" style="height:14px"><div class="progress-bar-fill" style="width:${pct}%"></div></div>
       </div>
       <div style="font-size:28px;font-weight:700;color:var(--dfe-navy)">${pct}%</div>
@@ -337,12 +362,10 @@ function renderSummary() {
     if (s.Red > 0) overall = "Red";
     else if (s.Amber > 0) overall = "Amber";
     else if (s["Not Set"] > 0) overall = "Not Set";
-    else if (s.Green > 0) overall = "Green";
-    else overall = "Met";
+    else overall = "Green";
     return `<tr>
       <td><a href="#" data-view="category" data-category="${cat.id}">${escHtml(cat.title)}${core}</a></td>
       <td>${cat.items.length}</td>
-      <td>${s.Met}</td>
       <td>${s.Green}</td>
       <td>${s.Amber}</td>
       <td>${s.Red}</td>
@@ -360,7 +383,6 @@ function renderSummary() {
           <tr>
             <th>Standard</th>
             <th>Total</th>
-            <th>Met</th>
             <th>Green</th>
             <th>Amber</th>
             <th>Red</th>
@@ -459,9 +481,9 @@ function renderCategory(catId) {
       ${s.Red ? `<span class="stat-chip red">Red: ${s.Red}</span>` : ""}
       ${s.Amber ? `<span class="stat-chip amber">Amber: ${s.Amber}</span>` : ""}
       ${s.Green ? `<span class="stat-chip green">Green: ${s.Green}</span>` : ""}
-      ${s.Met ? `<span class="stat-chip met">Met: ${s.Met}</span>` : ""}
       ${s["Not Set"] ? `<span class="stat-chip not-set">Not Set: ${s["Not Set"]}</span>` : ""}
     </div>
+    ${ragKey()}
     <div id="items-list">${items}</div>
   </div>`;
 }

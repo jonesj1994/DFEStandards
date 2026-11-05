@@ -304,7 +304,9 @@
       const matched = matchRows(cat, rows.slice(headerAt >= 0 ? headerAt + 1 : 3), warnings);
       matched.forEach((row, id) => {
         found++;
-        const status = frameworkId === "dfe" ? cell(row[4]) : cell(row[3]);
+        let status = frameworkId === "dfe" ? cell(row[4]) : cell(row[3]);
+        // Older ratings that have been renamed (e.g. DfE "Met" is now "Green")
+        if (f.aliases && Object.prototype.hasOwnProperty.call(f.aliases, status)) status = f.aliases[status];
         snap.items[id] = frameworkId === "dfe"
           ? { status: f.statuses.includes(status) ? status : "Not Set", notes: cell(row[2]), actions: cell(row[3]), owner: cell(row[5]) }
           : { status: f.statuses.includes(status) ? status : "Not Set", notes: cell(row[4]), actions: cell(row[5]), owner: cell(row[6]) };

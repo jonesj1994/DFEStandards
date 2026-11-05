@@ -5,25 +5,23 @@ function exportToExcel(state) {
 
   // ── Summary sheet ──────────────────────────────────────────────────────
   const summaryRows = [
-    ["Standard", "Total Recs", "Met", "Green", "Amber", "Red", "Not Set", "Overall Status"]
+    ["Standard", "Total Recs", "Green (met)", "Amber", "Red", "Not Set", "Overall Status"]
   ];
 
   STANDARDS_DATA.forEach(cat => {
-    const counts = { Red: 0, Amber: 0, Green: 0, Met: 0, "Not Set": 0 };
+    const counts = { Red: 0, Amber: 0, Green: 0, "Not Set": 0 };
     cat.items.forEach(item => {
-      const r = state.ratings[item.id] || "Not Set";
+      const r = normaliseRating(state.ratings[item.id] || "Not Set");
       counts[r] = (counts[r] || 0) + 1;
     });
     let overall = "Not Set";
     if (counts.Red > 0) overall = "Red";
     else if (counts.Amber > 0) overall = "Amber";
     else if (counts["Not Set"] > 0) overall = "Not Set";
-    else if (counts.Green > 0) overall = "Green";
-    else overall = "Met";
+    else overall = "Green";
     summaryRows.push([
       cat.title,
       cat.items.length,
-      counts.Met,
       counts.Green,
       counts.Amber,
       counts.Red,
@@ -33,8 +31,14 @@ function exportToExcel(state) {
   });
 
   const wsSummary = XLSX.utils.aoa_to_sheet(summaryRows);
-  wsSummary["!cols"] = [{ wch: 30 }, { wch: 12 }, { wch: 8 }, { wch: 8 }, { wch: 8 }, { wch: 8 }, { wch: 10 }, { wch: 16 }];
+  wsSummary["!cols"] = [{ wch: 30 }, { wch: 12 }, { wch: 12 }, { wch: 8 }, { wch: 8 }, { wch: 10 }, { wch: 16 }];
   XLSX.utils.book_append_sheet(wb, wsSummary, "Summary");
+
+  // ── Rating key ─────────────────────────────────────────────────────────
+  const keyRows = [["RAG Rating", "Means", "Description"]].concat(RAG_INFO.map(r => [r.value, r.label, r.meaning]));
+  const wsKey = XLSX.utils.aoa_to_sheet(keyRows);
+  wsKey["!cols"] = [{ wch: 12 }, { wch: 18 }, { wch: 80 }];
+  XLSX.utils.book_append_sheet(wb, wsKey, "Rating key");
 
   // ── Info sheet ─────────────────────────────────────────────────────────
   const infoRows = [
@@ -73,7 +77,7 @@ function exportToExcel(state) {
         item.title,
         state.notes[item.id] || "",
         state.recommendations[item.id] || "",
-        state.ratings[item.id] || "Not Set",
+        normaliseRating(state.ratings[item.id] || "Not Set"),
         state.ownership[item.id] || ""
       ]);
     });
@@ -258,7 +262,7 @@ function readVisibleSheets(wb) {
       matched++;
       imported.notes[item.id] = text(row[2]);
       imported.recommendations[item.id] = text(row[3]);
-      const rag = row[4] ? String(row[4]) : "Not Set";
+      const rag = normaliseRating(row[4] ? String(row[4]).trim() : "Not Set");
       imported.ratings[item.id] = RAG_VALUES.includes(rag) ? rag : "Not Set";
       imported.ownership[item.id] = text(row[5]);
     });

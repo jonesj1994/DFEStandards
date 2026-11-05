@@ -54,7 +54,7 @@ One school's assessment against one framework at one point in time.
   blank for files read from visible sheets.
 * `items` is keyed by the stable item ids in `data.js` / `ce-data.js`
   (`cyber-7`, `fw-3`, …). Items missing from a snapshot count as `Not Set`.
-* Statuses: DfE `Not Set`, `Red`, `Amber`, `Green`, `Met`;
+* Statuses: DfE `Not Set`, `Red`, `Amber`, `Green` (older files' `Met` is read as `Green`);
   Cyber Essentials `Not Set`, `Not Met`, `Partially Met`, `Met`, `N/A`.
 * Field meanings: DfE `notes` = Current Status & Notes, `actions` =
   Recommendations, `owner` = Ownership. Cyber Essentials `notes` = Evidence /
