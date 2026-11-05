@@ -273,15 +273,18 @@
         <!-- END TILE: backup-register-tile -->
 
         <!-- TILE: incident-log-tile (replace this whole block with a link card when the register is built) -->
-        <div class="tracker-card tracker-card-soon" id="incident-log-tile" style="--accent: #d4351c" aria-disabled="true">
-          <h3>Cyber Incident and Breach Log <span class="soon-badge">Coming soon</span></h3>
-          <p>Log cyber incidents and personal data breaches, the actions taken, and who was told and when.</p>
+        <a class="tracker-card" href="incidents.html" id="incident-log-tile" style="--accent: #d4351c">
+          <h3>Cyber Incident and Breach Log</h3>
+          <p>Log cyber incidents, near misses and personal data breaches, what was done, and who was told and when, as the DfE cyber security standard and UK GDPR ask.</p>
           <ul>
-            <li>Incident timeline, impact and actions</li>
-            <li>ICO 72-hour and other reporting checks</li>
-            <li>Lessons learned and an Excel export</li>
+            <li>Live ICO 72-hour countdown</li>
+            <li>Report Fraud, DfE, RPA and governor reporting checks</li>
+            <li>Lessons learned, follow-up actions and an Excel export</li>
           </ul>
-        </div>
+          <div class="tracker-school" id="school-incidents"></div>
+          <div class="tracker-progress" id="progress-incidents"></div>
+          <span class="btn">Open incident log &#8594;</span>
+        </a>
         <!-- END TILE: incident-log-tile -->
       </div>
     </section>
@@ -336,7 +339,8 @@
 
 
   <!-- REGISTER SLOT: incidents (add this register's home tile scripts here) -->
-
+  <script src="incidents-data.js"></script>
+  <script src="incidents-home.js"></script>
   <!-- END REGISTER SLOT: incidents -->
 </body>
 </html>
