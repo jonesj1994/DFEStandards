@@ -39,6 +39,16 @@
     .tracker-school { font-size: 13px; color: #0b0c0c; margin-bottom: 6px; overflow-wrap: anywhere; }
     .tracker-card .btn { align-self: flex-start; background: var(--accent); color: #fff; }
     .home-footer { padding: 0 16px 32px; font-size: 12px; color: #505a5f; }
+    .reset-area { margin: 0 16px 24px; padding: 16px 18px; background: #fff; border-radius: 8px; border-left: 4px solid var(--rag-red); box-shadow: 0 1px 3px rgba(0,0,0,0.12); }
+    .reset-area h2 { margin: 0 0 6px; font-size: 16px; }
+    .reset-area p { margin: 0 0 12px; font-size: 13px; color: #505a5f; line-height: 1.5; }
+    .reset-status { margin: 10px 0 0; font-size: 13px; color: #0b0c0c; min-height: 1em; }
+    #reset-dialog { border: none; border-radius: 8px; padding: 20px 22px; max-width: min(520px, calc(100vw - 32px)); box-shadow: 0 10px 30px rgba(0,0,0,0.3); }
+    #reset-dialog::backdrop { background: rgba(11,12,12,0.5); }
+    #reset-dialog h2 { margin: 0 0 10px; font-size: 18px; color: var(--dfe-navy); }
+    #reset-dialog p, #reset-dialog li { font-size: 14px; line-height: 1.5; }
+    #reset-dialog ul { margin: 0 0 10px; padding-left: 20px; }
+    .reset-buttons { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 14px; }
     .home-footer a { color: var(--dfe-blue); }
 
     /* ── School finder ── */
@@ -310,6 +320,30 @@
       </div>
     </section>
 
+    <section class="reset-area" aria-labelledby="reset-title">
+      <h2 id="reset-title">Clear all data</h2>
+      <p>Start again from scratch: removes everything this toolkit has saved in this browser. Export anything you want to keep to Excel first.</p>
+      <button type="button" class="btn btn-danger" id="reset-btn">Clear all data</button>
+      <p class="reset-status" id="reset-status" role="status" aria-live="polite"></p>
+    </section>
+
+    <dialog id="reset-dialog" aria-labelledby="reset-dialog-title" aria-describedby="reset-dialog-body">
+      <h2 id="reset-dialog-title">Clear all saved data?</h2>
+      <div id="reset-dialog-body">
+        <p>This permanently deletes, from this browser only:</p>
+        <ul>
+          <li>the DfE standards and Cyber Essentials trackers</li>
+          <li>the software, hardware, user accounts, backup and incident registers</li>
+          <li>the selected school or trust, and all files imported into the Trust Overview</li>
+        </ul>
+        <p>It cannot be undone. Export to Excel first if you want a copy, and close any other tabs with the toolkit open.</p>
+      </div>
+      <div class="reset-buttons">
+        <button type="button" class="btn btn-secondary" id="reset-cancel">Cancel</button>
+        <button type="button" class="btn btn-danger" id="reset-confirm">Delete everything</button>
+      </div>
+    </dialog>
+
     <p class="home-footer">
       Sources:
       <a href="https://www.gov.uk/guidance/meeting-digital-and-technology-standards-in-schools-and-colleges" target="_blank" rel="noopener">DfE digital and technology standards (GOV.UK)</a> ·
@@ -323,6 +357,7 @@
   <script src="register-data.js"></script>
   <script src="home-trust.js" defer></script>
   <script src="home.js"></script>
+  <script src="home-reset.js"></script>
 
   <!-- REGISTER SLOT: hardware (add this register's home tile scripts here) -->
   <script src="hardware-data.js"></script>
