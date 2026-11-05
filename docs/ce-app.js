@@ -45,14 +45,22 @@ function ceLoad() {
   const def = ceDefaultState();
   try {
     const saved = JSON.parse(localStorage.getItem(CE_STATE_KEY) || "null");
-    if (!saved) return def;
-    return {
-      org: { ...def.org, ...saved.org },
-      status: { ...def.status, ...saved.status },
-      evidence: { ...def.evidence, ...saved.evidence },
-      actions: { ...def.actions, ...saved.actions },
-      owner: { ...def.owner, ...saved.owner }
-    };
+    if (!saved || typeof saved !== "object") return def;
+    // Copy in only known fields, valid statuses and plain text, so tampered or
+    // out-of-date storage can't inject anything odd
+    const has = (o, k) => o && typeof o === "object" && Object.prototype.hasOwnProperty.call(o, k);
+    const isText = v => typeof v === "string" || typeof v === "number";
+    const out = ceDefaultState();
+    Object.keys(out.org).forEach(k => { if (has(saved.org, k) && isText(saved.org[k])) out.org[k] = String(saved.org[k]); });
+    if (has(saved.org, "profileKeptURN") && isText(saved.org.profileKeptURN)) out.org.profileKeptURN = String(saved.org.profileKeptURN);
+    ["status", "evidence", "actions", "owner"].forEach(field => {
+      Object.keys(out[field]).forEach(id => {
+        if (!has(saved[field], id)) return;
+        const v = saved[field][id];
+        if (field === "status" ? CE_STATUSES.includes(v) : typeof v === "string") out[field][id] = v;
+      });
+    });
+    return out;
   } catch (e) { return def; }
 }
 
@@ -268,7 +276,7 @@ function ceCategory(id) {
       <div class="item-header" data-item="${item.id}">
         <span class="item-number">${idx + 1}.</span>
         <span class="item-title">${esc(item.title)}</span>
-        <span class="rag-pill ${statusClass(st)}">${st}</span>
+        <span class="rag-pill ${statusClass(st)}">${esc(st)}</span>
         <span class="chevron">&#9660;</span>
       </div>
       <div class="item-body" id="body-${item.id}">
@@ -383,10 +391,16 @@ function ceExport() {
 // exports, or a damaged hidden sheet, are read from the visible sheets. A DfE
 // standards export is refused. Nothing is changed unless the whole file reads.
 function ceImport(file) {
+  try {
+    AssessmentModel.checkImportFile(file);
+  } catch (err) {
+    toast("Import failed: " + err.message);
+    return;
+  }
   const reader = new FileReader();
   reader.onload = e => {
     try {
-      const wb = XLSX.read(new Uint8Array(e.target.result), { type: "array" });
+      const wb = XLSX.read(new Uint8Array(e.target.result), AssessmentModel.SAFE_XLSX_READ);
       // Hidden sheet first. This throws for a DfE standards file.
       const hidden = window.AssessmentModel ? AssessmentModel.readTrackerFile(XLSX, wb, "cyber-essentials") : null;
       let next, found, notes = [];
@@ -429,7 +443,7 @@ function ceReadVisibleSheets(wb) {
   if (wb.Sheets.Info) {
     XLSX.utils.sheet_to_json(wb.Sheets.Info, { header: 1 }).forEach(r => {
       const f = CE_ORG_FIELDS.find(([, label]) => label === r[0]);
-      if (f) s.org[f[0]] = r[1] != null ? String(r[1]) : "";
+      if (f) s.org[f[0]] = r[1] != null ? AssessmentModel.limitText(r[1]) : "";
     });
   }
   let found = 0;
@@ -441,9 +455,10 @@ function ceReadVisibleSheets(wb) {
       if (!item) return;
       found++;
       s.status[item.id] = CE_STATUSES.includes(r[3]) ? r[3] : "Not Set";
-      s.evidence[item.id] = r[4] != null ? String(r[4]) : "";
-      s.actions[item.id] = r[5] != null ? String(r[5]) : "";
-      s.owner[item.id] = r[6] != null ? String(r[6]) : "";
+      const text = v => (v != null ? AssessmentModel.limitText(v) : "");
+      s.evidence[item.id] = text(r[4]);
+      s.actions[item.id] = text(r[5]);
+      s.owner[item.id] = text(r[6]);
     });
   });
   return { state: s, found };

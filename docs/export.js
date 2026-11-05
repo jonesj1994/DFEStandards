@@ -115,11 +115,17 @@ function exportToExcel(state) {
 // Older exports, or a file whose hidden sheet is damaged, are read from the
 // visible sheets instead. A Cyber Essentials export is refused.
 function importFromExcel(file, callback) {
+  try {
+    AssessmentModel.checkImportFile(file);
+  } catch (err) {
+    showToast("Import failed: " + err.message);
+    return;
+  }
   const reader = new FileReader();
   reader.onload = e => {
     try {
       const data = new Uint8Array(e.target.result);
-      const wb = XLSX.read(data, { type: "array" });
+      const wb = XLSX.read(data, AssessmentModel.SAFE_XLSX_READ);
 
       // Hidden sheet first. This throws for a Cyber Essentials file.
       const hidden = window.AssessmentModel ? AssessmentModel.readTrackerFile(XLSX, wb, "dfe") : null;
@@ -204,7 +210,7 @@ function readVisibleSheets(wb) {
     rows.forEach(row => {
       if (!row[0]) return;
       const key = String(row[0]).toLowerCase();
-      const val = row[1] ? String(row[1]) : "";
+      const val = row[1] ? AssessmentModel.limitText(row[1]).trim() : "";
       // Specific labels first, so "Number of Pupils" or "School Type" are not
       // mistaken for the school name
       if (key.startsWith("dfe number") || key.includes("laestab")) imported.schoolDfENumber = val;
@@ -238,21 +244,23 @@ function readVisibleSheets(wb) {
     // GOV.UK adds, removes or reorders standards. Rows whose title matches no
     // current standard (e.g. a standard GOV.UK has removed) are skipped.
     const norm = s => String(s || "").toLowerCase().replace(/[‘’]/g, "'").replace(/\s+/g, " ").trim();
-    const byTitle = {};
+    // A Map, so titles like "constructor" or "__proto__" can't match by accident
+    const byTitle = new Map();
     cat.items.forEach(item => {
-      [item.title, ...(item.previousTitles || [])].forEach(t => { byTitle[norm(t)] = item; });
+      [item.title, ...(item.previousTitles || [])].forEach(t => { byTitle.set(norm(t), item); });
     });
+    const text = v => (v ? AssessmentModel.limitText(v) : "");
     dataRows.forEach((row, idx) => {
       const title = norm(row[1]);
       // Fall back to position only when the row has no title at all.
-      const item = title ? byTitle[title] : cat.items[idx];
+      const item = title ? byTitle.get(title) : cat.items[idx];
       if (!item) return;
       matched++;
-      imported.notes[item.id] = row[2] ? String(row[2]) : "";
-      imported.recommendations[item.id] = row[3] ? String(row[3]) : "";
+      imported.notes[item.id] = text(row[2]);
+      imported.recommendations[item.id] = text(row[3]);
       const rag = row[4] ? String(row[4]) : "Not Set";
-      imported.ratings[item.id] = ["Red","Amber","Green","Met","Not Set"].includes(rag) ? rag : "Not Set";
-      imported.ownership[item.id] = row[5] ? String(row[5]) : "";
+      imported.ratings[item.id] = RAG_VALUES.includes(rag) ? rag : "Not Set";
+      imported.ownership[item.id] = text(row[5]);
     });
   });
   return { imported, matched };

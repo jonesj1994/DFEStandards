@@ -77,16 +77,27 @@ function loadState() {
     const raw = localStorage.getItem(STATE_KEY);
     if (!raw) return defaultState();
     const saved = JSON.parse(raw);
+    if (!saved || typeof saved !== "object") return defaultState();
     const def = defaultState();
-    // Merge so new items get defaults
-    return {
-      ...def,
-      ...saved,
-      ratings: { ...def.ratings, ...(saved.ratings || {}) },
-      notes: { ...def.notes, ...(saved.notes || {}) },
-      recommendations: { ...def.recommendations, ...(saved.recommendations || {}) },
-      ownership: { ...def.ownership, ...(saved.ownership || {}) }
+    // Start from the defaults and copy in only known standards, valid ratings and
+    // plain text, so tampered or out-of-date storage can't inject anything odd
+    const out = { ...def };
+    Object.keys(def).forEach(k => {
+      if (typeof def[k] === "string" && (typeof saved[k] === "string" || typeof saved[k] === "number")) out[k] = String(saved[k]);
+    });
+    // Not part of the assessment: remembers "keep this school" on the profile notice
+    if (typeof saved.profileKeptURN === "string" || typeof saved.profileKeptURN === "number") {
+      out.profileKeptURN = String(saved.profileKeptURN);
+    }
+    const pick = (field, ok) => {
+      const src = saved[field] && typeof saved[field] === "object" ? saved[field] : {};
+      Object.keys(def[field]).forEach(id => {
+        if (Object.prototype.hasOwnProperty.call(src, id) && ok(src[id])) out[field][id] = src[id];
+      });
     };
+    pick("ratings", v => RAG_VALUES.includes(v));
+    ["notes", "recommendations", "ownership"].forEach(f => pick(f, v => typeof v === "string"));
+    return out;
   } catch (e) {
     return defaultState();
   }
@@ -408,7 +419,7 @@ function renderCategory(catId) {
       <div class="item-header" data-item="${item.id}">
         <span class="item-number">${idx + 1}.</span>
         <span class="item-title">${escHtml(item.title)}</span>
-        <span class="rag-pill ${ragClass(rag)}">${rag}</span>
+        <span class="rag-pill ${ragClass(rag)}">${escHtml(rag)}</span>
         <span class="chevron">&#9660;</span>
       </div>
       <div class="item-body" id="body-${item.id}">
@@ -639,15 +650,18 @@ document.getElementById("menu-toggle").addEventListener("click", () => {
 
 // ── Helpers ────────────────────────────────────────────────────────────────
 function escHtml(str) {
-  return String(str)
+  return String(str == null ? "" : str)
     .replace(/&/g, "&amp;")
     .replace(/</g, "&lt;")
     .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;");
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
 }
 
+// Safe for attribute values AND element content (including <textarea>):
+// escapes every character that can end a value or start markup.
 function escAttr(str) {
-  return String(str).replace(/"/g, "&quot;");
+  return escHtml(str);
 }
 
 function showToast(msg) {

@@ -36,6 +36,29 @@
   const SNAPSHOT_MARKER = "school-tracker-snapshot";
   const CELL_CHUNK = 30000; // Excel cells hold at most 32,767 characters
 
+  // ── Import safety limits ─────────────────────────────────────────────────
+  // Imported files may come from other schools, so treat them as untrusted.
+  // Read options turn off features we never use (formulas, HTML, styles, macros).
+  const SAFE_XLSX_READ = Object.freeze({
+    type: "array", cellFormula: false, cellHTML: false, cellStyles: false,
+    cellDates: false, bookVBA: false, bookDeps: false
+  });
+  const MAX_FILE_BYTES = 10 * 1024 * 1024;      // a real tracker export is well under 1 MB
+  const MAX_SNAPSHOT_JSON = 5 * 1024 * 1024;    // characters of hidden-sheet JSON
+  const MAX_SNAPSHOT_CHUNKS = Math.ceil(MAX_SNAPSHOT_JSON / CELL_CHUNK);
+  const MAX_FIELD_LENGTH = 20000;               // characters per note/action/owner
+
+  // Throws a friendly error if a chosen file is too big or not an .xlsx file.
+  function checkImportFile(file) {
+    if (!file) throw new Error("no file was chosen");
+    if (!/\.xlsx$/i.test(file.name || "")) throw new Error(`"${file.name}" is not an .xlsx file`);
+    if (file.size > MAX_FILE_BYTES) {
+      throw new Error(`"${file.name}" is ${(file.size / 1048576).toFixed(1)} MB; tracker exports are under 1 MB, so files over 10 MB are refused`);
+    }
+  }
+
+  const hasOwn = (obj, key) => Object.prototype.hasOwnProperty.call(obj, key);
+
   // ── Framework definitions ─────────────────────────────────────────────────
   // "severity" orders statuses from worst (4) to best (0), so the trust view can
   // compare DfE and Cyber Essentials results on one scale.
@@ -88,16 +111,17 @@
     }
   };
 
+  function isFramework(id) { return typeof id === "string" && hasOwn(FRAMEWORKS, id); }
+
   function framework(id) {
-    const f = FRAMEWORKS[id];
-    if (!f) throw new Error("Unknown framework: " + id);
-    return f;
+    if (!isFramework(id)) throw new Error("Unknown framework: " + id);
+    return FRAMEWORKS[id];
   }
 
-  const str = v => (v == null ? "" : String(v).trim());
+  const str = v => limitText(v).trim();
   // Free text (notes, actions, owner) is kept exactly as typed, so a tracker
   // can restore it from a snapshot without changing it
-  const txt = v => (v == null ? "" : String(v));
+  const txt = v => limitText(v);
 
   // ── Building snapshots ────────────────────────────────────────────────────
   function emptySnapshot(frameworkId) {
@@ -166,7 +190,7 @@
   // other way round).
   function toTrackerState(frameworkId, raw) {
     const f = framework(frameworkId);
-    if (raw && raw.framework && raw.framework !== frameworkId && FRAMEWORKS[raw.framework]) {
+    if (raw && raw.framework && raw.framework !== frameworkId && isFramework(raw.framework)) {
       const e = new Error(`this file is a ${FRAMEWORKS[raw.framework].label} export, not ${f.label}. ` +
         `Open it in the ${FRAMEWORKS[raw.framework].shortLabel} tracker instead.`);
       e.code = "wrong-framework";
@@ -240,7 +264,7 @@
   function validate(raw) {
     const problems = [];
     if (!raw || typeof raw !== "object") return { snapshot: null, problems: ["not a snapshot object"] };
-    if (!FRAMEWORKS[raw.framework]) return { snapshot: null, problems: ["unknown framework " + JSON.stringify(raw.framework)] };
+    if (!isFramework(raw.framework)) return { snapshot: null, problems: ["unknown framework " + JSON.stringify(raw.framework)] };
     if (raw.schemaVersion > SCHEMA_VERSION) problems.push(`made by a newer version of the tracker (schema ${raw.schemaVersion}); some details may be missing`);
     const f = framework(raw.framework);
     const snap = emptySnapshot(raw.framework);
@@ -394,11 +418,23 @@
     const rows = XLSX.utils.sheet_to_json(ws, { header: 1, raw: true, defval: "" });
     if (!rows.length || rows[0][0] !== SNAPSHOT_MARKER) throw new Error("the hidden assessment sheet is not in the expected format");
     const n = Number(rows[0][2]) || rows.length - 1;
-    const json = rows.slice(1, 1 + n).map(r => String(r[0] == null ? "" : r[0])).join("");
+    if (!Number.isInteger(n) || n < 1 || n > MAX_SNAPSHOT_CHUNKS) throw new Error("the hidden assessment sheet is too large or damaged");
+    let json = "";
+    for (const r of rows.slice(1, 1 + n)) {
+      json += String(r[0] == null ? "" : r[0]);
+      if (json.length > MAX_SNAPSHOT_JSON) throw new Error("the hidden assessment sheet is too large");
+    }
     return JSON.parse(json);
   }
 
+  // Trims an imported text field to a sane length (it stays a plain string).
+  function limitText(s) {
+    const t = s == null ? "" : String(s);
+    return t.length > MAX_FIELD_LENGTH ? t.slice(0, MAX_FIELD_LENGTH) : t;
+  }
+
   window.AssessmentModel = {
+    SAFE_XLSX_READ, MAX_FILE_BYTES, checkImportFile, isFramework, limitText,
     SCHEMA_VERSION, SNAPSHOT_SHEET, FRAMEWORKS, framework,
     emptySnapshot, fromTrackerState, toTrackerState, readTrackerFile, validate, schoolKey, snapshotKey,
     summarise, certificationStatus, writeSnapshotSheet, readSnapshotSheet, parseDate

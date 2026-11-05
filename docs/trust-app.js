@@ -553,8 +553,13 @@
   }
 
   async function importFiles(fileList) {
-    const files = Array.from(fileList || []);
+    const MAX_FILES = 200; // two exports per school for even the largest trust
+    let files = Array.from(fileList || []);
     if (!files.length) return;
+    if (files.length > MAX_FILES) {
+      toast(`Only the first ${MAX_FILES} files were read. Import the rest in another batch.`);
+      files = files.slice(0, MAX_FILES);
+    }
     const status = document.getElementById("import-status");
     if (status) status.textContent = `Reading ${plural(files.length, "file")}…`;
     const results = [];
