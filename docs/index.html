@@ -217,16 +217,18 @@
       <h2 class="home-area-title" id="registers-title">Registers</h2>
       <p class="home-area-intro">The DfE standards ask schools to keep registers of their hardware and software up to date. Registers here are built around what the standards and Cyber Essentials need you to track.</p>
       <div class="home-grid">
-        <!-- REGISTER TILES: the software register tile replaces this placeholder when it is built -->
-        <div class="tracker-card tracker-card-soon" id="software-register-tile" style="--accent: #6f72af" aria-disabled="true">
-          <h3>Software Register <span class="soon-badge">Coming soon</span></h3>
+        <a class="tracker-card" href="register.html" id="software-register-tile" style="--accent: #6f72af">
+          <h3>Software Register</h3>
           <p>Keep a record of every piece of software and cloud service your school uses, with the details the DfE cyber security standard and Cyber Essentials ask for.</p>
           <ul>
             <li>Licensing, support and end-of-life dates</li>
             <li>Updates, MFA and data protection checks</li>
             <li>Owners, renewals and an Excel export</li>
           </ul>
-        </div>
+          <div class="tracker-school" id="school-register"></div>
+          <div class="tracker-progress" id="progress-register"></div>
+          <span class="btn">Open software register &#8594;</span>
+        </a>
       </div>
     </section>
 
@@ -258,6 +260,7 @@
   </main>
 
   <script src="school-lookup.js"></script>
+  <script src="register-data.js"></script>
   <script src="home-trust.js" defer></script>
   <script src="home.js"></script>
 </body>
