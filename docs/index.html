@@ -21,7 +21,18 @@
       border-top: 6px solid var(--accent); transition: box-shadow 0.15s, transform 0.15s;
     }
     .tracker-card:hover, .tracker-card:focus-visible { box-shadow: 0 6px 16px rgba(0,0,0,0.15); transform: translateY(-2px); }
-    .tracker-card h2 { margin: 0 0 8px; font-size: 20px; color: var(--dfe-navy); }
+    .tracker-card h3 { margin: 0 0 8px; font-size: 20px; color: var(--dfe-navy); }
+    .tracker-card-soon { cursor: default; opacity: 0.85; border-top-style: dashed; }
+    .tracker-card-soon:hover { box-shadow: 0 1px 3px rgba(0,0,0,0.12); transform: none; }
+    .soon-badge { display: inline-block; font-size: 11px; font-weight: 700; vertical-align: middle; margin-left: 6px;
+      padding: 2px 8px; border-radius: 10px; background: #f3f2f1; color: #505a5f; border: 1px solid #b1b4b6; }
+    .home-area { padding: 8px 0 0; }
+    .home-area-title { font-size: 22px; color: var(--dfe-navy); margin: 24px 16px 4px; }
+    .home-area-intro { margin: 0 16px; color: #505a5f; font-size: 14px; max-width: 720px; line-height: 1.5; }
+    .home-area .home-grid { padding-top: 16px; padding-bottom: 8px; grid-template-columns: repeat(auto-fill, minmax(min(100%, 380px), 1fr)); }
+    .home-jump { display: flex; flex-wrap: wrap; gap: 8px 18px; margin-top: 16px; }
+    .home-jump a { color: #fff; font-weight: 600; font-size: 15px; text-underline-offset: 3px; }
+    .home-jump a:focus-visible { outline: 3px solid #ffdd00; outline-offset: 2px; }
     .tracker-card p { margin: 0 0 16px; font-size: 14px; color: #505a5f; line-height: 1.5; flex: 1; }
     .tracker-card ul { margin: 0 0 20px; padding-left: 18px; font-size: 13px; color: #0b0c0c; line-height: 1.7; }
     .tracker-progress { font-size: 13px; color: #505a5f; margin-bottom: 14px; min-height: 18px; }
@@ -116,8 +127,13 @@
 <body>
   <header class="home-header">
     <div class="home-wrap">
-      <h1>School Compliance Trackers</h1>
-      <p>Choose a framework to assess your school or college against. Progress saves in this browser, and each tracker exports to Excel.</p>
+      <h1>School Compliance Toolkit</h1>
+      <p>Assess your school or college against the DfE digital and technology standards and Cyber Essentials, keep the registers they ask for, and bring a whole trust together. Everything saves in this browser and exports to Excel.</p>
+      <nav class="home-jump" aria-label="Areas of the toolkit">
+        <a href="#assessments">Assessments</a>
+        <a href="#registers">Registers</a>
+        <a href="#for-trusts">For trusts</a>
+      </nav>
     </div>
   </header>
 
@@ -165,45 +181,72 @@
       </section>
     </div>
 
-    <div class="home-grid">
-      <a class="tracker-card" href="dfe.html" style="--accent: var(--dfe-blue)">
-        <h2>DfE Digital &amp; Technology Standards</h2>
-        <p>Rate your school or college against the Department for Education's digital and technology standards, including the six core standards.</p>
-        <ul>
-          <li>12 standard areas, RAG rated</li>
-          <li>Notes, recommendations and ownership</li>
-          <li>School details filled in from your school search</li>
-        </ul>
-        <div class="tracker-school" id="school-dfe"></div>
-        <div class="tracker-progress" id="progress-dfe"></div>
-        <span class="btn">Open DfE tracker &#8594;</span>
-      </a>
+    <section class="home-area" id="assessments" aria-labelledby="assessments-title">
+      <h2 class="home-area-title" id="assessments-title">Assessments</h2>
+      <p class="home-area-intro">Rate your school against each framework, record evidence and actions, and export the results.</p>
+      <div class="home-grid">
+        <a class="tracker-card" href="dfe.html" style="--accent: var(--dfe-blue)">
+          <h3>DfE Digital &amp; Technology Standards</h3>
+          <p>Rate your school or college against the Department for Education's digital and technology standards, including the six core standards.</p>
+          <ul>
+            <li>12 standard areas, RAG rated</li>
+            <li>Notes, recommendations and ownership</li>
+            <li>School details filled in from your school search</li>
+          </ul>
+          <div class="tracker-school" id="school-dfe"></div>
+          <div class="tracker-progress" id="progress-dfe"></div>
+          <span class="btn">Open DfE tracker &#8594;</span>
+        </a>
 
-      <a class="tracker-card" href="ce.html" style="--accent: var(--rag-green)">
-        <h2>Cyber Essentials</h2>
-        <p>Check readiness for Cyber Essentials certification against the NCSC's current requirements, with notes on how each applies in schools.</p>
-        <ul>
-          <li>Scope plus the five technical controls</li>
-          <li>Evidence, actions and owners</li>
-          <li>Certification and renewal dates</li>
-        </ul>
-        <div class="tracker-school" id="school-ce"></div>
-        <div class="tracker-progress" id="progress-ce"></div>
-        <span class="btn">Open Cyber Essentials tracker &#8594;</span>
-      </a>
+        <a class="tracker-card" href="ce.html" style="--accent: var(--rag-green)">
+          <h3>Cyber Essentials</h3>
+          <p>Check readiness for Cyber Essentials certification against the NCSC's current requirements, with notes on how each applies in schools.</p>
+          <ul>
+            <li>Scope plus the five technical controls</li>
+            <li>Evidence, actions and owners</li>
+            <li>Certification and renewal dates</li>
+          </ul>
+          <div class="tracker-school" id="school-ce"></div>
+          <div class="tracker-progress" id="progress-ce"></div>
+          <span class="btn">Open Cyber Essentials tracker &#8594;</span>
+        </a>
+      </div>
+    </section>
 
-      <a class="tracker-card" href="trust.html" id="trust-tile" style="--accent: var(--dfe-navy)">
-        <h2>Trust Overview</h2>
-        <p>For multi-academy trusts: bring together the tracker exports from each of your schools and see the whole trust at a glance.</p>
-        <ul>
-          <li>Every academy against every standard area</li>
-          <li>Core standards, filtering and Cyber Essentials readiness</li>
-          <li>Outstanding actions and a trust Excel export</li>
-        </ul>
-        <div class="tracker-progress" id="progress-trust"></div>
-        <span class="btn">Open trust overview &#8594;</span>
-      </a>
-    </div>
+    <section class="home-area" id="registers" aria-labelledby="registers-title">
+      <h2 class="home-area-title" id="registers-title">Registers</h2>
+      <p class="home-area-intro">The DfE standards ask schools to keep registers of their hardware and software up to date. Registers here are built around what the standards and Cyber Essentials need you to track.</p>
+      <div class="home-grid">
+        <!-- REGISTER TILES: the software register tile replaces this placeholder when it is built -->
+        <div class="tracker-card tracker-card-soon" id="software-register-tile" style="--accent: #6f72af" aria-disabled="true">
+          <h3>Software Register <span class="soon-badge">Coming soon</span></h3>
+          <p>Keep a record of every piece of software and cloud service your school uses, with the details the DfE cyber security standard and Cyber Essentials ask for.</p>
+          <ul>
+            <li>Licensing, support and end-of-life dates</li>
+            <li>Updates, MFA and data protection checks</li>
+            <li>Owners, renewals and an Excel export</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <section class="home-area" id="for-trusts" aria-labelledby="for-trusts-title">
+      <h2 class="home-area-title" id="for-trusts-title">For trusts</h2>
+      <p class="home-area-intro">Bring together the exports from each of your academies. Use the <strong>I'm a trust</strong> tab above to find your trust first.</p>
+      <div class="home-grid">
+        <a class="tracker-card" href="trust.html" id="trust-tile" style="--accent: var(--dfe-navy)">
+          <h3>Trust Overview</h3>
+          <p>For multi-academy trusts: bring together the tracker exports from each of your schools and see the whole trust at a glance.</p>
+          <ul>
+            <li>Every academy against every standard area</li>
+            <li>Core standards, filtering and Cyber Essentials readiness</li>
+            <li>Outstanding actions and a trust Excel export</li>
+          </ul>
+          <div class="tracker-progress" id="progress-trust"></div>
+          <span class="btn">Open trust overview &#8594;</span>
+        </a>
+      </div>
+    </section>
 
     <p class="home-footer">
       Sources:
