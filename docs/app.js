@@ -35,6 +35,9 @@ function defaultState() {
   };
 }
 
+// Declared before loadState() runs, because loadState() uses it
+const RAG_VALUES = ["Not Set", "Red", "Amber", "Green", "Met"];
+
 let state = loadState();
 
 // ── Shared school profile (chosen on the home page) ────────────────────────
@@ -157,7 +160,6 @@ function updateSidebarActive() {
 }
 
 // ── RAG helpers ────────────────────────────────────────────────────────────
-const RAG_VALUES = ["Not Set", "Red", "Amber", "Green", "Met"];
 
 function ragClass(val) {
   if (val === "Red") return "red";
