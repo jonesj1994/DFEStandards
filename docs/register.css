@@ -1,0 +1,106 @@
+/* Software register: extras on top of style.css */
+/* Let wide tables scroll inside their own box instead of widening the page */
+#main, #content { min-width: 0; }
+.reg-page { max-width: 960px; min-width: 0; }
+.reg-page.reg-wide { max-width: 1200px; }
+.reg-page h2 { margin-top: 0; }
+.reg-page h2:focus { outline: none; }
+.reg-muted { color: #505a5f; font-size: 13px; line-height: 1.5; }
+.reg-school { font-size: 14px; color: #505a5f; overflow-wrap: anywhere; }
+.reg-actions { display: flex; gap: 8px; flex-wrap: wrap; margin: 12px 0; }
+a.btn { text-decoration: none; }
+.btn:focus-visible, .reg-sort:focus-visible, a:focus-visible,
+.form-field input:focus-visible, .form-field select:focus-visible, .form-field textarea:focus-visible,
+.reg-check input:focus-visible, details summary:focus-visible {
+  outline: 3px solid #ffdd00; outline-offset: 1px;
+}
+.visually-hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+/* Dashboard */
+.reg-counts { grid-template-columns: repeat(auto-fill, minmax(min(100%, 180px), 1fr)); margin-top: 12px; }
+.reg-count-num { font-size: 32px; font-weight: 700; color: var(--dfe-navy); line-height: 1.1; }
+.reg-count-sub { font-size: 12px; color: #505a5f; }
+.reg-attention { background: #fff; border-radius: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); margin-bottom: 10px; }
+.reg-attention summary { padding: 10px 14px; cursor: pointer; font-weight: 700; font-size: 14px; }
+.reg-attention ul { margin: 0; padding: 0 14px 12px 32px; font-size: 13px; line-height: 1.6; }
+.reg-attention li { margin-bottom: 4px; overflow-wrap: anywhere; }
+.reg-attention li .rag-pill { margin: 0 4px; }
+.reg-badge { display: inline-block; min-width: 22px; text-align: center; font-size: 12px; padding: 1px 7px; border-radius: 10px; background: #f3f2f1; border: 1px solid #b1b4b6; }
+.reg-two-col { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr)); gap: 16px; }
+.reg-evidence { margin-top: 20px; font-size: 13px; line-height: 1.6; }
+.reg-evidence ul { padding-left: 20px; }
+.card-body { padding: 16px 18px; }
+
+/* List */
+.reg-filters { display: grid; grid-template-columns: 2fr repeat(4, 1fr); gap: 10px; margin: 8px 0; }
+.reg-table-wrap { overflow-x: auto; }
+.reg-table { min-width: 860px; }
+.reg-table th { padding: 0; }
+.reg-sort {
+  background: none; border: none; color: #fff; font: inherit; font-weight: 600; cursor: pointer;
+  padding: 10px 12px; width: 100%; text-align: left; white-space: nowrap;
+}
+.reg-sort:hover { text-decoration: underline; }
+.reg-table td { vertical-align: top; overflow-wrap: anywhere; }
+.reg-table td:first-child a { color: var(--dfe-blue); }
+.reg-table td.reg-nowrap { white-space: nowrap; overflow-wrap: normal; }
+.reg-reason-count { display: block; font-size: 11px; color: #505a5f; margin-top: 3px; }
+.reg-row-actions { white-space: nowrap; }
+.reg-row-actions .btn { margin: 0 4px 4px 0; }
+
+/* Edit form */
+.reg-group { border: none; padding: 16px 18px; margin: 0 0 16px; min-width: 0; }
+.reg-group > legend {
+  float: left; width: 100%; padding: 0; margin-bottom: 4px;
+  font-size: 17px; font-weight: 700; color: var(--dfe-navy);
+}
+.reg-group > legend + * { clear: both; }
+.reg-field { min-width: 0; }
+.reg-field[hidden] { display: none; }
+.reg-help { font-size: 12px; color: #505a5f; margin: 4px 0 0; line-height: 1.4; }
+.reg-why { font-size: 11px; color: #505a5f; margin: 3px 0 0; line-height: 1.4; overflow-wrap: anywhere; }
+.reg-why:empty { display: none; }
+.reg-why a { color: var(--dfe-blue); }
+.reg-basis { display: inline-block; font-size: 10px; font-weight: 700; padding: 1px 6px; border-radius: 3px; vertical-align: middle; margin-left: 4px; white-space: nowrap; }
+.reg-basis.req { background: #e8f1f8; color: var(--dfe-navy); border: 1px solid #9cc0de; }
+.reg-basis.good { background: #f3f2f1; color: #505a5f; border: 1px solid #d0d0d0; }
+.reg-checks { border: none; padding: 0; margin: 0; min-width: 0; }
+.reg-checks legend { font-size: 12px; font-weight: 600; margin-bottom: 4px; padding: 0; }
+.reg-check { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; margin: 2px 16px 4px 0; cursor: pointer; }
+.form-field .reg-check input { width: auto; }
+.reg-link-preview { font-size: 12px; margin-top: 4px; }
+.reg-link-preview a { color: var(--dfe-blue); }
+.reg-warn { color: var(--rag-red); }
+.reg-rag-panel { border-left: 6px solid #b1b4b6; position: sticky; top: 0; z-index: 5; }
+.reg-rag-panel.red { border-left-color: var(--rag-red); }
+.reg-rag-panel.amber { border-left-color: var(--rag-amber); }
+.reg-rag-panel.green { border-left-color: var(--rag-green); }
+.reg-rag-head { font-size: 14px; }
+.reg-reasons { margin: 8px 0 0; padding-left: 0; list-style: none; font-size: 13px; line-height: 1.5; max-height: 30vh; overflow-y: auto; }
+.reg-reasons li { margin-bottom: 4px; }
+
+/* Quick add */
+.reg-starters { list-style: none; padding: 0; margin: 0 0 16px; columns: 2 260px; }
+.reg-starters li { break-inside: avoid; }
+.reg-starters .reg-check input:disabled + * { opacity: 0.7; }
+
+/* Field guide */
+.reg-guide { min-width: 820px; }
+.reg-guide td { vertical-align: top; font-size: 12px; }
+.reg-guide td:first-child { white-space: nowrap; }
+.reg-guide a { color: var(--dfe-blue); display: block; margin-bottom: 3px; }
+.reg-rule-list { margin: 0; padding-left: 18px; }
+.rag-key-row { align-items: flex-start; }
+
+/* Dialog */
+#reg-dialog { border: none; border-radius: 8px; padding: 20px 22px; max-width: min(560px, calc(100vw - 32px)); box-shadow: 0 10px 30px rgba(0,0,0,0.3); }
+#reg-dialog::backdrop { background: rgba(11,12,12,0.5); }
+#reg-dialog h2 { margin: 0 0 10px; font-size: 18px; color: var(--dfe-navy); }
+#reg-dialog p { font-size: 14px; line-height: 1.5; margin: 0 0 10px; overflow-wrap: anywhere; }
+.reg-dialog-buttons { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 14px; }
+
+@media (max-width: 768px) {
+  .reg-filters { grid-template-columns: 1fr 1fr; }
+  .reg-filters .form-field:first-child { grid-column: 1 / -1; }
+  #toast { left: 16px; right: 16px; bottom: 16px; }
+}
