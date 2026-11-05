@@ -1,0 +1,13 @@
+# Keeps the GitHub Actions used by the workflows up to date.
+# Actions are pinned to exact commit SHAs (with the version in a comment);
+# Dependabot opens a pull request when a newer release is published.
+version: 2
+updates:
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    groups:
+      github-actions:
+        patterns: ["*"]
