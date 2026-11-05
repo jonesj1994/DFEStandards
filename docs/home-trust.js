@@ -9,7 +9,7 @@
   const AREA_KEY = "home_area_v1";   // last open area: "school" or "trust"
   const SAMPLE = 5;                  // academy names shown in the summary
   const $ = id => document.getElementById(id);
-  const esc = s => String(s == null ? "" : s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+  const esc = s => String(s == null ? "" : s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
 
   // localStorage can be unavailable (private browsing, blocked storage)
   function load(key) { try { return JSON.parse(localStorage.getItem(key) || "null"); } catch (e) { return null; } }

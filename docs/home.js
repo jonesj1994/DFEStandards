@@ -10,7 +10,7 @@ function giasHref(s) {
 const SL = window.SchoolLookup;
 const KEYS = { dfe: "dfe_tracker_v1", ce: "ce_tracker_v1" };
 const $ = id => document.getElementById(id);
-const esc = s => String(s == null ? "" : s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+const esc = s => String(s == null ? "" : s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
 
 function readTracker(key) {
   try { return JSON.parse(localStorage.getItem(key) || "null"); } catch (e) { return null; }
