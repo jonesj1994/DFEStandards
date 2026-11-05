@@ -28,7 +28,7 @@
   // exports can be refused with a clear message
   const OTHER_EXPORTS = [
     ["_software_register", "Software Register", "register.html"],
-    ["_hardware_register", "Hardware and Asset Register", "index.html"],
+    ["_hardware_register", "Hardware and Asset Register", "hardware.html"],
     ["_backup_register", "Backup and Disaster Recovery Register", "index.html"],
     ["_incident_log", "Cyber Incident and Breach Log", "index.html"]
   ];
