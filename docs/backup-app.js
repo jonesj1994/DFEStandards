@@ -25,10 +25,10 @@
   const PRIORITY_ORDER = { Critical: 0, High: 1, "": 2, Normal: 3 };
   // Other registers' hidden sheets, so their files get a clear message
   const OTHER_REGISTERS = [
-    ["_software_register", "Software Register"],
-    ["_hardware_register", "Hardware and Asset Register"],
-    ["_accounts_register", "User Accounts and Access Privileges Register"],
-    ["_incident_log", "Cyber Incident and Breach Log"]
+    ["_software_register", "Software Register", "register.html"],
+    ["_hardware_register", "Hardware and Asset Register", "hardware.html"],
+    ["_accounts_register", "User Accounts and Access Privileges Register", "accounts.html"],
+    ["_incident_log", "Cyber Incident and Breach Log", "the home page"]
   ];
   const VIEW_TITLES = {
     dashboard: TITLE, list: "Backup list", edit: "Edit backup", log: "Restore test and DR log", logedit: "Edit log entry",
@@ -36,6 +36,7 @@
   };
   // Dashboard "needs attention" lists: [title, reason codes]
   const ATTENTION = [
+    ["Text that looks like a password or key", ["possible-secret"]],
     ["Not backed up, or not known", ["no-backup"]],
     ["Relying on the supplier's standard retention", ["supplier-only"]],
     ["No offline or off-network copy", ["no-offline"]],
@@ -1229,7 +1230,7 @@
     if (wb.Sheets[SHEET_ITEMS] && (!a1 || a1 === TITLE)) return { state: readVisible(wb), from: "visible", notes };
     // Not a backup register: say what it is if we can
     const other = OTHER_REGISTERS.find(([sheetName]) => wb.Sheets[sheetName]);
-    if (other) throw new Error(`this file is a ${other[1]} export, not a backup register. Open it on the ${other[1]} page instead.`);
+    if (other) throw new Error(`this file is a ${other[1]} export, not a backup register. Open it in the ${other[1]} (${other[2]}) instead.`);
     let framework = "";
     try {
       const snap = AM && AM.readSnapshotSheet(XLSX, wb);

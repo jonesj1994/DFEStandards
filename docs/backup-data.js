@@ -137,6 +137,10 @@
     "NCSC", "MIS supplier", "Data protection officer", "Trust or local authority", "Disaster recovery lead", "Other"
   ];
 
+  // Text that looks like a secret was typed in, e.g. "password: abc" or
+  // "recovery key = 1234". Only a warning: the register must hold locations only.
+  const SECRET_RE = /\b(pass ?words?|passwd|pwd|pass ?codes?|pass ?phrases?|pins?|recovery (codes?|keys?)|encryption keys?|bitlocker keys?|decryption keys?|backup codes?|secrets?|api keys?|private keys?|mfa codes?|otp)\s*[:=]\s*\S/i;
+  const looksSecret = v => typeof v === "string" && SECRET_RE.test(v);
   const important = e => e.priority !== "Normal";           // Critical, High, or not yet set
   const isCloud = e => CLOUD_HOSTING.includes(e.hosting);
   const backedUp = e => e.backedUp === "Yes";
@@ -649,6 +653,9 @@
     if (hasBackup && e.encrypted !== "Yes") amber("not-encrypted", e.encrypted === "No" ? "Backups are not encrypted." : "Not confirmed that backups are encrypted.");
 
     // Ownership, priority, DR plan, review
+    if (FIELDS.some(f => (f.type === "text" || f.type === "textarea") && looksSecret(e[f.key]))) {
+      amber("possible-secret", "Some text looks like a password or key (for example \"password: …\"). Record only where it is kept, then remove it.");
+    }
     if (!String(e.dataOwner || "").trim()) amber("no-owner", "No data owner named.");
     if (!e.priority) amber("no-priority", "No recovery priority set (it is checked as critical or high until it is).");
     if (e.inDrPlan !== "Yes") amber("not-in-plan", "Not confirmed as included in the disaster recovery or business continuity plan.");
@@ -682,6 +689,9 @@
     const tested = lastDrTest(state);
     if (!tested) amber("dr-test", "No test of the disaster recovery plan recorded. Test it at least once a year.");
     else if (tested < addMonths(t, -THRESHOLDS.drTestMonths)) amber("dr-test", `The disaster recovery plan was last tested on ${formatDate(tested)}, more than ${THRESHOLDS.drTestMonths} months ago.`);
+    if (PLAN_FIELDS.some(f => looksSecret(p[f.key])) || (p.contacts || []).some(c => looksSecret(c.notes) || looksSecret(c.organisation))) {
+      amber("possible-secret", "Some text looks like a password or key (for example \"password: …\"). Record only where it is kept, then remove it.");
+    }
     if (!String(p.drLead || "").trim()) amber("plan-detail", "Nobody is named as owning the backup and DR plans.");
     if (!String(p.planLocation || "").trim()) amber("plan-detail", "Where the disaster recovery plan is kept is not recorded.");
     if (p.hardCopy !== "Yes") amber("plan-detail", "No printed copy of the plan confirmed.");
@@ -742,6 +752,7 @@
       "Backups not confirmed as encrypted.",
       `No check of backup success recorded in the last ${THRESHOLDS.successCheckWarnDays} days.`,
       "No data owner named, no priority set, or not in the disaster recovery plan.",
+      "Some text looks like a password or key (for example \"password: …\"). The register must hold only where keys and passwords are kept.",
       `Not reviewed in the last ${THRESHOLDS.reviewMonths} months.`,
       `DR plan: not tested in the last ${THRESHOLDS.drTestMonths} months, plan location, printed copy, staff summary, offline copy location or owner not recorded, or key contacts missing (IT support, internet provider, insurer or RPA).`
     ],
@@ -753,7 +764,7 @@
     STATE_KEY, SCHEMA_VERSION, MAX_ITEMS, MAX_LOG, MAX_CONTACTS, THRESHOLDS, SOURCES, RULES,
     GROUPS, FIELDS, FIELD_BY_KEY, LOG_GROUPS, LOG_FIELDS, LOG_FIELD_BY_KEY, PLAN_FIELDS, PLAN_FIELD_BY_KEY, CONTACT_FIELDS,
     CATEGORIES, HOSTING, PRIORITIES, STATUSES, LOG_TYPES, RESULTS, CONTACT_ROLES, STARTERS, RTO_OPTIONS, RPO_OPTIONS,
-    SUPPLIER_DEFAULT, important, isCloud, cleanValue,
+    SUPPLIER_DEFAULT, important, isCloud, cleanValue, looksSecret,
     blankEntry, sanitiseEntry, blankLog, sanitiseLog, blankPlan, sanitisePlan, blankContact, sanitiseContact,
     emptyState, sanitiseState, loadState,
     lastRestore, rtoHours, rpoHours, evaluate, evaluatePlan, lastDrTest, logNeedsAttention, summarise,

@@ -155,6 +155,7 @@ Thresholds are constants at the top of `backup-data.js` (`THRESHOLDS`) and are s
 8. No check of backup success recorded in the last **31 days**.
 9. No data owner, no priority, or not confirmed as in the DR plan.
 10. Not reviewed in the last **12 months**.
+11. Some text looks like a password or key, for example "password: …" or "recovery key = …". The register must hold only **where** secrets are kept, so this warns the school to move it.
 
 **Green**: none of the above. **Retired**: kept for the record and not checked. A row marked "Not needed (no school data)" is only asked to be confirmed once a year.
 
@@ -162,7 +163,7 @@ Thresholds are constants at the top of `backup-data.js` (`THRESHOLDS`) and are s
 
 **Red**: the backup plan, or the DR plan, has not been reviewed in the last **12 months** (or has no review date).
 
-**Amber**: the DR plan has not been tested in the last 12 months (a DR exercise or real recovery in the log counts); no owner, plan location, printed copy, staff summary or offline copy location recorded; key contacts missing for the IT support provider, internet service provider, or insurer or RPA.
+**Amber**: text in the plan or contacts that looks like a password or key; the DR plan has not been tested in the last 12 months (a DR exercise or real recovery in the log counts); no owner, plan location, printed copy, staff summary or offline copy location recorded; key contacts missing for the IT support provider, internet service provider, or insurer or RPA.
 
 The dashboard shows the plan's result alongside the systems. The home tile counts the plan as one item needing attention if it is Red or Amber.
 
@@ -180,7 +181,7 @@ An entry "needs follow-up" when its actions are marked open, or when the result 
 
 - Saved in the browser under `backup_register_v1`, together with the school name and URN (filled in from the school chosen on the home page).
 - **Export** writes an Excel file with the sheets *Info*, *Backups*, *Restore log*, *DR plan*, *Needs attention* and *Field guide*, plus a hidden `_backup_register` sheet holding the exact register as JSON (split into 30,000-character cells).
-- **Import** reads the hidden sheet first. If it is missing or damaged, it reads the visible *Backups*, *Restore log* and *DR plan* sheets; log entries are linked back to systems by name. It offers **merge** (by ID, then by name) or **replace**. Files over 10 MB, non-`.xlsx` files, tracker exports and other registers' exports are refused with a message saying what the file is.
+- **Import** reads the hidden sheet first. If it is missing or damaged, it reads the visible *Backups*, *Restore log* and *DR plan* sheets; log entries are linked back to systems by name. It offers **merge** (by ID, then by name) or **replace**. Files over 10 MB, non-`.xlsx` files, tracker exports and other registers' exports (software, hardware, accounts, incidents) are refused with a message saying what the file is and which page opens it.
 - **CSV import** adds a basic list (System or data, Category, Data owner, Priority).
 - Everything read from storage or a file is validated field by field: only known fields, only listed options for choices, real dates, hours as numbers, phone numbers as digits, text capped at 20,000 characters, and log links only to systems that exist.
 
