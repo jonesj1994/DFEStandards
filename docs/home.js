@@ -55,6 +55,24 @@ function renderTrackerCards() {
   });
 }
 
+// ── Register tiles added by each register ─────────────────────────────────
+// A register's own home script (loaded in its REGISTER SLOT at the bottom of
+// index.html, after this file) calls HomeTiles.add(fn). fn receives helpers:
+//   esc(text)  - escape text for HTML
+//   $(id)      - document.getElementById
+//   schoolLine(name, urn) - the "School: … (URN …)" HTML used on every tile
+// and fills in its own tile, e.g. its progress line. Errors in one tile never
+// stop the rest of the home page.
+window.HomeTiles = {
+  add(fn) {
+    try {
+      fn({ esc, $, schoolLine: (name, urn) => name ? `School: <strong>${esc(name)}</strong>${urn ? " (URN " + esc(urn) + ")" : ""}` : "" });
+    } catch (e) {
+      console.warn("Home tile failed:", e);
+    }
+  }
+};
+
 // Software register tile: "12 items · 2 need attention", worked out with the
 // same rules as the register page (register-data.js)
 function renderRegisterCard() {
