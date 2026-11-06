@@ -156,7 +156,12 @@ body {
   .report { max-width: none; margin: 0; padding: 0; box-shadow: none; font-size: 10.5pt; }
   * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
   .page-break { break-before: page; page-break-before: always; }
-  h2, h3 { break-after: avoid; page-break-after: avoid; }
-  .stat, .commentary { break-inside: avoid; page-break-inside: avoid; }
+  /* Keep whole blocks on one page: if one would run over, it starts on the next
+     page instead. A block taller than a page still has to split. */
+  .keep-together, .area-block, .item, .stat, .stat-row, .commentary, .key-table, .sources li {
+    break-inside: avoid; page-break-inside: avoid;
+  }
+  /* Keep a heading and its intro line with what follows */
+  h2, h3, .intro { break-after: avoid; page-break-after: avoid; }
   thead { display: table-header-group; }
 }

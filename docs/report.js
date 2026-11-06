@@ -149,7 +149,7 @@
     if (open) bullets.push(`${plural(open, IS_DFE ? "standard is" : "requirement is", IS_DFE ? "standards are" : "requirements are")} not yet fully met. These are listed under Priority actions.`);
     if (notSet) bullets.push(`<strong>${plural(notSet, IS_DFE ? "standard has" : "requirement has", IS_DFE ? "standards have" : "requirements have")} not been assessed yet</strong>, so this report is incomplete.`);
 
-    return `<section class="section" aria-labelledby="h-summary">
+    return `<section class="section keep-together" aria-labelledby="h-summary">
       <h2 id="h-summary">1. Summary</h2>
       <div class="stat-row">${cards.join("")}</div>
       ${countChips(t.counts)}
@@ -184,7 +184,7 @@
         <td class="num">${c.done} of ${c.total}</td>
         <td class="bar-cell">${bar(c.counts, c.total)}</td>
       </tr>`).join("");
-    return `<section class="section" aria-labelledby="h-areas">
+    return `<section class="section keep-together" aria-labelledby="h-areas">
       <h2 id="h-areas">2. Results by ${IS_DFE ? "standard area" : "control area"}</h2>
       <p class="intro">${IS_DFE ? "Each area takes its lowest rating, so an area is only Green when every standard in it is Green." : "Each area takes its lowest result, so an area is only Met when every requirement in it is met or not applicable."}</p>
       <table class="data-table areas">
@@ -255,7 +255,7 @@
     const sources = IS_DFE
       ? [["Meeting digital and technology standards in schools and colleges (GOV.UK)", STANDARDS_INDEX_URL]]
       : [["Cyber Essentials requirements (NCSC): " + CE_VERSION, CE_SOURCE_URL], ["Cyber Essentials overview (NCSC)", CE_OVERVIEW_URL]];
-    return `<section class="section about" aria-labelledby="h-about">
+    return `<section class="section about keep-together" aria-labelledby="h-about">
       <h2 id="h-about">${n}. About this report</h2>
       <h3>Rating key</h3>
       <table class="key-table"><tbody>${KEY.map(([v, m]) => `<tr><td>${pill(v)}</td><td>${esc(m)}</td></tr>`).join("")}</tbody></table>
@@ -287,7 +287,7 @@
     document.title = `${school} - ${TITLE} governors' report`;
 
     const parts = [
-      `<header class="cover">
+      `<header class="cover keep-together">
         <p class="kicker">Report to governors</p>
         <h1>${esc(TITLE)}</h1>
         <p class="school">${esc(snap.school.name || "School name not entered")}</p>
