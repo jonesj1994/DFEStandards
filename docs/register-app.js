@@ -86,8 +86,9 @@
     saveTimer = setTimeout(() => {
       if (saveNow()) {
         const ind = $("save-indicator");
+        clearTimeout(save.shown);
         ind.classList.add("saved");
-        setTimeout(() => ind.classList.remove("saved"), 2000);
+        save.shown = setTimeout(() => ind.classList.remove("saved"), 2000);
       }
     }, 300);
   }

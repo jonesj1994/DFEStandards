@@ -147,14 +147,29 @@ let saveTimer = null;
 function saveState() {
   clearTimeout(saveTimer);
   saveTimer = setTimeout(() => {
-    localStorage.setItem(STATE_KEY, JSON.stringify(state));
-    const ind = document.getElementById("save-indicator");
-    if (ind) {
-      ind.textContent = "✓ Saved";
-      ind.classList.add("saved");
-      setTimeout(() => ind.classList.remove("saved"), 2000);
-    }
+    let ok = true;
+    try { localStorage.setItem(STATE_KEY, JSON.stringify(state)); } catch (e) { ok = false; }
+    showSaved(ok);
   }, 500);
+}
+
+// Top bar indicator: "✓ Saved" for a moment after each save, or a warning that
+// stays until the next successful save
+let savedTimer = null;
+function showSaved(ok) {
+  const ind = document.getElementById("save-indicator");
+  if (!ind) return;
+  clearTimeout(savedTimer);
+  ind.classList.remove("saved", "error");
+  if (ok) {
+    ind.textContent = "\u2713 Saved";
+    ind.classList.add("saved");
+    savedTimer = setTimeout(() => ind.classList.remove("saved"), 2000);
+  } else {
+    ind.textContent = "\u26A0 Not saved";
+    ind.classList.add("error");
+    showToast("Could not save in this browser. Export to Excel to keep a copy.");
+  }
 }
 
 // ── Routing ────────────────────────────────────────────────────────────────
