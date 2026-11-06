@@ -15,16 +15,21 @@
 //   assessor: "Jane Smith",
 //   assessmentDate: "2026-10-01",           // as entered in the tracker (may be "")
 //   exportedAt: "2026-11-04T21:00:00.000Z", // when the snapshot was made
-//   items: { "<itemId>": { status, notes, actions, owner } },
+//   items: { "<itemId>": { status, notes, actions, owner, date, dateType } },
 //   certification: {                        // Cyber Essentials only
 //     level, body, number, certifiedOn, renewalDue, scope
 //   }
 // }
 // Field meanings per framework:
 //   DfE  status = RAG rating, notes = "Current Status & Notes",
-//        actions = "Recommendations", owner = "Ownership"
+//        actions = "Recommendations", owner = "Ownership",
+//        date = target date "YYYY-MM-DD" (or ""), dateType = "complete" (complete
+//        by) or "review" (next review). The tracker fixes the type when a date is
+//        entered; "" (older or hand-made data) is read as next review for a Green
+//        standard, otherwise complete by. Older files have neither.
 //   CE   status = Status, notes = "Evidence / current position",
 //        actions = "Action needed", owner = "Owner"
+//        (date and dateType are always "" for Cyber Essentials)
 //
 // This file needs data.js (STANDARDS_DATA) and/or ce-data.js (CE_DATA) loaded
 // first for the framework it is asked about. It has no other dependencies.
@@ -156,8 +161,12 @@
       snap.assessor = str(s.assessorName);
       snap.assessmentDate = str(s.assessmentDate);
       const r = s.ratings || {}, n = s.notes || {}, a = s.recommendations || {}, o = s.ownership || {};
+      const d = s.targetDates || {}, dt = s.dateTypes || {};
       items.forEach(i => {
-        snap.items[i.id] = { status: validStatus(f, r[i.id]), notes: txt(n[i.id]), actions: txt(a[i.id]), owner: txt(o[i.id]) };
+        snap.items[i.id] = {
+          status: validStatus(f, r[i.id]), notes: txt(n[i.id]), actions: txt(a[i.id]), owner: txt(o[i.id]),
+          date: validDate(d[i.id]), dateType: validDateType(dt[i.id])
+        };
       });
     } else {
       const org = s.org || {};
@@ -173,7 +182,7 @@
       };
       const st = s.status || {}, ev = s.evidence || {}, ac = s.actions || {}, ow = s.owner || {};
       items.forEach(i => {
-        snap.items[i.id] = { status: validStatus(f, st[i.id]), notes: txt(ev[i.id]), actions: txt(ac[i.id]), owner: txt(ow[i.id]) };
+        snap.items[i.id] = { status: validStatus(f, st[i.id]), notes: txt(ev[i.id]), actions: txt(ac[i.id]), owner: txt(ow[i.id]), date: "", dateType: "" };
       });
     }
     return snap;
@@ -203,19 +212,20 @@
     const snap = v.snapshot;
     const sc = snap.school;
     const items = f.categories().flatMap(c => c.items);
-    const get = id => snap.items[id] || { status: "Not Set", notes: "", actions: "", owner: "" };
+    const get = id => snap.items[id] || { status: "Not Set", notes: "", actions: "", owner: "", date: "", dateType: "" };
     let state;
     if (frameworkId === "dfe") {
       state = {
         schoolName: sc.name, schoolURN: sc.urn, schoolDfENumber: sc.dfeNumber, schoolTrust: sc.trust,
         schoolType: sc.type, schoolPhase: sc.phase, schoolLA: sc.la, schoolPupils: sc.pupils,
         assessorName: snap.assessor, assessmentDate: snap.assessmentDate,
-        ratings: {}, notes: {}, recommendations: {}, ownership: {}
+        ratings: {}, notes: {}, recommendations: {}, ownership: {}, targetDates: {}, dateTypes: {}
       };
       items.forEach(i => {
         const d = get(i.id);
         state.ratings[i.id] = d.status; state.notes[i.id] = d.notes;
         state.recommendations[i.id] = d.actions; state.ownership[i.id] = d.owner;
+        state.targetDates[i.id] = d.date; state.dateTypes[i.id] = d.dateType;
       });
     } else {
       const c = snap.certification || {};
@@ -261,6 +271,38 @@
     return f.statuses.includes(v) ? v : "Not Set";
   }
 
+  // Target dates: a real calendar date "YYYY-MM-DD", otherwise ""
+  function validDate(v) {
+    v = str(v);
+    const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(v);
+    if (!m) return "";
+    const d = new Date(Date.UTC(+m[1], +m[2] - 1, +m[3]));
+    return d.getUTCFullYear() === +m[1] && d.getUTCMonth() === +m[2] - 1 && d.getUTCDate() === +m[3] ? v : "";
+  }
+  // "complete" (complete by) or "review" (next review); "" if not chosen
+  const DATE_TYPES = ["complete", "review"];
+  function validDateType(v) { v = str(v); return DATE_TYPES.includes(v) ? v : ""; }
+  // The date type actually in use for a DfE standard (an unchosen type is read
+  // from the rating)
+  function effectiveDateType(dateType, status) {
+    return DATE_TYPES.includes(dateType) ? dateType : (status === "Green" ? "review" : "complete");
+  }
+  // Where a dated standard stands: "done" (a complete-by date on a Green standard),
+  // "overdue", "soon" (within soonDays, default 30) or "ok". null if there's no date.
+  function dateStatus(date, dateType, status, now, soonDays) {
+    const d = parseDate(validDate(date));
+    if (!d) return null;
+    const type = effectiveDateType(dateType, status);
+    const t = now ? new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate())) : today();
+    const daysLeft = daysBetween(t, d);
+    let state;
+    if (type === "complete" && status === "Green") state = "done";
+    else if (daysLeft < 0) state = "overdue";
+    else if (daysLeft <= (soonDays == null ? 30 : soonDays)) state = "soon";
+    else state = "ok";
+    return { type, date: isoDate(d), daysLeft, state };
+  }
+
   // Check and tidy a snapshot from any source. Returns { snapshot, problems }.
   // A snapshot with problems is still returned where it can be used.
   function validate(raw) {
@@ -280,7 +322,11 @@
     Object.entries(raw.items || {}).forEach(([id, v]) => {
       if (!known.has(id)) { unknown++; return; }
       v = v || {};
-      snap.items[id] = { status: validStatus(f, v.status), notes: txt(v.notes), actions: txt(v.actions), owner: txt(v.owner) };
+      snap.items[id] = {
+        status: validStatus(f, v.status), notes: txt(v.notes), actions: txt(v.actions), owner: txt(v.owner),
+        date: raw.framework === "dfe" ? validDate(v.date) : "",
+        dateType: raw.framework === "dfe" ? validDateType(v.dateType) : ""
+      };
     });
     if (unknown) problems.push(`${unknown} item(s) are no longer in the current ${f.shortLabel} and were ignored`);
     if (raw.framework === "cyber-essentials") {
@@ -338,7 +384,8 @@
           out.outstanding.push({
             categoryId: cat.id, categoryTitle: cat.title, isCore: !!cat.isCore,
             itemId: item.id, itemTitle: item.title, status: v,
-            notes: d.notes, actions: d.actions, owner: d.owner, severity: f.severity[v]
+            notes: d.notes, actions: d.actions, owner: d.owner, severity: f.severity[v],
+            date: d.date || "", dateType: d.dateType || ""
           });
         }
       });
@@ -439,6 +486,7 @@
     SAFE_XLSX_READ, MAX_FILE_BYTES, checkImportFile, isFramework, limitText,
     SCHEMA_VERSION, SNAPSHOT_SHEET, FRAMEWORKS, framework,
     emptySnapshot, fromTrackerState, toTrackerState, readTrackerFile, validate, schoolKey, snapshotKey,
-    summarise, certificationStatus, writeSnapshotSheet, readSnapshotSheet, parseDate
+    summarise, certificationStatus, writeSnapshotSheet, readSnapshotSheet, parseDate,
+    DATE_TYPES, validDate, validDateType, effectiveDateType, dateStatus
   };
 })();

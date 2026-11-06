@@ -55,6 +55,19 @@
     const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso || "");
     return m ? `${parseInt(m[3], 10)} ${MONTHS[+m[2] - 1]} ${m[1]}` : (iso || "");
   }
+  // Target date of an outstanding DfE standard (Complete by / Next review)
+  const TARGET_TYPE = { complete: "Complete by", review: "Next review" };
+  const TARGET_STATE = { overdue: "Overdue", soon: "Due soon", ok: "On track", done: "Done" };
+  function targetCell(a) {
+    const d = AM.dateStatus(a.date, a.dateType, a.status);
+    if (!d) return '<em class="muted">None</em>';
+    const flag = d.state === "overdue" ? ' <strong style="color:var(--rag-red)">overdue</strong>' : d.state === "soon" ? ' <strong style="color:#a85300">soon</strong>' : "";
+    return `<span style="white-space:nowrap">${esc(ukDate(d.date))}</span>${flag}`;
+  }
+  function targetExport(a) {
+    const d = AM.dateStatus(a.date, a.dateType, a.status);
+    return d ? [d.date, `${TARGET_TYPE[d.type]}: ${TARGET_STATE[d.state]}`] : ["", ""];
+  }
   function toast(msg) {
     const t = document.getElementById("toast");
     t.textContent = msg; t.classList.add("show");
@@ -773,10 +786,10 @@
         <tbody>${rows}</tbody></table></div>
       <h4>Outstanding actions (${actions.length})</h4>
       ${actions.length ? `<div class="table-wrap"><table class="summary-table">
-        <thead><tr><th>Area</th><th>${f.id === "dfe" ? "Standard" : "Requirement"}</th><th>Status</th><th>${notesLabel}</th><th>${actionLabel}</th><th>Owner</th></tr></thead>
+        <thead><tr><th>Area</th><th>${f.id === "dfe" ? "Standard" : "Requirement"}</th><th>Status</th><th>${notesLabel}</th><th>${actionLabel}</th><th>Owner</th>${f.id === "dfe" ? "<th>Target</th>" : ""}</tr></thead>
         <tbody>${actions.map(a => `<tr><td>${esc(a.categoryTitle)}${a.isCore ? " ★" : ""}</td><td class="wrap">${esc(a.itemTitle)}</td>
           <td><span class="rag-pill ${f.cls(a.status)}">${esc(a.status)}</span></td>
-          <td class="wrap">${esc(a.notes) || '<em class="muted">None</em>'}</td><td class="wrap">${esc(a.actions) || '<em class="muted">None recorded</em>'}</td><td>${esc(a.owner)}</td></tr>`).join("")}</tbody>
+          <td class="wrap">${esc(a.notes) || '<em class="muted">None</em>'}</td><td class="wrap">${esc(a.actions) || '<em class="muted">None recorded</em>'}</td><td>${esc(a.owner)}</td>${f.id === "dfe" ? `<td>${targetCell(a)}</td>` : ""}</tr>`).join("")}</tbody>
       </table></div>` : `<p class="small muted">Nothing rated ${f.open.join(" or ")}.</p>`}
     </section>`;
   }
@@ -850,12 +863,13 @@
     wsG["!cols"] = head.map((h, i) => ({ wch: i === 0 ? 40 : Math.min(Math.max(h.length, 10), 26) }));
     XLSX.utils.book_append_sheet(wb, wsG, "Grid");
 
-    const act = [["School", "URN", "Framework", "Area", "Core", "Standard / requirement", "Status", "Notes / evidence", "Recommendations / action needed", "Owner", "Exported"]];
+    const act = [["School", "URN", "Framework", "Area", "Core", "Standard / requirement", "Status", "Notes / evidence", "Recommendations / action needed", "Owner", "Target date", "Target status", "Exported"]];
     sorted(schools).forEach(s => FW.forEach(f => {
       const sm = s.summary[f.id];
       if (!sm) return;
       sm.outstanding.slice().sort((a, b) => b.severity - a.severity).forEach(a => act.push([
         s.name, s.urn, f.shortLabel, a.categoryTitle, a.isCore ? "Yes" : "", a.itemTitle, a.status, a.notes, a.actions, a.owner,
+        ...targetExport(a),
         (s.current[f.id].snapshot.exportedAt || "").slice(0, 10)
       ]));
     }));

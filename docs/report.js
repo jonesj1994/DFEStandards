@@ -147,10 +147,14 @@
     }
 
     if (open) bullets.push(`${plural(open, IS_DFE ? "standard is" : "requirement is", IS_DFE ? "standards are" : "requirements are")} not yet fully met. These are listed under Priority actions.`);
+    if (IS_DFE) {
+      const overdue = datedItems(snap).filter(x => x.dt.state === "overdue").length;
+      if (overdue) bullets.push(`<strong>${plural(overdue, "target date has", "target dates have")} passed.</strong> These are listed under Working towards.`);
+    }
     if (notSet) bullets.push(`<strong>${plural(notSet, IS_DFE ? "standard has" : "requirement has", IS_DFE ? "standards have" : "requirements have")} not been assessed yet</strong>, so this report is incomplete.`);
 
     return `<section class="section keep-together" aria-labelledby="h-summary">
-      <h2 id="h-summary">1. Summary</h2>
+      <h2 id="h-summary">${num()}. Summary</h2>
       <div class="stat-row">${cards.join("")}</div>
       ${countChips(t.counts)}
       <ul class="bullets">${bullets.map(b => `<li>${b}</li>`).join("")}</ul>
@@ -185,7 +189,7 @@
         <td class="bar-cell">${bar(c.counts, c.total)}</td>
       </tr>`).join("");
     return `<section class="section keep-together" aria-labelledby="h-areas">
-      <h2 id="h-areas">2. Results by ${IS_DFE ? "standard area" : "control area"}</h2>
+      <h2 id="h-areas">${num()}. Results by ${IS_DFE ? "standard area" : "control area"}</h2>
       <p class="intro">${IS_DFE ? "Each area takes its lowest rating, so an area is only Green when every standard in it is Green." : "Each area takes its lowest result, so an area is only Met when every requirement in it is met or not applicable."}</p>
       <table class="data-table areas">
         <thead><tr><th scope="col">${IS_DFE ? "Standard area" : "Control area"}</th><th scope="col">Overall</th><th scope="col">${IS_DFE ? "Met" : "Met or N/A"}</th><th scope="col">Progress</th></tr></thead>
@@ -204,18 +208,19 @@
       body = `<p class="good">There are no ${IS_DFE ? "standards rated Red or Amber" : "requirements marked Not met or Partly met"}.</p>`;
     } else {
       body = `<table class="data-table actions">
-        <thead><tr><th scope="col">${IS_DFE ? "Standard" : "Requirement"}</th><th scope="col">Rating</th><th scope="col">${IS_DFE ? "Recommendation" : "Action needed"}</th><th scope="col">Owner</th></tr></thead>
+        <thead><tr><th scope="col">${IS_DFE ? "Standard" : "Requirement"}</th><th scope="col">Rating</th><th scope="col">${IS_DFE ? "Recommendation" : "Action needed"}</th><th scope="col">Owner</th>${IS_DFE ? '<th scope="col">Target</th>' : ""}</tr></thead>
         <tbody>${items.map(o => `<tr>
           <td><span class="area">${esc(o.categoryTitle)}${o.isCore ? " (core)" : ""}</span>${esc(o.itemTitle)}
             ${o.notes.trim() ? `<div class="sub"><span class="sub-label">Current position:</span> <span class="text">${esc(o.notes.trim())}</span></div>` : ""}</td>
           <td>${pill(o.status)}</td>
           <td class="text">${o.actions.trim() ? esc(o.actions.trim()) : '<span class="missing">None recorded</span>'}</td>
           <td class="text">${o.owner.trim() ? esc(o.owner.trim()) : '<span class="missing">Not assigned</span>'}</td>
+          ${IS_DFE ? `<td>${dateCell(AM.dateStatus(o.date, o.dateType, o.status))}</td>` : ""}
         </tr>`).join("")}</tbody>
       </table>`;
     }
     return `<section class="section" aria-labelledby="h-actions">
-      <h2 id="h-actions">3. Priority actions</h2>
+      <h2 id="h-actions">${num()}. Priority actions</h2>
       <p class="intro">${IS_DFE ? "Standards rated Red, then Amber, with core standards first." : "Requirements not met, then partly met."}</p>
       ${body}
     </section>`;
@@ -234,6 +239,8 @@
           [IS_DFE ? "Recommendation" : "Action needed", d.actions],
           ["Owner", d.owner]
         ].filter(([, v]) => v.trim());
+        const dt = IS_DFE ? itemDate(d) : null;
+        if (dt) fields.push([DATE_TYPE[dt.type], fmtDate(dt.date) + (dt.state === "overdue" ? " (overdue)" : "")]);
         return `<li class="item">
           <div class="item-head"><span class="item-title">${esc(i.title)}</span>${pill(d.status)}</div>
           ${fields.map(([k, v]) => `<div class="sub"><span class="sub-label">${esc(k)}:</span> <span class="text">${esc(v.trim())}</span></div>`).join("")}
@@ -246,12 +253,13 @@
       </div>`;
     }).join("");
     return `<section class="section page-break" aria-labelledby="h-detail">
-      <h2 id="h-detail">4. Full results</h2>
+      <h2 id="h-detail">${num()}. Full results</h2>
       ${blocks}
     </section>`;
   }
 
-  function aboutSection(n) {
+  function aboutSection() {
+    const n = num();
     const sources = IS_DFE
       ? [["Meeting digital and technology standards in schools and colleges (GOV.UK)", STANDARDS_INDEX_URL]]
       : [["Cyber Essentials requirements (NCSC): " + CE_VERSION, CE_SOURCE_URL], ["Cyber Essentials overview (NCSC)", CE_OVERVIEW_URL]];
@@ -262,6 +270,56 @@
       <h3>Sources</h3>
       <ul class="sources">${sources.map(([t, u]) => `<li>${esc(t)}<br /><span class="url">${esc(u)}</span></li>`).join("")}</ul>
       <p class="muted">This is the school's own self-assessment, made with the School Compliance Toolkit. It is not an official DfE or NCSC assessment${IS_DFE ? "" : " or certification"}.</p>
+    </section>`;
+  }
+
+  // Section numbers, in the order sections are built
+  let sectionNo = 0;
+  const num = () => ++sectionNo;
+
+  // ── Target dates (DfE only) ────────────────────────────────────────────────
+  const DATE_TYPE = { complete: "Complete by", review: "Next review" };
+  const DATE_STATE = { overdue: "Overdue", soon: "Due within 30 days", ok: "On track", done: "Done" };
+  const itemDate = d => AM.dateStatus(d.date, d.dateType, d.status);
+  const dateCell = dt => dt
+    ? `<span class="nowrap">${esc(fmtDate(dt.date))}</span><div class="date-note ${esc(dt.state)}">${esc(DATE_TYPE[dt.type])}${dt.state === "overdue" || dt.state === "soon" ? " · " + esc(DATE_STATE[dt.state]) : ""}</div>`
+    : '<span class="missing">No date</span>';
+
+  function datedItems(snap) {
+    const out = [];
+    STANDARDS_DATA.forEach(cat => cat.items.forEach(item => {
+      const d = snap.items[item.id];
+      const dt = d && itemDate(d);
+      if (dt) out.push({ cat, item, d, dt });
+    }));
+    return out.sort((a, b) => a.dt.date.localeCompare(b.dt.date));
+  }
+
+  function planSection(snap) {
+    const all = datedItems(snap).filter(x => x.dt.state !== "done");
+    const open = Object.values(snap.items).filter(d => d.status === "Red" || d.status === "Amber");
+    const noDate = open.filter(d => !itemDate(d)).length;
+    const count = st => all.filter(x => x.dt.state === st).length;
+    const body = all.length
+      ? `<table class="data-table plan">
+          <thead><tr><th scope="col">Date</th><th scope="col">Standard</th><th scope="col">Rating</th><th scope="col">Owner</th></tr></thead>
+          <tbody>${all.map(x => `<tr>
+            <td>${dateCell(x.dt)}</td>
+            <td><span class="area">${esc(x.cat.title)}${x.cat.isCore ? " (core)" : ""}</span>${esc(x.item.title)}</td>
+            <td>${pill(x.d.status)}</td>
+            <td class="text">${x.d.owner.trim() ? esc(x.d.owner.trim()) : '<span class="missing">Not assigned</span>'}</td>
+          </tr>`).join("")}</tbody>
+        </table>`
+      : `<p class="muted">No target or review dates have been set in the tracker.</p>`;
+    const facts = [];
+    if (count("overdue")) facts.push(`<strong>${plural(count("overdue"), "date has", "dates have")} passed</strong> without the standard being met or reviewed.`);
+    if (count("soon")) facts.push(`${plural(count("soon"), "date falls", "dates fall")} in the next 30 days.`);
+    if (noDate) facts.push(`${plural(noDate, "standard rated Red or Amber has", "standards rated Red or Amber have")} no target date yet.`);
+    return `<section class="section keep-together" aria-labelledby="h-plan">
+      <h2 id="h-plan">${num()}. Working towards</h2>
+      <p class="intro">Target dates set by the school: <strong>Complete by</strong> for standards still being worked on, and <strong>Next review</strong> for standards already met. Earliest first.</p>
+      ${facts.length ? `<ul class="bullets plan-facts">${facts.map(f => `<li>${f}</li>`).join("")}</ul>` : ""}
+      ${body}
     </section>`;
   }
 
@@ -286,6 +344,7 @@
     // Used as the suggested file name when saving as PDF
     document.title = `${school} - ${TITLE} governors' report`;
 
+    sectionNo = 0;
     const parts = [
       `<header class="cover keep-together">
         <p class="kicker">Report to governors</p>
@@ -297,8 +356,9 @@
       areasSection(sum),
       actionsSection(sum)
     ];
+    if (IS_DFE) parts.push(planSection(snap));
     if (opts.detail) parts.push(detailSection(snap, sum, opts));
-    parts.push(aboutSection(opts.detail ? 5 : 4));
+    parts.push(aboutSection());
     root.innerHTML = parts.join("");
   }
 

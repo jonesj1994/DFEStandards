@@ -68,17 +68,20 @@ function exportToExcel(state) {
     const rows = [
       [cat.title + (cat.isCore ? " ★ (Core)" : "")],
       [],
-      ["#", "Standard", "Current Status & Notes", "Recommendations", "RAG Rating", "Ownership"]
+      ["#", "Standard", "Current Status & Notes", "Recommendations", "RAG Rating", "Ownership", "Date type", "Date"]
     ];
 
     cat.items.forEach((item, idx) => {
+      const d = exportDate(state, item.id);
       rows.push([
         idx + 1,
         item.title,
         state.notes[item.id] || "",
         state.recommendations[item.id] || "",
         normaliseRating(state.ratings[item.id] || "Not Set"),
-        state.ownership[item.id] || ""
+        state.ownership[item.id] || "",
+        d ? DATE_TYPE_LABELS[d.type] : "",
+        d ? d.date : ""
       ]);
     });
 
@@ -89,13 +92,32 @@ function exportToExcel(state) {
       { wch: 40 },
       { wch: 40 },
       { wch: 12 },
-      { wch: 20 }
+      { wch: 20 },
+      { wch: 12 },
+      { wch: 12 }
     ];
 
     // Sheet name: max 31 chars, strip invalid chars
     const sheetName = cat.title.replace(/[\/\\*?\[\]:]/g, "").substring(0, 31);
     XLSX.utils.book_append_sheet(wb, ws, sheetName);
   });
+
+  // ── Working towards: every dated standard in date order ────────────────
+  const planRows = [["Date", "Date type", "Status", "Standard area", "Core", "Standard", "RAG Rating", "Ownership"]];
+  STANDARDS_DATA.flatMap(cat => cat.items.map(item => ({ cat, item, d: exportDate(state, item.id) })))
+    .filter(x => x.d)
+    .sort((a, b) => a.d.date.localeCompare(b.d.date))
+    .forEach(({ cat, item, d }) => planRows.push([
+      d.date, DATE_TYPE_LABELS[d.type], DATE_STATE_LABELS[d.state], cat.title, cat.isCore ? "Yes" : "",
+      item.title, normaliseRating(state.ratings[item.id] || "Not Set"), state.ownership[item.id] || ""
+    ]));
+  if (planRows.length === 1) planRows.push(["No dates set yet"]);
+  const wsPlan = XLSX.utils.aoa_to_sheet(planRows);
+  wsPlan["!cols"] = [{ wch: 12 }, { wch: 12 }, { wch: 10 }, { wch: 26 }, { wch: 6 }, { wch: 60 }, { wch: 12 }, { wch: 20 }];
+  // Straight after Summary, so it is easy to find
+  XLSX.utils.book_append_sheet(wb, wsPlan, "Working towards");
+  wb.SheetNames.splice(wb.SheetNames.indexOf("Working towards"), 1);
+  wb.SheetNames.splice(1, 0, "Working towards");
 
   // ── Save ───────────────────────────────────────────────────────────────
   const school = state.schoolName ? "_" + state.schoolName.replace(/[^a-zA-Z0-9]/g, "_") : "";
@@ -111,6 +133,32 @@ function exportToExcel(state) {
 
   XLSX.writeFile(wb, filename);
   showToast("Exported: " + filename);
+}
+
+// A standard's date as exported, or null (see AssessmentModel.dateStatus)
+function exportDate(state, id) {
+  const t = state.targetDates || {}, ty = state.dateTypes || {};
+  return AssessmentModel.dateStatus(t[id], ty[id], normaliseRating(state.ratings[id] || "Not Set"), null, DATE_SOON_DAYS);
+}
+
+// A date cell from Excel: "2027-03-12" as typed or exported, "12/03/2027" (UK
+// order) or an Excel date serial number if someone edited the cell in Excel
+function importDate(v) {
+  if (typeof v === "number" && v > 20000 && v < 80000) {
+    const d = new Date(Date.UTC(1899, 11, 30) + Math.round(v) * 86400000);
+    return AssessmentModel.validDate(d.toISOString().slice(0, 10));
+  }
+  const t = String(v == null ? "" : v).trim();
+  const uk = /^(\d{1,2})\/(\d{1,2})\/(\d{4})$/.exec(t);
+  if (uk) return AssessmentModel.validDate(`${uk[3]}-${uk[2].padStart(2, "0")}-${uk[1].padStart(2, "0")}`);
+  return AssessmentModel.validDate(t);
+}
+
+function importDateType(v) {
+  const t = String(v == null ? "" : v).trim().toLowerCase();
+  if (t === "complete by") return "complete";
+  if (t === "next review") return "review";
+  return "";
 }
 
 // ── Import ─────────────────────────────────────────────────────────────────
@@ -196,7 +244,9 @@ function readVisibleSheets(wb) {
     ratings: {},
     notes: {},
     recommendations: {},
-    ownership: {}
+    ownership: {},
+    targetDates: {},
+    dateTypes: {}
   };
   // Start every current standard as blank, so standards missing from an older
   // file show as Not Set rather than keeping values from before the import
@@ -205,6 +255,8 @@ function readVisibleSheets(wb) {
     imported.notes[item.id] = "";
     imported.recommendations[item.id] = "";
     imported.ownership[item.id] = "";
+    imported.targetDates[item.id] = "";
+    imported.dateTypes[item.id] = "";
   }));
 
   // Try Info sheet
@@ -265,6 +317,9 @@ function readVisibleSheets(wb) {
       const rag = normaliseRating(row[4] ? String(row[4]).trim() : "Not Set");
       imported.ratings[item.id] = RAG_VALUES.includes(rag) ? rag : "Not Set";
       imported.ownership[item.id] = text(row[5]);
+      // Columns G and H (only in exports that have target dates)
+      imported.targetDates[item.id] = importDate(row[7]);
+      imported.dateTypes[item.id] = imported.targetDates[item.id] ? importDateType(row[6]) : "";
     });
   });
   return { imported, matched };
