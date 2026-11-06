@@ -108,9 +108,22 @@ function ceSaveNow() {
 function ceSave() {
   clearTimeout(ceTimer);
   ceTimer = setTimeout(() => {
-    try { localStorage.setItem(CE_STATE_KEY, JSON.stringify(ce)); } catch (e) { /* storage unavailable */ }
+    let ok = true;
+    try { localStorage.setItem(CE_STATE_KEY, JSON.stringify(ce)); } catch (e) { ok = false; }
     const ind = document.getElementById("save-indicator");
-    if (ind) { ind.classList.add("saved"); setTimeout(() => ind.classList.remove("saved"), 2000); }
+    if (!ind) return;
+    clearTimeout(ceSave.shown);
+    ind.classList.remove("saved", "error");
+    if (ok) {
+      ind.textContent = "\u2713 Saved";
+      ind.classList.add("saved");
+      ceSave.shown = setTimeout(() => ind.classList.remove("saved"), 2000);
+    } else {
+      // Stays until the next successful save
+      ind.textContent = "\u26A0 Not saved";
+      ind.classList.add("error");
+      if (typeof toast === "function") toast("Could not save in this browser. Export to Excel to keep a copy.");
+    }
   }, 400);
 }
 

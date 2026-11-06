@@ -369,7 +369,21 @@ select.rag-select option[value="Met"]     { background: #eee; }
   transition: opacity 0.5s;
 }
 
+/* Hidden until something is saved, then shown briefly. visibility (not just
+   opacity) so screen readers don't read a stale "Saved" either. */
+#save-indicator {
+  visibility: hidden;
+  opacity: 0;
+  transition: opacity 0.5s, visibility 0s 0.5s;
+}
+#save-indicator.saved,
+#save-indicator.error {
+  visibility: visible;
+  opacity: 1;
+  transition: opacity 0.2s;
+}
 #save-indicator.saved { color: #8fffcc; }
+#save-indicator.error { color: #ffdd00; font-weight: 700; }
 
 /* ── Summary table ── */
 .summary-table {
