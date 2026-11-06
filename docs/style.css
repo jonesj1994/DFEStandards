@@ -420,3 +420,32 @@ select.rag-select option[value="Met"]     { background: #eee; }
 }
 .rag-key-row { display: flex; align-items: baseline; gap: 10px; }
 .rag-key-row .rag-pill { min-width: 64px; text-align: center; flex-shrink: 0; }
+
+/* ── Target dates ("working towards") ── */
+.date-slot:empty { display: none; }
+.date-badge {
+  font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 12px; white-space: nowrap;
+  background: #f3f2f1; color: #0b0c0c; border: 1px solid #b1b4b6;
+}
+.date-badge.overdue { background: #fde8e4; color: #942514; border-color: var(--rag-red); }
+.date-badge.soon { background: #fef3e9; color: #6e3500; border-color: var(--rag-amber); }
+.date-badge.done { background: #e3f5ec; color: #005a30; border-color: var(--rag-green); }
+.date-state { font-size: 12px; font-weight: 700; white-space: nowrap; }
+.date-state.overdue { color: var(--rag-red); }
+.date-state.soon { color: #a85300; }
+.date-state.ok { color: var(--rag-green); }
+.date-state.done { color: #505a5f; }
+.date-help { font-size: 12px; color: #505a5f; margin: 0; grid-column: 1 / -1; }
+.plan-table td { vertical-align: top; }
+.plan-table td:first-child { font-weight: 400; }
+.plan-table .nowrap { white-space: nowrap; }
+.plan-month th { background: #f3f2f1 !important; color: #0b0c0c !important; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; }
+.plan-type { font-size: 11px; color: #505a5f; }
+.plan-area { display: block; font-size: 11px; color: #505a5f; text-transform: uppercase; letter-spacing: 0.3px; }
+.plan-list { margin: 0; padding-left: 18px; font-size: 13px; line-height: 1.7; }
+.plan-list a, .plan-table a { color: var(--dfe-blue); }
+.plan-card { max-width: 900px; margin-top: 4px; }
+@media (max-width: 768px) {
+  .item-header { flex-wrap: wrap; }
+  .date-slot { order: 5; flex-basis: 100%; padding-left: 32px; }
+}

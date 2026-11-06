@@ -6,12 +6,16 @@ function defaultState() {
   const notes = {};
   const recommendations = {};
   const ownership = {};
+  const targetDates = {};
+  const dateTypes = {};
   STANDARDS_DATA.forEach(cat => {
     cat.items.forEach(item => {
       ratings[item.id] = "Not Set";
       notes[item.id] = "";
       recommendations[item.id] = "";
       ownership[item.id] = "";
+      targetDates[item.id] = "";
+      dateTypes[item.id] = "";
     });
   });
   return {
@@ -31,7 +35,12 @@ function defaultState() {
     ratings,
     notes,
     recommendations,
-    ownership
+    ownership,
+    // Per standard: a target date ("YYYY-MM-DD") and what it means. dateTypes is
+    // "complete" (complete by), "review" (next review) or "" to follow the rating
+    // (complete by until the standard is Green, then next review).
+    targetDates,
+    dateTypes
   };
 }
 
@@ -120,6 +129,8 @@ function loadState() {
       if (RAG_VALUES.includes(v)) out.ratings[id] = v;
     });
     ["notes", "recommendations", "ownership"].forEach(f => pick(f, v => typeof v === "string"));
+    pick("targetDates", v => typeof v === "string" && AssessmentModel.validDate(v) === v);
+    pick("dateTypes", v => typeof v === "string" && AssessmentModel.validDateType(v) === v);
     return out;
   } catch (e) {
     return defaultState();
@@ -162,6 +173,7 @@ function viewTitle() {
   if (currentView === "dashboard") return "Dashboard";
   if (currentView === "school-info") return "School Information";
   if (currentView === "summary") return "Summary";
+  if (currentView === "plan") return "Working towards";
   if (currentView === "category") {
     const cat = STANDARDS_DATA.find(c => c.id === currentCategoryId);
     return cat ? cat.title : "";
@@ -247,6 +259,7 @@ function renderView() {
   if (currentView === "dashboard") content.innerHTML = renderDashboard();
   else if (currentView === "school-info") content.innerHTML = renderSchoolInfo();
   else if (currentView === "summary") content.innerHTML = renderSummary();
+  else if (currentView === "plan") content.innerHTML = renderPlan();
   else if (currentView === "category") content.innerHTML = renderCategory(currentCategoryId);
   attachViewEvents();
   buildSidebarNav();
@@ -294,7 +307,23 @@ function renderDashboard() {
       <div style="font-size:28px;font-weight:700;color:var(--dfe-navy)">${pct}%</div>
       <div style="font-size:13px;color:#505a5f">${met} / ${totalItems} items</div>
     </div>
+    ${dashboardPlan()}
     <div class="dashboard-grid">${cards}</div>
+  </div>`;
+}
+
+// Dashboard: target dates at a glance, with the next few coming up
+function dashboardPlan() {
+  const c = planCounts();
+  const next = datedItems().filter(x => x.date && x.date.state !== "done")
+    .sort((a, b) => a.date.date.localeCompare(b.date.date)).slice(0, 3);
+  const chips = dateChips(c);
+  return `<div class="card plan-card">
+    <div class="card-header"><h3>Working towards</h3><a href="#" data-view="plan" class="guidance-link" style="margin-left:auto">See all dates &#8594;</a></div>
+    <div class="card-body">
+      ${chips ? `<div class="dash-stats" style="margin-bottom:${next.length ? 10 : 0}px">${chips}</div>` : `<p style="margin:0;font-size:13px;color:#505a5f">No dates set yet. Expand a standard and set a <strong>Complete by</strong> or <strong>Next review</strong> date to track what you are working towards.</p>`}
+      ${next.length ? `<ul class="plan-list">${next.map(x => `<li><strong>${escHtml(formatUkDate(x.date.date))}</strong> &middot; ${escHtml(DATE_TYPE_LABELS[x.date.type])}: <a href="#" data-view="category" data-category="${escAttr(x.cat.id)}" data-focus="${escAttr(x.item.id)}">${escHtml(x.item.title)}</a> <span class="date-state ${x.date.state}">${escHtml(DATE_STATE_LABELS[x.date.state])}</span></li>`).join("")}</ul>` : ""}
+    </div>
   </div>`;
 }
 
@@ -405,6 +434,100 @@ function formatUkDate(iso) {
   return `${parseInt(m[3], 10)} ${months[parseInt(m[2], 10) - 1]} ${m[1]}`;
 }
 
+// ── Target dates ("working towards") ───────────────────────────────────────
+const DATE_TYPE_LABELS = { complete: "Complete by", review: "Next review" };
+const DATE_STATE_LABELS = { overdue: "Overdue", soon: "Due soon", ok: "On track", done: "Done" };
+const DATE_SOON_DAYS = 30;
+
+// Where one standard's date stands (see AssessmentModel.dateStatus), or null
+function itemDate(id) {
+  return AssessmentModel.dateStatus(state.targetDates[id], state.dateTypes[id], state.ratings[id] || "Not Set", null, DATE_SOON_DAYS);
+}
+
+// Short badge for an item header, e.g. "Complete by 12 March 2027 · Overdue"
+function dateBadge(id) {
+  const d = itemDate(id);
+  if (!d) return "";
+  const when = d.state === "overdue" ? ` · ${d.type === "review" ? "review " : ""}overdue`
+    : d.state === "soon" ? ` · ${d.daysLeft === 0 ? "today" : "in " + d.daysLeft + " day" + (d.daysLeft === 1 ? "" : "s")}`
+    : d.state === "done" ? " · done" : "";
+  return `<span class="date-badge ${d.state}">${escHtml(DATE_TYPE_LABELS[d.type])} ${escHtml(formatUkDate(d.date))}${when}</span>`;
+}
+
+// Every standard with its date, for the dashboard and the Working towards view
+function datedItems() {
+  const out = [];
+  STANDARDS_DATA.forEach(cat => cat.items.forEach(item => {
+    out.push({ cat, item, rating: state.ratings[item.id] || "Not Set", date: itemDate(item.id) });
+  }));
+  return out;
+}
+
+function planCounts() {
+  const all = datedItems();
+  const c = { overdue: 0, soon: 0, ok: 0, done: 0, undated: 0, reviews: 0 };
+  all.forEach(x => {
+    if (x.date) c[x.date.state]++;
+    else if (x.rating === "Red" || x.rating === "Amber") c.undated++;
+  });
+  return c;
+}
+
+function dateChips(c) {
+  return `${c.overdue ? `<span class="stat-chip red">Overdue: ${c.overdue}</span>` : ""}
+    ${c.soon ? `<span class="stat-chip amber">Due in ${DATE_SOON_DAYS} days: ${c.soon}</span>` : ""}
+    ${c.ok ? `<span class="stat-chip green">On track: ${c.ok}</span>` : ""}
+    ${c.done ? `<span class="stat-chip met">Done: ${c.done}</span>` : ""}
+    ${c.undated ? `<span class="stat-chip not-set">Red/Amber with no date: ${c.undated}</span>` : ""}`.trim();
+}
+
+// Working towards: every dated standard in date order, grouped by month
+function renderPlan() {
+  const all = datedItems();
+  const dated = all.filter(x => x.date && x.date.state !== "done")
+    .sort((a, b) => a.date.date.localeCompare(b.date.date));
+  const done = all.filter(x => x.date && x.date.state === "done");
+  const undated = all.filter(x => !x.date && (x.rating === "Red" || x.rating === "Amber"));
+  const c = planCounts();
+  const months = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+  const link = x => `<a href="#" data-view="category" data-category="${escAttr(x.cat.id)}" data-focus="${escAttr(x.item.id)}">${escHtml(x.item.title)}</a>`;
+  const area = x => `<span class="plan-area">${escHtml(x.cat.title)}${x.cat.isCore ? " ★" : ""}</span>`;
+
+  let rows = "", lastMonth = "";
+  dated.forEach(x => {
+    const ym = x.date.date.slice(0, 7);
+    const label = x.date.state === "overdue" ? "Overdue" : months[parseInt(ym.slice(5), 10) - 1] + " " + ym.slice(0, 4);
+    if (label !== lastMonth) {
+      rows += `<tr class="plan-month"><th colspan="5" scope="colgroup">${escHtml(label)}</th></tr>`;
+      lastMonth = label;
+    }
+    rows += `<tr>
+      <td class="nowrap">${escHtml(formatUkDate(x.date.date))}<div class="plan-type">${escHtml(DATE_TYPE_LABELS[x.date.type])}</div></td>
+      <td>${area(x)}${link(x)}</td>
+      <td><span class="rag-pill ${ragClass(x.rating)}">${escHtml(x.rating)}</span></td>
+      <td>${escHtml(state.ownership[x.item.id] || "")}</td>
+      <td><span class="date-state ${x.date.state}">${escHtml(DATE_STATE_LABELS[x.date.state])}</span></td>
+    </tr>`;
+  });
+
+  const simpleList = list => `<ul class="plan-list">${list.map(x => `<li>${area(x)}${link(x)} <span class="rag-pill ${ragClass(x.rating)}">${escHtml(x.rating)}</span>${x.date ? ` <span class="plan-type">completed; target was ${escHtml(formatUkDate(x.date.date))}</span>` : ""}</li>`).join("")}</ul>`;
+
+  return `
+  <div style="max-width:900px">
+    <h2 style="margin-top:0">Working towards</h2>
+    <p style="color:#505a5f;font-size:14px;margin-top:0">Give each standard a <strong>Complete by</strong> date while you work towards it, and a <strong>Next review</strong> date once it is met. Set dates on each standard area's page. Standards marked ★ are core standards, which DfE expects schools and colleges to be working towards by ${coreYear()}.</p>
+    <div class="dash-stats" style="margin-bottom:16px">${dateChips(c) || '<span class="stat-chip not-set">No dates set yet</span>'}</div>
+    ${dated.length ? `<div class="card" style="overflow:auto">
+      <table class="summary-table plan-table">
+        <thead><tr><th scope="col">Date</th><th scope="col">Standard</th><th scope="col">Rating</th><th scope="col">Owner</th><th scope="col">Status</th></tr></thead>
+        <tbody>${rows}</tbody>
+      </table>
+    </div>` : `<div class="card"><div class="card-body">No upcoming dates. Open a standard area, expand a standard and set a date.</div></div>`}
+    ${undated.length ? `<div class="card"><div class="card-header"><h3>Rated Red or Amber with no date (${undated.length})</h3></div><div class="card-body">${simpleList(undated)}</div></div>` : ""}
+    ${done.length ? `<div class="card"><div class="card-header"><h3>Completed (${done.length})</h3></div><div class="card-body"><p style="margin-top:0;font-size:13px;color:#505a5f">Now rated Green. Change the date to <strong>Next review</strong> to schedule a review.</p>${simpleList(done)}</div></div>` : ""}
+  </div>`;
+}
+
 function coreYear() {
   return (typeof STANDARDS_META !== "undefined" && STANDARDS_META.coreDeadlineYear) || 2030;
 }
@@ -443,6 +566,7 @@ function renderCategory(catId) {
       <div class="item-header" data-item="${item.id}">
         <span class="item-number">${idx + 1}.</span>
         <span class="item-title">${escHtml(item.title)}</span>
+        <span class="date-slot">${dateBadge(item.id)}</span>
         <span class="rag-pill ${ragClass(rag)}">${escHtml(rag)}</span>
         <span class="chevron">&#9660;</span>
       </div>
@@ -465,6 +589,17 @@ function renderCategory(catId) {
             <label>Ownership</label>
             <input type="text" data-field="ownership" data-id="${item.id}" value="${o}" placeholder="e.g. IT Manager" />
           </div>
+          <div class="form-field">
+            <label for="dt-${item.id}">Date type</label>
+            <select id="dt-${item.id}" data-field="dateTypes" data-id="${item.id}">
+              ${["complete", "review"].map(t => `<option value="${t}"${AssessmentModel.effectiveDateType(state.dateTypes[item.id], rag) === t ? " selected" : ""}>${DATE_TYPE_LABELS[t]}</option>`).join("")}
+            </select>
+          </div>
+          <div class="form-field">
+            <label for="td-${item.id}">Date</label>
+            <input type="date" id="td-${item.id}" data-field="targetDates" data-id="${item.id}" value="${escAttr(state.targetDates[item.id] || "")}" />
+          </div>
+          <p class="date-help full-width">Use <strong>Complete by</strong> for when you aim to meet this standard. Once it is Green, switch to <strong>Next review</strong> and set when it should next be checked.</p>
         </div>
       </div>
     </div>`;
@@ -545,7 +680,19 @@ function attachViewEvents() {
   content.querySelectorAll("a[data-view]").forEach(a => {
     a.addEventListener("click", e => {
       e.preventDefault();
+      const focus = a.dataset.focus;
       navigate(a.dataset.view, a.dataset.category);
+      // Links to one standard open it and scroll to it
+      if (focus) {
+        const body = document.getElementById("body-" + focus);
+        const header = document.querySelector(`.item-header[data-item="${CSS.escape(focus)}"]`);
+        if (body && header) {
+          body.classList.add("open");
+          const ch = header.querySelector(".chevron");
+          if (ch) ch.classList.add("open");
+          header.scrollIntoView({ block: "start" });
+        }
+      }
     });
   });
 
@@ -626,8 +773,26 @@ function attachViewEvents() {
     el.addEventListener(event, () => {
       const field = el.dataset.field;
       const id = el.dataset.id;
-      state[field][id] = el.value;
+      // Only real dates and known date types are kept
+      if (field === "targetDates") {
+        state.targetDates[id] = AssessmentModel.validDate(el.value);
+        // Fix the date type as shown, so a later rating change never changes
+        // what an existing date means
+        const sel = document.getElementById("dt-" + id);
+        if (state.targetDates[id] && !state.dateTypes[id] && sel) state.dateTypes[id] = AssessmentModel.validDateType(sel.value);
+      }
+      else if (field === "dateTypes") state[field][id] = AssessmentModel.validDateType(el.value);
+      else state[field][id] = el.value;
       saveState();
+
+      // Update the date badge live (a rating change can change the date type)
+      if (field === "ratings" || field === "targetDates" || field === "dateTypes") {
+        const slot = document.querySelector(`[data-item="${CSS.escape(id)}"] .date-slot`);
+        if (slot) slot.innerHTML = dateBadge(id);
+        // No date or type chosen yet: suggest the type that suits the rating
+        const sel = document.getElementById("dt-" + id);
+        if (sel && field === "ratings" && !state.dateTypes[id]) sel.value = AssessmentModel.effectiveDateType("", state.ratings[id]);
+      }
 
       // Update RAG pill live
       if (field === "ratings") {

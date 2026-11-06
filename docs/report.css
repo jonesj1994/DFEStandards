@@ -113,9 +113,18 @@ body {
 .seg.green { background: var(--green); }
 .seg.met { background: var(--grey); }
 .seg.not-set { background: #e8e9ea; }
-.actions td:nth-child(1) { width: 38%; }
-.actions td:nth-child(2) { width: 13%; }
-.actions td:nth-child(4) { width: 15%; }
+.actions td:nth-child(1) { width: 34%; }
+.actions td:nth-child(2) { width: 12%; }
+.actions td:nth-child(4) { width: 13%; }
+.actions td:nth-child(5) { width: 14%; }
+.nowrap { white-space: nowrap; }
+.date-note { font-size: 8.5pt; color: var(--grey); }
+.date-note.overdue { color: var(--red); font-weight: 700; }
+.date-note.soon { color: #a85300; font-weight: 700; }
+.plan td:nth-child(1) { width: 20%; }
+.plan td:nth-child(3) { width: 16%; }
+.plan td:nth-child(4) { width: 18%; }
+.plan-facts { margin: 0 0 10px; }
 .area { display: block; font-size: 8.5pt; text-transform: uppercase; letter-spacing: 0.5px; color: var(--grey); font-weight: 700; }
 .sub { font-size: 9.5pt; margin-top: 3px; }
 .sub-label { font-weight: 700; }
