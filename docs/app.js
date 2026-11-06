@@ -647,6 +647,12 @@ function attachViewEvents() {
 }
 
 // ── Import/Export wiring ───────────────────────────────────────────────────
+// Governors' report: save first so the report has the latest answers
+document.getElementById("btn-report").addEventListener("click", () => {
+  saveStateNow();
+  location.href = "report.html?f=dfe";
+});
+
 document.getElementById("btn-export").addEventListener("click", () => {
   exportToExcel(state);
 });

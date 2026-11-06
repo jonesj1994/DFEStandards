@@ -19,7 +19,8 @@
     "school_profile_v1",       // School selected on the home page
     "home_trust_v1",           // Trust selected on the home page
     "home_area_v1",            // School / trust tab choice
-    "trust_view_settings_v1"   // Trust overview settings
+    "trust_view_settings_v1",  // Trust overview settings
+    "report_options_v1"        // Governors' report settings
   ];
   const INDEXED_DBS = ["trust_view_v1"]; // Trust overview imported files
 

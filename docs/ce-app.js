@@ -466,6 +466,11 @@ function ceReadVisibleSheets(wb) {
 
 // ── Init ───────────────────────────────────────────────────────────────────
 document.getElementById("btn-export").addEventListener("click", ceExport);
+// Governors' report: save first so the report has the latest answers
+document.getElementById("btn-report").addEventListener("click", () => {
+  ceSaveNow();
+  location.href = "report.html?f=ce";
+});
 document.getElementById("btn-import").addEventListener("click", () => document.getElementById("file-input").click());
 document.getElementById("file-input").addEventListener("change", e => {
   if (e.target.files[0]) ceImport(e.target.files[0]);
