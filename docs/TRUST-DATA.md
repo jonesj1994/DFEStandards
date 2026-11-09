@@ -166,3 +166,21 @@ tracker and edit it:
   the tracker.
 - If the tracker already holds an assessment that isn't linked to the trust,
   the user is asked to add it to the trust store first, replace it, or cancel.
+
+## Trust central team and central answers
+
+The **Trust central** page (`trust-central.js`, stored in this browser as
+`trust_central_v1` and validated on load) holds:
+
+- **Central team:** trust staff `{ id, name, role }`. When a school is opened
+  from the trust overview they are added to its People list with `central: true`,
+  and appear under "Trust central team" in every Ownership drop-down.
+- **Central answers:** for DfE standards the trust handles centrally, a rating,
+  current position, recommendations, owner and date.
+
+Central answers only ever **fill gaps**: a rating that is Not Set, or an empty
+note, recommendation, owner or date. They never overwrite a school's answers.
+They are used by **Fill from trust central answers** in the tracker's trust
+banner (one school), or **Apply central answers to all schools** on the Trust
+central page, which saves a new version for every school that changes (its
+previous version is kept) and starts an assessment for schools without one.

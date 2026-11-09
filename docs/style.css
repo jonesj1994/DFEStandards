@@ -600,3 +600,4 @@ select.rag-select option[value="Met"]     { background: #eee; }
 .tl-dialog h2 { margin: 0 0 10px; font-size: 18px; color: var(--dfe-navy); }
 .tl-dialog p { font-size: 14px; line-height: 1.5; margin: 0 0 10px; overflow-wrap: anywhere; }
 .tl-dialog-buttons { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 14px; }
+.central-tag { display: inline-block; margin-top: 4px; font-size: 11px; font-weight: 700; color: var(--dfe-navy); background: #e8f3f8; border-radius: 999px; padding: 1px 8px; }
