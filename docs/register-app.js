@@ -467,18 +467,44 @@
 
   function viewQuick() {
     const have = existingNames();
-    const rows = RM.STARTERS.map((s, i) => {
+    const item = (s, i) => {
       const exists = have.has(s.name.toLowerCase());
-      return `<li><label class="reg-check"><input type="checkbox" data-starter="${i}" ${exists ? "disabled" : ""} />
-        ${esc(s.name)} <span class="reg-muted">${esc(s.category)}${exists ? " · already in your register" : ""}</span></label></li>`;
+      const search = [s.name, s.vendor, s.group, s.sectionTitle].join(" ").toLowerCase();
+      return `<li data-search="${esc(search)}"><label class="reg-check"><input type="checkbox" data-starter="${i}" ${exists ? "disabled" : ""} />
+        <span><span class="qa-name">${esc(s.name)}</span>${s.vendor ? ` <span class="reg-muted">${esc(s.vendor)}</span>` : ""}${exists ? ' <span class="qa-have">already added</span>' : ""}</span></label></li>`;
+    };
+    const sections = RM.STARTER_SECTIONS.map(sec => {
+      const idx = RM.STARTERS.map((s, i) => [s, i]).filter(([s]) => s.section === sec.id);
+      const added = idx.filter(([s]) => have.has(s.name.toLowerCase())).length;
+      const groups = sec.groups.map(g => {
+        const list = idx.filter(([s]) => s.group === g.title);
+        return `<div class="qa-group">${g.title ? `<h4>${esc(g.title)}</h4>` : ""}<ul class="reg-starters">${list.map(([s, i]) => item(s, i)).join("")}</ul></div>`;
+      }).join("");
+      return `<details class="qa-section" data-section="${esc(sec.id)}">
+        <summary><span class="qa-title">${esc(sec.title)}</span>
+          <span class="qa-meta">${idx.length} item${idx.length === 1 ? "" : "s"}${added ? ` · ${added} already added` : ""}</span>
+          <span class="qa-picked" data-picked="${esc(sec.id)}"></span></summary>
+        <div class="qa-body">
+          <p class="qa-tools"><button type="button" class="btn btn-secondary btn-sm" data-select-section="${esc(sec.id)}">Select all in this section</button></p>
+          ${groups}
+        </div>
+      </details>`;
     }).join("");
     return `<div class="reg-page">
       <h2>Quick add</h2>
-      <p>Tick the software your school uses. Each is added with its name and category only: fill in the versions, dates and other details from your own records and suppliers.</p>
+      <p>Open a heading, tick the software your school uses, then select <strong>Add selected</strong>. Each is added with its name, vendor and category (and type where it's obvious): fill in the versions, dates and other details from your own records and suppliers. Listing a product here is not a recommendation.</p>
       <div class="card card-body">
-        <p style="margin-top:0"><button type="button" class="btn btn-secondary btn-sm" id="btn-select-all">Select all</button></p>
-        <ul class="reg-starters">${rows}</ul>
-        <button type="button" class="btn btn-primary" id="btn-quick-add">Add selected</button>
+        <div class="qa-search form-field">
+          <label for="qa-search">Search the list</label>
+          <input type="search" id="qa-search" placeholder="e.g. Senso, filtering, Microsoft" autocomplete="off" />
+        </div>
+        <p class="qa-none reg-muted" id="qa-none" hidden>Nothing matches. You can <a href="#" data-view="add">add it yourself</a> instead.</p>
+        <div class="qa-sections">${sections}</div>
+        <div class="qa-bar">
+          <button type="button" class="btn btn-primary" id="btn-quick-add">Add selected</button>
+          <span class="reg-muted" id="qa-count" role="status" aria-live="polite">Nothing selected yet.</span>
+          <span class="qa-own">Can't find it? <a href="#" data-view="add">Add software yourself</a>.</span>
+        </div>
       </div>
       <h2>Import a list from CSV</h2>
       <div class="card card-body">
@@ -494,7 +520,7 @@
     indexes.forEach(i => {
       const s = RM.STARTERS[i];
       if (!s || have.has(s.name.toLowerCase()) || reg.items.length >= RM.MAX_ITEMS) return;
-      reg.items.push(RM.sanitiseEntry({ name: s.name, category: s.category, status: "In use" }));
+      reg.items.push(RM.sanitiseEntry({ name: s.name, vendor: s.vendor, category: s.category, type: s.type, status: "In use" }));
       have.add(s.name.toLowerCase());
       added++;
     });
@@ -672,9 +698,48 @@
     }
 
     if (view === "quick") {
-      $("btn-select-all").addEventListener("click", () => c.querySelectorAll("[data-starter]:not(:disabled)").forEach(x => { x.checked = true; }));
+      const boxes = () => Array.from(c.querySelectorAll("[data-starter]:not(:disabled)"));
+      // Live counts: per section heading and overall
+      const updateCounts = () => {
+        let total = 0;
+        c.querySelectorAll(".qa-section").forEach(sec => {
+          const n = sec.querySelectorAll("[data-starter]:checked:not(:disabled)").length;
+          total += n;
+          const tag = sec.querySelector(".qa-picked");
+          tag.textContent = n ? `${n} selected` : "";
+        });
+        $("qa-count").textContent = total ? `${total} selected` : "Nothing selected yet.";
+      };
+      c.querySelectorAll("[data-starter]").forEach(x => x.addEventListener("change", updateCounts));
+      c.querySelectorAll("[data-select-section]").forEach(b => b.addEventListener("click", () => {
+        const sec = b.closest(".qa-section");
+        const list = Array.from(sec.querySelectorAll("li:not([hidden]) [data-starter]:not(:disabled)"));
+        const allOn = list.length && list.every(x => x.checked);
+        list.forEach(x => { x.checked = !allOn; });
+        b.textContent = allOn ? "Select all in this section" : "Clear this section";
+        updateCounts();
+      }));
+      // Search: show matching items and open the sections they are in
+      $("qa-search").addEventListener("input", () => {
+        const q = $("qa-search").value.trim().toLowerCase();
+        let any = false;
+        c.querySelectorAll(".qa-section").forEach(sec => {
+          let hits = 0;
+          sec.querySelectorAll("li[data-search]").forEach(li => {
+            const show = !q || li.dataset.search.includes(q);
+            li.hidden = !show;
+            if (show) hits++;
+          });
+          sec.querySelectorAll(".qa-group").forEach(g => { g.hidden = !g.querySelector("li:not([hidden])"); });
+          sec.hidden = !hits;
+          sec.open = !!q && hits > 0;
+          if (hits) any = true;
+        });
+        $("qa-none").hidden = any;
+      });
+
       $("btn-quick-add").addEventListener("click", () => {
-        const picked = Array.from(c.querySelectorAll("[data-starter]:checked:not(:disabled)")).map(x => Number(x.dataset.starter));
+        const picked = boxes().filter(x => x.checked).map(x => Number(x.dataset.starter));
         if (!picked.length) { toast("Tick the software you want to add first."); return; }
         const n = addStarters(picked);
         navigate("list");
