@@ -1,7 +1,39 @@
 // Excel export / import using SheetJS
+//
+// buildDfeWorkbook(state) makes the DfE tracker's Excel file without saving it.
+// It is used by the tracker's Export Excel and by the trust overview, which
+// builds updated files for its schools. It needs only data.js and
+// assessment-model.js, so these constants are its own copies (the tracker's
+// app.js has the same values).
+const EXPORT_RAG_INFO = [
+  { value: "Not Set", label: "Not yet assessed", meaning: "This standard has not been assessed yet." },
+  { value: "Red", label: "Not met", meaning: "No provision is in place, or there are significant gaps." },
+  { value: "Amber", label: "Partly met", meaning: "Some provision is in place, or work to meet the standard is planned or in progress." },
+  { value: "Green", label: "Met", meaning: "The standard is fully met." }
+];
+const EXPORT_DATE_TYPES = { complete: "Complete by", review: "Next review" };
+const EXPORT_DATE_STATES = { overdue: "Overdue", soon: "Due soon", ok: "On track", done: "Done" };
+const exportRating = v => (v === "Met" ? "Green" : v);
+const exportLabel = p => (p.role ? `${p.name} (${p.role})` : p.name);
+const exportOwners = v => String(v == null ? "" : v).split(";").map(x => x.trim()).filter(Boolean);
 
 function exportToExcel(state) {
+  const { wb, filename } = buildDfeWorkbook(state);
+  XLSX.writeFile(wb, filename);
+  showToast("Exported: " + filename);
+}
+
+function dfeExportFilename(state) {
+  const school = state.schoolName ? "_" + String(state.schoolName).replace(/[^a-zA-Z0-9]/g, "_") : "";
+  const date = new Date().toISOString().slice(0, 10);
+  return `DfE_Standards_Assessment${school}_${date}.xlsx`;
+}
+
+function buildDfeWorkbook(state) {
   const wb = XLSX.utils.book_new();
+  ["ratings", "notes", "recommendations", "ownership", "targetDates", "dateTypes"].forEach(f => {
+    if (!state[f] || typeof state[f] !== "object") state[f] = {};
+  });
 
   // ── Summary sheet ──────────────────────────────────────────────────────
   const summaryRows = [
@@ -11,7 +43,7 @@ function exportToExcel(state) {
   STANDARDS_DATA.forEach(cat => {
     const counts = { Red: 0, Amber: 0, Green: 0, "Not Set": 0 };
     cat.items.forEach(item => {
-      const r = normaliseRating(state.ratings[item.id] || "Not Set");
+      const r = exportRating(state.ratings[item.id] || "Not Set");
       counts[r] = (counts[r] || 0) + 1;
     });
     let overall = "Not Set";
@@ -35,7 +67,7 @@ function exportToExcel(state) {
   XLSX.utils.book_append_sheet(wb, wsSummary, "Summary");
 
   // ── Rating key ─────────────────────────────────────────────────────────
-  const keyRows = [["RAG Rating", "Means", "Description"]].concat(RAG_INFO.map(r => [r.value, r.label, r.meaning]));
+  const keyRows = [["RAG Rating", "Means", "Description"]].concat(EXPORT_RAG_INFO.map(r => [r.value, r.label, r.meaning]));
   const wsKey = XLSX.utils.aoa_to_sheet(keyRows);
   wsKey["!cols"] = [{ wch: 12 }, { wch: 18 }, { wch: 80 }];
   XLSX.utils.book_append_sheet(wb, wsKey, "Rating key");
@@ -78,9 +110,9 @@ function exportToExcel(state) {
         item.title,
         state.notes[item.id] || "",
         state.recommendations[item.id] || "",
-        normaliseRating(state.ratings[item.id] || "Not Set"),
+        exportRating(state.ratings[item.id] || "Not Set"),
         state.ownership[item.id] || "",
-        d ? DATE_TYPE_LABELS[d.type] : "",
+        d ? EXPORT_DATE_TYPES[d.type] : "",
         d ? d.date : ""
       ]);
     });
@@ -108,8 +140,8 @@ function exportToExcel(state) {
     .filter(x => x.d)
     .sort((a, b) => a.d.date.localeCompare(b.d.date))
     .forEach(({ cat, item, d }) => planRows.push([
-      d.date, DATE_TYPE_LABELS[d.type], DATE_STATE_LABELS[d.state], cat.title, cat.isCore ? "Yes" : "",
-      item.title, normaliseRating(state.ratings[item.id] || "Not Set"), state.ownership[item.id] || ""
+      d.date, EXPORT_DATE_TYPES[d.type], EXPORT_DATE_STATES[d.state], cat.title, cat.isCore ? "Yes" : "",
+      item.title, exportRating(state.ratings[item.id] || "Not Set"), state.ownership[item.id] || ""
     ]));
   if (planRows.length === 1) planRows.push(["No dates set yet"]);
   const wsPlan = XLSX.utils.aoa_to_sheet(planRows);
@@ -122,16 +154,13 @@ function exportToExcel(state) {
   // ── People (the Ownership list) ────────────────────────────────────────
   const peopleRows = [["Name", "Role", "Standards owned"]];
   (state.people || []).forEach(p => peopleRows.push([
-    p.name, p.role, STANDARDS_DATA.reduce((n, c) => n + c.items.filter(i => state.ownership[i.id] === personLabel(p)).length, 0)
+    p.name, p.role, STANDARDS_DATA.reduce((n, c) => n + c.items.filter(i => exportOwners(state.ownership[i.id]).includes(exportLabel(p))).length, 0)
   ]));
   const wsPeople = XLSX.utils.aoa_to_sheet(peopleRows);
   wsPeople["!cols"] = [{ wch: 28 }, { wch: 28 }, { wch: 16 }];
   XLSX.utils.book_append_sheet(wb, wsPeople, "People");
 
-  // ── Save ───────────────────────────────────────────────────────────────
-  const school = state.schoolName ? "_" + state.schoolName.replace(/[^a-zA-Z0-9]/g, "_") : "";
-  const date = new Date().toISOString().slice(0, 10);
-  const filename = `DfE_Standards_Assessment${school}_${date}.xlsx`;
+  const filename = dfeExportFilename(state);
 
   // Hidden "_assessment" sheet with the full assessment as JSON, so the trust
   // overview can import this file exactly (see assessment-model.js). Never let
@@ -140,14 +169,13 @@ function exportToExcel(state) {
     if (window.AssessmentModel) AssessmentModel.writeSnapshotSheet(XLSX, wb, AssessmentModel.fromTrackerState("dfe", state));
   } catch (e) { console.warn("Assessment sheet not added:", e); }
 
-  XLSX.writeFile(wb, filename);
-  showToast("Exported: " + filename);
+  return { wb, filename };
 }
 
 // A standard's date as exported, or null (see AssessmentModel.dateStatus)
 function exportDate(state, id) {
   const t = state.targetDates || {}, ty = state.dateTypes || {};
-  return AssessmentModel.dateStatus(t[id], ty[id], normaliseRating(state.ratings[id] || "Not Set"), null, DATE_SOON_DAYS);
+  return AssessmentModel.dateStatus(t[id], ty[id], exportRating(state.ratings[id] || "Not Set"), null, 30);
 }
 
 // A date cell from Excel: "2027-03-12" as typed or exported, "12/03/2027" (UK

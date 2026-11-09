@@ -347,6 +347,7 @@
       ${trustLine()}
       ${summaryCards(t)}
       <h2 id="grid-heading" style="font-size:18px">Schools</h2>
+      ${sendFilesBar()}
       ${filtersHtml()}
       ${gridHtml()}
     </div>`;
@@ -760,6 +761,8 @@
           ? "Opens this school's newest DfE assessment in the standards tracker. Your changes are copied back here as you work; the imported version is kept as an earlier version."
           : "Opens the standards tracker with this school's details filled in, so you can start its assessment. Your work is copied back here as you go."}
           Use <strong>Back to trust overview</strong> in the tracker to return.</p>
+        ${s.records.dfe.length ? `<p class="small" style="margin-bottom:0"><button type="button" class="btn btn-secondary btn-sm" data-download-school="${esc(s.key)}">&#8595; Download this school's file</button>
+          <span class="muted">A DfE tracker Excel file to send to the school. They use <strong>Import Excel</strong> in their tracker to load it.</span></p>` : ""}
       </div>
       ${sections}
     </div>`;
@@ -812,6 +815,80 @@
   }
 
   // ── About ────────────────────────────────────────────────────────────────
+  // ── Updated files for schools ─────────────────────────────────────────────
+  // Builds each school's DfE tracker Excel file (the same file the school's own
+  // Export Excel makes, via export.js) from its newest assessment here, so the
+  // trust can send schools what it has changed. The site can't email them: the
+  // trust downloads the files (one, or all in a ZIP) and sends them on.
+  const changedByTrust = row => { const r = row.current && row.current.dfe; return !!r && r.provenance.parsedFrom === "DfE tracker"; };
+
+  function sendFilesBar() {
+    const withDfe = schools.filter(s => s.current && s.current.dfe);
+    if (!withDfe.length || typeof buildDfeWorkbook !== "function") return "";
+    const changed = withDfe.filter(changedByTrust).length;
+    return `<div class="send-files">
+      <span><strong>Send schools their files.</strong> ${changed ? `${plural(changed, "school")} changed by the trust.` : "Download each school's DfE tracker file to send back to it."}</span>
+      <button type="button" class="btn btn-primary btn-sm" id="btn-send-files">&#8595; Download school files</button>
+    </div>`;
+  }
+
+  // A school's tracker state for export: its newest assessment, with a People
+  // list of the trust's central team plus every owner named on its standards
+  function exportStateFor(row) {
+    const state = window.TrustLink.stateForRow(row);
+    let people = window.TrustCentral ? TrustCentral.mergePeople([], central) : [];
+    const have = new Set(people.map(p => (p.role ? `${p.name} (${p.role})` : p.name)));
+    Object.values(state.ownership || {}).forEach(v => String(v || "").split(";").map(x => x.trim()).filter(Boolean).forEach(label => {
+      if (have.has(label)) return;
+      have.add(label);
+      const m = /^(.*\S) \(([^()]+)\)$/.exec(label);
+      people.push(m ? { name: m[1], role: m[2] } : { name: label, role: "" });
+    }));
+    state.people = people.map(p => ({ name: p.name, role: p.role }));
+    return state;
+  }
+
+  function downloadSchoolFile(row) {
+    const { wb, filename } = buildDfeWorkbook(exportStateFor(row));
+    XLSX.writeFile(wb, filename);
+    toast(`Downloaded ${filename}. Send it to ${row.name}; they use Import Excel in the DfE tracker.`);
+  }
+
+  async function sendFilesToSchools() {
+    const withDfe = schools.filter(s => s.current && s.current.dfe);
+    if (!withDfe.length) return;
+    const changed = withDfe.filter(changedByTrust);
+    const buttons = [];
+    if (changed.length) buttons.push([`Schools changed by the trust (${changed.length})`, "changed", "btn-primary"]);
+    buttons.push([`All schools with an assessment (${withDfe.length})`, "all", changed.length ? "btn-secondary" : "btn-primary"], ["Cancel", "cancel"]);
+    const choice = await window.TrustLink.chooseDialog("Download school files", [
+      "This downloads a ZIP file with each school's DfE tracker Excel file, made from its newest assessment here (including anything the trust has changed or filled from central answers).",
+      "Send each file to its school. They open the DfE standards tracker and use Import Excel to load it, which replaces what is in their tracker, so they should export a copy of theirs first if they want to keep it."
+    ], buttons);
+    if (choice !== "changed" && choice !== "all") return;
+    const rows = choice === "changed" ? changed : withDfe;
+    const C = XLSX.CFB, zip = C.utils.cfb_new(), used = new Set();
+    let n = 0, failed = 0;
+    rows.forEach(row => {
+      try {
+        const { wb, filename } = buildDfeWorkbook(exportStateFor(row));
+        let name = filename;
+        if (used.has(name)) name = filename.replace(/\.xlsx$/, "_" + (row.urn || ++n) + ".xlsx");
+        used.add(name);
+        C.utils.cfb_add(zip, name, new Uint8Array(XLSX.write(wb, { bookType: "xlsx", type: "array" })));
+        n++;
+      } catch (e) { failed++; }
+    });
+    const out = C.write(zip, { fileType: "zip", type: "array" });
+    const trustName = app.trust ? "_" + app.trust.name.replace(/[^a-zA-Z0-9]/g, "_").slice(0, 60) : "";
+    const zipName = `School_files${trustName}_${new Date().toISOString().slice(0, 10)}.zip`;
+    const url = URL.createObjectURL(new Blob([out], { type: "application/zip" }));
+    const a = document.createElement("a");
+    a.href = url; a.download = zipName; document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 10000);
+    toast(`Downloaded ${zipName} with ${plural(rows.length - failed, "school file")}.${failed ? ` ${plural(failed, "file")} could not be made.` : ""} Send each school its file.`);
+  }
+
   // ── Trust central: central team and central answers (trust-central.js) ──
   let central = window.TrustCentral ? TrustCentral.load() : { people: [], answers: {} };
   const RATING_LABEL = { "Not Set": "Not set", Red: "Red: not met", Amber: "Amber: partly met", Green: "Green: met" };
@@ -1104,6 +1181,12 @@
       try { await TrustLink.openInTracker(row); } finally { b.disabled = false; }
     }));
     bindCentral(c);
+    const sendBtn = document.getElementById("btn-send-files");
+    if (sendBtn) sendBtn.addEventListener("click", sendFilesToSchools);
+    c.querySelectorAll("[data-download-school]").forEach(b => b.addEventListener("click", () => {
+      const row = schools.find(x => x.key === b.dataset.downloadSchool);
+      if (row) downloadSchoolFile(row);
+    }));
     c.querySelectorAll("[data-sort]").forEach(b => b.addEventListener("click", () => {
       const k = b.dataset.sort;
       // Status columns start worst first; text columns A to Z
