@@ -112,7 +112,7 @@
   const CATEGORIES = [
     "MIS", "Safeguarding", "Filtering and monitoring", "Learning platform", "Curriculum and classroom",
     "Productivity and email", "Communication", "Finance and HR", "Operating system", "Browser",
-    "Security", "Device management", "Other"
+    "Security", "Backup", "Device management", "Other"
   ];
   const TYPES = [
     "Installed software", "SaaS (cloud service)", "IaaS (cloud infrastructure)", "PaaS (cloud platform)",
@@ -314,18 +314,188 @@
   const FIELD_BY_KEY = {};
   FIELDS.forEach(f => { FIELD_BY_KEY[f.key] = f; });
 
-  // ── Starter list for "Quick add": names and categories only ──────────────
-  // No versions, support dates or prices: the school fills those in.
-  const STARTERS = [
-    ["Microsoft 365", "Productivity and email"], ["Google Workspace for Education", "Productivity and email"],
-    ["Windows 11", "Operating system"], ["ChromeOS", "Operating system"], ["macOS", "Operating system"], ["iPadOS", "Operating system"],
-    ["Arbor", "MIS"], ["SIMS", "MIS"], ["Bromcom", "MIS"],
-    ["CPOMS", "Safeguarding"], ["MyConcern", "Safeguarding"],
-    ["Smoothwall", "Filtering and monitoring"], ["Securly", "Filtering and monitoring"], ["Senso", "Filtering and monitoring"], ["Impero", "Filtering and monitoring"],
-    ["Sophos", "Security"], ["Microsoft Defender", "Security"],
-    ["Microsoft Intune", "Device management"], ["Google Classroom", "Learning platform"], ["Microsoft Teams", "Communication"],
-    ["Google Chrome", "Browser"], ["Microsoft Edge", "Browser"]
-  ].map(([name, category]) => ({ name, category }));
+  // ── Starter catalogue for "Quick add" ────────────────────────────────────
+  // Common UK school software, grouped into sections (and sub-groups) so a
+  // school can open a heading such as Safeguarding and tick what it uses.
+  // Each entry is [name, vendor, category, type]. Vendor is only filled in
+  // where the supplier is clear; type only where it is obvious. No versions,
+  // support dates or prices: the school fills those in from its own records.
+  // Listing a product here is not a recommendation.
+  const SAAS = "SaaS (cloud service)", INSTALLED = "Installed software", APP = "Mobile app";
+  const STARTER_SECTIONS = [
+    { id: "safeguarding", title: "Safeguarding and online safety", groups: [
+      { title: "Online monitoring", items: [
+        ["Senso", "Senso", "Filtering and monitoring", ""],
+        ["Securus", "Securus Software", "Filtering and monitoring", ""],
+        ["Smoothwall Monitor", "Smoothwall", "Filtering and monitoring", ""],
+        ["Impero", "Impero Software", "Filtering and monitoring", ""],
+        ["NetSupport DNA", "NetSupport", "Filtering and monitoring", ""],
+        ["Lightspeed Alert", "Lightspeed Systems", "Filtering and monitoring", ""],
+        ["Linewize Monitor", "Linewize", "Filtering and monitoring", ""],
+        ["eSafe", "eSafe Global", "Filtering and monitoring", ""]
+      ] },
+      { title: "Web filtering", items: [
+        ["Smoothwall Filter", "Smoothwall", "Filtering and monitoring", ""],
+        ["Netsweeper", "Netsweeper", "Filtering and monitoring", ""],
+        ["Securly Filter", "Securly", "Filtering and monitoring", ""],
+        ["Lightspeed Filter", "Lightspeed Systems", "Filtering and monitoring", ""],
+        ["Linewize Filter", "Linewize", "Filtering and monitoring", ""],
+        ["SurfProtect", "Exa Networks", "Filtering and monitoring", ""],
+        ["WebScreen", "LGfL", "Filtering and monitoring", ""],
+        ["RM SafetyNet", "RM", "Filtering and monitoring", ""]
+      ] },
+      { title: "Safeguarding records", items: [
+        ["CPOMS", "CPOMS Systems", "Safeguarding", SAAS],
+        ["MyConcern", "The Safeguarding Company", "Safeguarding", SAAS]
+      ] }
+    ] },
+    { id: "mis", title: "MIS and school data", groups: [
+      { title: "Management information systems", items: [
+        ["Arbor", "Arbor Education", "MIS", SAAS],
+        ["SIMS", "Education Software Solutions", "MIS", ""],
+        ["Bromcom", "Bromcom", "MIS", SAAS],
+        ["iSAMS", "iSAMS", "MIS", SAAS],
+        ["ScholarPack", "", "MIS", SAAS],
+        ["Pupil Asset", "Juniper Education", "MIS", SAAS]
+      ] },
+      { title: "Data sharing with other apps", items: [
+        ["Wonde", "Wonde", "MIS", SAAS],
+        ["Groupcall Xporter", "Groupcall", "MIS", SAAS]
+      ] },
+      { title: "Assessment and tracking", items: [
+        ["FFT Aspire", "FFT Education", "MIS", SAAS],
+        ["GL Assessment", "GL Assessment", "Curriculum and classroom", SAAS],
+        ["Target Tracker", "Juniper Education", "MIS", SAAS]
+      ] }
+    ] },
+    { id: "productivity", title: "Email, productivity and staff communication", groups: [
+      { title: "", items: [
+        ["Microsoft 365", "Microsoft", "Productivity and email", SAAS],
+        ["Google Workspace for Education", "Google", "Productivity and email", SAAS],
+        ["Microsoft Teams", "Microsoft", "Communication", SAAS],
+        ["Adobe Creative Cloud", "Adobe", "Productivity and email", SAAS],
+        ["Canva for Education", "Canva", "Productivity and email", SAAS]
+      ] }
+    ] },
+    { id: "parents", title: "Parent communication and payments", groups: [
+      { title: "", items: [
+        ["ParentPay", "ParentPay", "Finance and HR", SAAS],
+        ["ParentMail", "", "Communication", SAAS],
+        ["Schoolcomms", "", "Communication", SAAS],
+        ["sQuid", "sQuid", "Finance and HR", SAAS],
+        ["Weduc", "", "Communication", SAAS],
+        ["ClassDojo", "ClassDojo", "Communication", SAAS]
+      ] }
+    ] },
+    { id: "learning", title: "Learning platforms and homework", groups: [
+      { title: "", items: [
+        ["Google Classroom", "Google", "Learning platform", SAAS],
+        ["Satchel One", "Satchel", "Learning platform", SAAS],
+        ["Seesaw", "Seesaw Learning", "Learning platform", SAAS],
+        ["Tapestry", "The Foundation Stage Forum", "Learning platform", SAAS],
+        ["Evidence Me", "2Simple", "Learning platform", SAAS]
+      ] }
+    ] },
+    { id: "curriculum", title: "Curriculum and classroom apps", groups: [
+      { title: "Maths", items: [
+        ["Times Tables Rock Stars", "Maths Circle", "Curriculum and classroom", SAAS],
+        ["Numbots", "Maths Circle", "Curriculum and classroom", SAAS],
+        ["Sparx Maths", "Sparx", "Curriculum and classroom", SAAS],
+        ["MyMaths", "Oxford University Press", "Curriculum and classroom", SAAS],
+        ["Mathletics", "3P Learning", "Curriculum and classroom", SAAS],
+        ["DoodleMaths", "", "Curriculum and classroom", SAAS]
+      ] },
+      { title: "Reading, writing and languages", items: [
+        ["Accelerated Reader", "Renaissance Learning", "Curriculum and classroom", SAAS],
+        ["Bug Club", "Pearson", "Curriculum and classroom", SAAS],
+        ["Lexia", "Lexia Learning", "Curriculum and classroom", SAAS],
+        ["Spelling Shed", "Education Shed", "Curriculum and classroom", SAAS]
+      ] },
+      { title: "General", items: [
+        ["Purple Mash", "2Simple", "Curriculum and classroom", SAAS],
+        ["Kerboodle", "Oxford University Press", "Curriculum and classroom", SAAS],
+        ["Seneca", "Seneca Learning", "Curriculum and classroom", SAAS],
+        ["CENTURY", "CENTURY Tech", "Curriculum and classroom", SAAS],
+        ["Kahoot!", "Kahoot!", "Curriculum and classroom", SAAS],
+        ["Scratch", "MIT", "Curriculum and classroom", ""],
+        ["Unifrog", "Unifrog", "Curriculum and classroom", SAAS]
+      ] }
+    ] },
+    { id: "send", title: "SEND and accessibility", groups: [
+      { title: "", items: [
+        ["Provision Map", "Edukey", "Curriculum and classroom", SAAS],
+        ["Read&Write", "Texthelp", "Curriculum and classroom", ""],
+        ["Clicker", "Crick Software", "Curriculum and classroom", ""],
+        ["Widgit Online", "Widgit", "Curriculum and classroom", SAAS]
+      ] }
+    ] },
+    { id: "office", title: "Finance, HR and school office", groups: [
+      { title: "Finance and HR", items: [
+        ["Sage", "Sage", "Finance and HR", ""],
+        ["Xero", "Xero", "Finance and HR", SAAS],
+        ["PS Financials", "", "Finance and HR", ""],
+        ["IRIS Financials", "IRIS Software Group", "Finance and HR", ""]
+      ] },
+      { title: "Visitors and trips", items: [
+        ["InVentry", "InVentry", "Other", ""],
+        ["Sign In App", "Sign In App", "Other", SAAS],
+        ["EVOLVE", "Eduspot", "Other", SAAS]
+      ] }
+    ] },
+    { id: "security", title: "Security and backup", groups: [
+      { title: "Anti-malware", items: [
+        ["Microsoft Defender", "Microsoft", "Security", ""],
+        ["Sophos Intercept X", "Sophos", "Security", ""],
+        ["ESET", "ESET", "Security", ""],
+        ["Bitdefender", "Bitdefender", "Security", ""]
+      ] },
+      { title: "Firewalls", items: [
+        ["Sophos Firewall", "Sophos", "Security", ""],
+        ["FortiGate", "Fortinet", "Security", ""],
+        ["WatchGuard Firebox", "WatchGuard", "Security", ""]
+      ] },
+      { title: "Backup", items: [
+        ["Veeam", "Veeam", "Backup", ""],
+        ["Redstor", "Redstor", "Backup", SAAS]
+      ] }
+    ] },
+    { id: "devices", title: "Device and classroom management", groups: [
+      { title: "Device management", items: [
+        ["Microsoft Intune", "Microsoft", "Device management", SAAS],
+        ["Google Admin console", "Google", "Device management", SAAS],
+        ["Apple School Manager", "Apple", "Device management", SAAS],
+        ["Jamf School", "Jamf", "Device management", SAAS],
+        ["Mosyle", "Mosyle", "Device management", SAAS]
+      ] },
+      { title: "Classroom management", items: [
+        ["NetSupport School", "NetSupport", "Device management", INSTALLED],
+        ["LanSchool", "Lenovo", "Device management", ""],
+        ["Apple Classroom", "Apple", "Device management", APP]
+      ] }
+    ] },
+    { id: "os", title: "Operating systems and browsers", groups: [
+      { title: "Operating systems", items: [
+        ["Windows 11", "Microsoft", "Operating system", INSTALLED],
+        ["Windows 10", "Microsoft", "Operating system", INSTALLED],
+        ["Windows Server", "Microsoft", "Operating system", INSTALLED],
+        ["ChromeOS", "Google", "Operating system", INSTALLED],
+        ["macOS", "Apple", "Operating system", INSTALLED],
+        ["iPadOS", "Apple", "Operating system", INSTALLED]
+      ] },
+      { title: "Browsers", items: [
+        ["Google Chrome", "Google", "Browser", INSTALLED],
+        ["Microsoft Edge", "Microsoft", "Browser", INSTALLED],
+        ["Safari", "Apple", "Browser", INSTALLED],
+        ["Mozilla Firefox", "Mozilla", "Browser", INSTALLED]
+      ] }
+    ] }
+  ];
+
+  // Flat list (index = position), each entry with its section and group
+  const STARTERS = [];
+  STARTER_SECTIONS.forEach(sec => sec.groups.forEach(g => g.items.forEach(([name, vendor, category, type]) => {
+    STARTERS.push({ name, vendor, category, type, section: sec.id, sectionTitle: sec.title, group: g.title });
+  })));
 
   // ── Helpers ───────────────────────────────────────────────────────────────
   const hasOwn = (o, k) => !!o && typeof o === "object" && Object.prototype.hasOwnProperty.call(o, k);
@@ -568,7 +738,7 @@
 
   window.RegisterModel = {
     STATE_KEY, SCHEMA_VERSION, MAX_ITEMS, THRESHOLDS, SOURCES, GROUPS, FIELDS, FIELD_BY_KEY, RULES,
-    CATEGORIES, TYPES, CLOUD_TYPES, STATUSES, STARTERS, SUPPORTED_ROLLING,
+    CATEGORIES, TYPES, CLOUD_TYPES, STATUSES, STARTERS, STARTER_SECTIONS, SUPPORTED_ROLLING,
     isCloud, onDevice, blankEntry, sanitiseEntry, sanitiseState, emptyState, loadState,
     evaluate, summarise, validDate, isoToday, addDays, addMonths, formatDate, newId
   };
