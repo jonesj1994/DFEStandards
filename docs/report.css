@@ -1,7 +1,7 @@
 /* Governors' report: screen preview and A4 print layout */
 :root {
-  --navy: #003a63;
-  --blue: #1d70b8;
+  --navy: #0b3c5d;   /* School Compliance Toolkit brand */
+  --blue: #0f7b72;
   --red: #d4351c;
   --amber: #f47738;
   --green: #00703c;
@@ -21,26 +21,28 @@ body {
 }
 
 /* ── Settings panel (screen only) ── */
-.report-tools { background: var(--navy); color: #fff; padding: 12px 16px; }
+.report-tools { background: linear-gradient(135deg, #0b3c5d 0%, #0e5a72 60%, #0f7b72 100%); color: #fff; padding: 12px 16px; font-family: "Segoe UI", system-ui, -apple-system, Roboto, Arial, sans-serif; }
+.tools-brand { display: flex; align-items: center; gap: 8px; color: #fff; text-decoration: none; font-weight: 800; font-size: 14px; margin-right: 6px; }
+.tools-brand img { border-radius: 6px; }
 .tools-inner { max-width: 210mm; margin: 0 auto; }
 .tools-row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
 .tools-hint { font-size: 13px; color: rgba(255,255,255,0.85); flex: 1 1 240px; }
 .tbtn {
-  display: inline-block; padding: 8px 16px; border-radius: 4px; border: 2px solid #fff;
+  display: inline-block; padding: 8px 16px; border-radius: 8px; border: 2px solid #fff;
   font: 600 14px Arial, sans-serif; text-decoration: none; cursor: pointer;
 }
 .tbtn-primary { background: #fff; color: var(--navy); }
 .tbtn-secondary { background: transparent; color: #fff; }
 .tbtn:hover { opacity: 0.85; }
 .tbtn:focus-visible, .report-tools input:focus-visible, .report-tools textarea:focus-visible, .report-tools summary:focus-visible {
-  outline: 3px solid #ffdd00; outline-offset: 1px;
+  outline: 3px solid #ffd65a; outline-offset: 1px;
 }
-.tools-options { margin-top: 12px; background: rgba(255,255,255,0.08); border-radius: 6px; padding: 8px 12px; }
+.tools-options { margin-top: 12px; background: rgba(255,255,255,0.1); border-radius: 10px; padding: 8px 12px; }
 .tools-options summary { cursor: pointer; font-weight: 700; font-size: 14px; }
 .tools-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px 12px; margin-top: 10px; }
 .tfield label { display: block; font-size: 12px; font-weight: 700; margin-bottom: 3px; }
 .tfield input[type=text], .tfield input[type=date], .tfield textarea {
-  width: 100%; padding: 6px 8px; border: 0; border-radius: 3px; font: 13px Arial, sans-serif; color: var(--ink);
+  width: 100%; padding: 6px 8px; border: 0; border-radius: 6px; font: 13px Arial, sans-serif; color: var(--ink);
 }
 .tfield textarea { resize: vertical; }
 .tfield-wide { grid-column: 1 / -1; }
@@ -51,7 +53,7 @@ body {
 /* ── Report page ── */
 .report {
   max-width: 210mm; margin: 20px auto; background: #fff; padding: 18mm 16mm;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.15); font-size: 11pt;
+  box-shadow: 0 2px 10px rgba(16,42,58,0.15); border-radius: 4px; font-size: 11pt;
 }
 .report h1 { font-size: 22pt; margin: 0 0 4px; color: var(--navy); line-height: 1.15; }
 .report h2 { font-size: 15pt; color: var(--navy); border-bottom: 2px solid var(--navy); padding-bottom: 4px; margin: 0 0 10px; }

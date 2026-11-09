@@ -8,12 +8,16 @@
   <link rel="icon" href="favicon.svg" type="image/svg+xml" />
   <link rel="stylesheet" href="style.css" />
   <link rel="stylesheet" href="trust.css" />
+  <link rel="stylesheet" href="brand.css" />
 </head>
 <body>
 <a class="skip-link" href="#content">Skip to main content</a>
 <div id="app">
   <nav id="sidebar" aria-label="Trust overview">
-    <div class="sidebar-logo">Trust Overview</div>
+    <div class="sidebar-logo">
+      <a class="sb-brand" href="index.html"><img src="favicon.svg" alt="" width="30" height="30" /><span>School Compliance Toolkit</span></a>
+      <span class="sb-tool">Trust Overview</span>
+    </div>
     <ul class="sidebar-nav" id="sidebar-nav">
       <li><a href="index.html" class="home-link">&#8592; All trackers</a></li>
       <li><a href="#" data-view="overview" class="active">&#9632; Trust overview</a></li>
@@ -21,6 +25,7 @@
       <li><a href="#" data-view="trust">&#9632; Choose trust</a></li>
       <li><a href="#" data-view="about">&#9632; About this data</a></li>
     </ul>
+    <p class="sb-foot">An independent toolkit for schools. Not affiliated with the DfE or NCSC. Your data stays in this browser.</p>
   </nav>
 
   <div id="main">
