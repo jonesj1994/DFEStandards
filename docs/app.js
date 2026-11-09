@@ -212,7 +212,7 @@ function showSaved(ok) {
 }
 
 // ── Routing ────────────────────────────────────────────────────────────────
-let currentView = "dashboard";
+let currentView = "home";
 let currentCategoryId = null;
 
 function navigate(view, categoryId) {
@@ -221,9 +221,12 @@ function navigate(view, categoryId) {
   renderView();
   updateSidebarActive();
   document.getElementById("topbar-title").textContent = viewTitle();
+  // A new page starts at the top
+  window.scrollTo(0, 0);
 }
 
 function viewTitle() {
+  if (currentView === "home") return "Start here";
   if (currentView === "dashboard") return "Dashboard";
   if (currentView === "school-info") return "School Information";
   if (currentView === "summary") return "Summary";
@@ -311,7 +314,8 @@ function buildSidebarNav() {
 // ── Views ──────────────────────────────────────────────────────────────────
 function renderView() {
   const content = document.getElementById("content");
-  if (currentView === "dashboard") content.innerHTML = renderDashboard();
+  if (currentView === "home") content.innerHTML = renderHome();
+  else if (currentView === "dashboard") content.innerHTML = renderDashboard();
   else if (currentView === "school-info") content.innerHTML = renderSchoolInfo();
   else if (currentView === "summary") content.innerHTML = renderSummary();
   else if (currentView === "plan") content.innerHTML = renderPlan();
@@ -666,6 +670,149 @@ function addPerson(name, role) {
   return "";
 }
 
+// ── Start here (the tracker's home page) ───────────────────────────────────
+function areaGuideHtml(catId) {
+  const g = typeof AREA_GUIDE !== "undefined" && Object.prototype.hasOwnProperty.call(AREA_GUIDE, catId) ? AREA_GUIDE[catId] : null;
+  if (!g) return "";
+  return `<p><strong>Who can help:</strong> ${escHtml(g.who)}</p>
+    <p style="margin-bottom:4px"><strong>Evidence to gather:</strong></p>
+    <ul>${g.evidence.map(e => `<li>${escHtml(e)}</li>`).join("")}</ul>
+    <p class="guide-tip"><strong>Tip:</strong> ${escHtml(g.tip)}</p>`;
+}
+
+// "How to fill in this area" on each area page; open until something is rated
+function areaGuideBox(cat, counts) {
+  const inner = areaGuideHtml(cat.id);
+  if (!inner) return "";
+  const started = counts["Not Set"] < cat.items.length;
+  return `<details class="area-guide"${started ? "" : " open"}>
+    <summary>How to fill in this area</summary>
+    <div class="area-guide-body">
+      ${inner}
+      <p class="guide-steps">For each standard below: select it to open it, read the DfE guidance, then set the <strong>rating</strong>, write the <strong>current position</strong> and any <strong>recommendations</strong>, choose an <strong>owner</strong> and set a <strong>date</strong>. <a href="#" data-view="home" data-anchor="guide-standard">See the full guide</a>.</p>
+    </div>
+  </details>`;
+}
+
+function renderHome() {
+  const all = STANDARDS_DATA.flatMap(c => c.items.map(i => state.ratings[i.id] || "Not Set"));
+  const rated = all.filter(r => r !== "Not Set").length;
+  const areasDone = STANDARDS_DATA.filter(c => c.items.every(i => (state.ratings[i.id] || "Not Set") !== "Not Set")).length;
+  const pc = planCounts();
+  const steps = [
+    { done: !!state.schoolName, title: "Add your school's details", text: state.schoolName ? `Done: ${state.schoolName}.` : "Look up your school by URN or DfE number, and add who is doing the assessment.", view: "school-info", btn: "School Info" },
+    { done: state.people.length > 0, title: "Add your people", text: state.people.length ? `${state.people.length} ${state.people.length === 1 ? "person" : "people"} added.` : "List the people who will own standards, so you can pick them from a drop-down.", view: "people", btn: "People" },
+    { done: rated === all.length, title: "Rate each standard area", text: `${rated} of ${all.length} standards rated; ${areasDone} of ${STANDARDS_DATA.length} areas complete.`, view: "dashboard", btn: "Dashboard" },
+    { done: rated > 0 && pc.undated === 0, title: "Set dates for what you're working towards", text: rated === 0 ? "Once standards are rated, give each a Complete by or Next review date." : pc.undated ? `${pc.undated} standard${pc.undated === 1 ? " is" : "s are"} rated Red or Amber with no date.` : "Every Red and Amber standard has a date.", view: "plan", btn: "Working towards" },
+    { done: false, share: true, title: "Save a copy and share it", text: "Export to Excel to keep a copy or send to your trust. Create a governors' report to print or save as a PDF." }
+  ];
+  const next = steps.findIndex(s => !s.done && !s.share);
+  const stepHtml = steps.map((s, i) => `
+    <li class="step${s.done ? " done" : ""}${i === next ? " next" : ""}">
+      <span class="step-mark" aria-hidden="true">${s.done ? "&#10003;" : i + 1}</span>
+      <div class="step-body">
+        <h3>${escHtml(s.title)}${s.done ? '<span class="visually-hidden"> (done)</span>' : i === next ? ' <span class="next-tag">Next step</span>' : ""}</h3>
+        <p>${escHtml(s.text)}</p>
+      </div>
+      ${s.share
+        ? `<div class="step-btns"><button type="button" class="btn btn-success btn-sm" data-click="btn-export">&#8595; Export Excel</button><button type="button" class="btn btn-secondary btn-sm" data-click="btn-report">Governors' report</button></div>`
+        : `<a href="#" class="btn ${i === next ? "btn-primary" : "btn-secondary"} btn-sm" data-view="${s.view}">${escHtml(s.btn)} &#8594;</a>`}
+    </li>`).join("");
+
+  const areaCards = STANDARDS_DATA.map(cat => {
+    const c = categoryRagSummary(cat);
+    const g = typeof AREA_GUIDE !== "undefined" && Object.prototype.hasOwnProperty.call(AREA_GUIDE, cat.id) ? AREA_GUIDE[cat.id] : null;
+    const r = cat.items.length - c["Not Set"];
+    return `<a class="guide-area" href="#" data-view="category" data-category="${escAttr(cat.id)}">
+      <span class="guide-area-title"><span class="rag-dot ${categoryOverallDot(cat)}"></span>${escHtml(cat.title)}${cat.isCore ? ' <span class="core-badge">CORE</span>' : ""}</span>
+      <span class="guide-area-meta">${r} of ${cat.items.length} rated</span>
+      ${g ? `<span class="guide-area-who">Who can help: ${escHtml(g.who)}</span>` : ""}
+    </a>`;
+  }).join("");
+
+  return `
+  <div class="home-guide">
+    <h2 style="margin-top:0">Start here</h2>
+    <p class="lead">Use this tracker to check your school against the DfE's <a class="guidance-link" href="${escAttr(STANDARDS_INDEX_URL)}" target="_blank" rel="noopener">digital and technology standards</a> &#8599;, record what you have in place, and plan what to do next. There are ${all.length} standards in ${STANDARDS_DATA.length} areas; the ${STANDARDS_DATA.filter(c => c.isCore).length} marked <span class="core-badge">CORE</span> are the core standards DfE expects schools and colleges to be working towards by ${coreYear()}.</p>
+    ${profileNotice()}
+
+    <section class="card" aria-labelledby="h-progress">
+      <div class="card-header"><h3 id="h-progress">Your progress</h3></div>
+      <ol class="steps">${stepHtml}</ol>
+    </section>
+
+    <section class="card guide-section" aria-labelledby="h-people">
+      <div class="card-header"><h3 id="h-people">How to set up your people</h3></div>
+      <div class="card-body">
+        <p>Each standard has an owner: the person responsible for it. Add everyone once on the <a href="#" data-view="people">People</a> page and they appear in the <strong>Ownership</strong> drop-down on every standard.</p>
+        <ol class="guide-list">
+          <li>Open <a href="#" data-view="people">People</a> in the menu.</li>
+          <li>Type a <strong>name</strong> and, if you like, a <strong>role</strong> (for example "Alex Taylor" and "Business Manager"), then select <strong>+ Add</strong>. Repeat for each person.</li>
+          <li>Include people outside school who own standards too, such as your IT support company.</li>
+          <li>To change a name or role, edit it in the list and select <strong>Save</strong>. Every standard they own is updated.</li>
+          <li>Selecting <strong>Remove</strong> takes someone off the list and sets their standards to Not assigned.</li>
+        </ol>
+        <p class="guide-tip"><strong>Tip:</strong> while filling in a standard, choose <strong>+ Add someone to the People list…</strong> in the Ownership drop-down to add a person without losing your place.</p>
+      </div>
+    </section>
+
+    <section class="card guide-section" id="guide-standard" aria-labelledby="h-standard">
+      <div class="card-header"><h3 id="h-standard">How to fill in a standard</h3></div>
+      <div class="card-body">
+        <p>Open a standard area from the menu, then select a standard to open it. Each standard has the same fields:</p>
+        <div class="example-item" aria-hidden="true">
+          <div class="example-head"><span>1.</span><strong>Example: Review your filtering and monitoring provision at least annually</strong><span class="date-badge soon">Complete by 28 November 2026</span><span class="rag-pill amber">Amber</span></div>
+          <div class="example-grid">
+            <div class="example-field wide"><span class="callout">A</span><b>DfE guidance</b><i>The official GOV.UK text for this standard.</i></div>
+            <div class="example-field wide"><span class="callout">B</span><b>Current Status &amp; Notes</b><i>Annual review done in September; alerts not yet logged.</i></div>
+            <div class="example-field wide"><span class="callout">C</span><b>Recommendations</b><i>Link monitoring alerts to the safeguarding log.</i></div>
+            <div class="example-field"><span class="callout">D</span><b>RAG Rating</b><i>Amber</i></div>
+            <div class="example-field"><span class="callout">E</span><b>Ownership</b><i>Chris Morgan (DSL) &#9662;</i></div>
+            <div class="example-field"><span class="callout">F</span><b>Date type</b><i>Complete by &#9662;</i></div>
+            <div class="example-field"><span class="callout">F</span><b>Date</b><i>28/11/2026</i></div>
+          </div>
+        </div>
+        <dl class="field-guide">
+          <dt><span class="callout">A</span> DfE guidance</dt><dd>Read this first. It says why the standard matters, when to meet it and how. The link at the top of each area page opens the full guidance on GOV.UK.</dd>
+          <dt><span class="callout">B</span> Current Status &amp; Notes</dt><dd>What you have in place now, and the evidence for it: for example "Annual review completed September 2026, signed off by the safeguarding governor". Be specific, so someone else could check it.</dd>
+          <dt><span class="callout">C</span> Recommendations</dt><dd>What needs to happen to meet the standard, or to keep meeting it. Leave it blank if nothing is needed.</dd>
+          <dt><span class="callout">D</span> RAG Rating</dt><dd>
+            ${RAG_INFO.map(r => `<span class="rag-pill ${ragClass(r.value)}">${escHtml(r.value)}</span> ${escHtml(r.label)}: ${escHtml(r.meaning)}`).join("<br>")}
+          </dd>
+          <dt><span class="callout">E</span> Ownership</dt><dd>Who is responsible. Choose from your <a href="#" data-view="people">People</a> list.</dd>
+          <dt><span class="callout">F</span> Date type and Date</dt><dd><strong>Complete by</strong>: when you aim to meet the standard (for Red and Amber). <strong>Next review</strong>: when to check it again once it is Green. Dates show on <a href="#" data-view="plan">Working towards</a> and are flagged when overdue.</dd>
+        </dl>
+        <p class="guide-tip"><strong>Saving:</strong> everything saves automatically in this browser as you type (you'll see &#10003; Saved at the top). It is not shared with anyone else, so use <strong>Export Excel</strong> to keep a copy, and <strong>Import Excel</strong> to carry on from a copy on another computer.</p>
+      </div>
+    </section>
+
+    <section class="guide-section" aria-labelledby="h-areas">
+      <h3 id="h-areas" class="guide-h">How to fill in each area</h3>
+      <p class="lead" style="margin-top:0">Work through the areas in any order. Each area page has a <strong>How to fill in this area</strong> box with who can help and the evidence to gather.</p>
+      <div class="guide-areas">${areaCards}</div>
+      <details class="area-guide all-areas">
+        <summary>Show the guidance for every area</summary>
+        <div class="area-guide-body">
+          ${STANDARDS_DATA.map(cat => `<h4>${escHtml(cat.title)}${cat.isCore ? ' <span class="core-badge">CORE</span>' : ""}</h4>${areaGuideHtml(cat.id)}`).join("")}
+        </div>
+      </details>
+    </section>
+
+    <section class="card guide-section" aria-labelledby="h-finish">
+      <div class="card-header"><h3 id="h-finish">When you've finished</h3></div>
+      <div class="card-body">
+        <ul class="guide-list">
+          <li><a href="#" data-view="dashboard">Dashboard</a> and <a href="#" data-view="summary">Summary</a> show your results by area.</li>
+          <li><a href="#" data-view="plan">Working towards</a> lists every date, with anything overdue first.</li>
+          <li><strong>Governors' report</strong> (top right) makes a report to print or save as a PDF for your governors.</li>
+          <li><strong>Export Excel</strong> saves everything, including your People list. Trusts can import these files on the Trust Overview page.</li>
+          <li>Review the tracker at least once a year, and whenever a Next review date comes round.</li>
+        </ul>
+      </div>
+    </section>
+  </div>`;
+}
+
 function coreYear() {
   return (typeof STANDARDS_META !== "undefined" && STANDARDS_META.coreDeadlineYear) || 2030;
 }
@@ -756,6 +903,7 @@ function renderCategory(catId) {
       ${s.Green ? `<span class="stat-chip green">Green: ${s.Green}</span>` : ""}
       ${s["Not Set"] ? `<span class="stat-chip not-set">Not Set: ${s["Not Set"]}</span>` : ""}
     </div>
+    ${areaGuideBox(cat, s)}
     ${ragKey()}
     <div id="items-list">${items}</div>
   </div>`;
@@ -819,7 +967,12 @@ function attachViewEvents() {
     a.addEventListener("click", e => {
       e.preventDefault();
       const focus = a.dataset.focus;
+      const anchor = a.dataset.anchor;
       navigate(a.dataset.view, a.dataset.category);
+      if (anchor) {
+        const el = document.getElementById(anchor);
+        if (el) el.scrollIntoView({ block: "start" });
+      }
       // Links to one standard open it and scroll to it
       if (focus) {
         const body = document.getElementById("body-" + focus);
@@ -831,6 +984,14 @@ function attachViewEvents() {
           header.scrollIntoView({ block: "start" });
         }
       }
+    });
+  });
+
+  // Buttons that trigger a top bar action (Export Excel, Governors' report)
+  content.querySelectorAll("[data-click]").forEach(b => {
+    b.addEventListener("click", () => {
+      const target = document.getElementById(b.dataset.click);
+      if (target && (b.dataset.click === "btn-export" || b.dataset.click === "btn-report")) target.click();
     });
   });
 
@@ -1072,5 +1233,4 @@ function showToast(msg) {
 }
 
 // ── Init ───────────────────────────────────────────────────────────────────
-buildSidebarNav();
-renderView();
+navigate(currentView);
