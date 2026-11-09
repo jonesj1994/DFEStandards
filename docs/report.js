@@ -155,11 +155,132 @@
 
     return `<section class="section keep-together" aria-labelledby="h-summary">
       <h2 id="h-summary">${num()}. Summary</h2>
-      <div class="stat-row">${cards.join("")}</div>
       ${countChips(t.counts)}
       <ul class="bullets">${bullets.map(b => `<li>${b}</li>`).join("")}</ul>
       ${opts.comment.trim() ? `<div class="commentary"><h3>Commentary</h3><p class="text">${esc(opts.comment.trim())}</p></div>` : ""}
     </section>`;
+  }
+
+  // ── Page 1: At a glance ────────────────────────────────────────────────────
+  // A one-page overview for governors, styled like the "Your progress"
+  // picture on the home page. Always printed on its own page.
+  function overviewPage(snap, sum, opts) {
+    const t = sum.totals;
+    const meta = [
+      opts.meeting && `Presented to <strong>${esc(opts.meeting)}</strong>`,
+      opts.date && `<strong>${esc(fmtDate(opts.date))}</strong>`,
+      (opts.author || snap.assessor) && `Prepared by <strong>${esc(opts.author || snap.assessor)}</strong>`
+    ].filter(Boolean).join(" &middot; ");
+
+    // Progress card: one row per area, a bar of its results, and a tick or
+    // the area's overall rating
+    const rows = sum.categories.map(c => {
+      const done = c.assessed && F.done.includes(c.overall);
+      const end = !c.assessed ? '<span class="ov-muted">guidance only</span>'
+        : done ? '<span class="ov-tick" title="Fully met" aria-label="Fully met">&#10003;</span>'
+        : shortPill(c.overall);
+      return `<li class="ov-row">
+        <span class="ov-name">${esc(c.title)}${c.isCore ? ' <span class="core">Core</span>' : ""}</span>
+        <span class="ov-bar">${bar(c.counts, c.total)}</span>
+        <span class="ov-count">${c.done}/${c.total}</span>
+        <span class="ov-end">${end}</span>
+      </li>`;
+    }).join("");
+
+    // Key figures
+    const tiles = [];
+    const tile = (big, label, cls, sub) => `<div class="ov-tile ${cls ? "ov-" + esc(cls) : ""}"><div class="ov-big">${esc(big)}</div><div class="ov-label">${esc(label)}</div>${sub ? `<div class="ov-sub">${esc(sub)}</div>` : ""}</div>`;
+    if (IS_DFE) {
+      const core = sum.core, fm = sum.filtering;
+      const word = { Green: "Met", Amber: "Partly met", Red: "Not met", "Not Set": "Not assessed" };
+      tiles.push(tile(`${core.categoriesMet} of ${core.categories}`, "core standard areas fully met", core.categoriesMet === core.categories ? "green" : "", `DfE expects these by ${STANDARDS_META.coreDeadlineYear || 2030}`));
+      if (fm) tiles.push(tile(word[fm.overall], "filtering and monitoring", fm.cls, "a safeguarding duty under KCSIE"));
+      const d = datedItems(snap).filter(x => x.dt.state !== "done");
+      const over = d.filter(x => x.dt.state === "overdue").length, soon = d.filter(x => x.dt.state === "soon").length;
+      tiles.push(d.length
+        ? tile(over ? `${over} overdue` : soon ? `${soon} due soon` : "On track", "target and review dates", over ? "red" : soon ? "amber" : "green",
+          `${plural(d.length, "date")} set${over && soon ? `, ${soon} due within 30 days` : ""}`)
+        : tile("None set", "target and review dates", "", "add dates in the tracker"));
+    } else {
+      const cert = sum.certification;
+      const open = F.open.reduce((n, v) => n + (t.counts[v] || 0), 0) + (t.counts["Not Set"] || 0);
+      tiles.push(sum.ready ? tile("Ready", "to apply for certification", "green") : tile("Not yet ready", "to apply for certification", "amber", plural(open, "requirement") + " still to do"));
+      if (!cert || cert.state === "none") tiles.push(tile("None recorded", "Cyber Essentials certificate", ""));
+      else if (cert.state === "overdue") tiles.push(tile("Expired", cert.level || "Cyber Essentials", "red", `renewal was due ${fmtDate(cert.renewalDue)}`));
+      else if (cert.state === "due") tiles.push(tile("Renew soon", cert.level || "Cyber Essentials", "amber", `due ${fmtDate(cert.renewalDue)}`));
+      else tiles.push(tile("Certified", cert.level || "Cyber Essentials", "green", `renewal due ${fmtDate(cert.renewalDue)}`));
+    }
+    const notSet = t.counts["Not Set"] || 0;
+
+    // Top priorities and what's coming up
+    const top = priorityItems(sum).slice(0, 3);
+    const prio = top.length
+      ? `<ol class="ov-list">${top.map(o => {
+          const dt = IS_DFE ? AM.dateStatus(o.date, o.dateType, o.status) : null;
+          return `<li>${shortPill(o.status)} <span class="ov-item">${esc(o.itemTitle)}</span>
+            <span class="ov-meta">${esc(o.categoryTitle)}${o.owner.trim() ? " &middot; " + esc(o.owner.trim()) : ""}${dt ? " &middot; " + esc(DATE_TYPE[dt.type]) + " " + esc(fmtDate(dt.date)) : ""}</span></li>`;
+        }).join("")}</ol>${priorityItems(sum).length > 3 ? `<p class="ov-more">and ${priorityItems(sum).length - 3} more under Priority actions</p>` : ""}`
+      : `<p class="ov-good">Nothing is rated ${IS_DFE ? "Red or Amber" : "Not met or Partly met"}.</p>`;
+    let upcoming = "";
+    if (IS_DFE) {
+      const next = datedItems(snap).filter(x => x.dt.state !== "done").slice(0, 3);
+      upcoming = `<div class="ov-box">
+        <h3>Coming up</h3>
+        ${next.length ? `<ul class="ov-list ov-dates">${next.map(x => `<li><span class="ov-date ${esc(x.dt.state)}">${esc(fmtDate(x.dt.date))}</span>
+          <span class="ov-item">${esc(x.item.title)}</span>
+          <span class="ov-meta">${esc(DATE_TYPE[x.dt.type])}${x.dt.state === "overdue" ? " &middot; overdue" : x.dt.state === "soon" ? " &middot; within 30 days" : ""}</span></li>`).join("")}</ul>`
+          : '<p class="ov-muted">No target or review dates set yet.</p>'}
+      </div>`;
+    }
+
+    return `<section class="overview" aria-labelledby="ov-title">
+      <header class="ov-head">
+        <div class="ov-brand"><img src="favicon.svg" alt="" width="22" height="22" /> Report to governors</div>
+        <h1 id="ov-title">${esc(TITLE)}</h1>
+        <p class="ov-school">${esc(snap.school.name || "School name not entered")}</p>
+        ${meta ? `<p class="ov-metaline">${meta}</p>` : ""}
+      </header>
+
+      <div class="ov-grid">
+        <div class="ov-progress">
+          <div class="ov-progress-head">
+            <h2>Your progress</h2>
+            <span class="ov-total">${t.done} of ${t.items} ${IS_DFE ? "met" : "met or N/A"}</span>
+          </div>
+          <div class="ov-pct" aria-hidden="true"><span style="width:${t.pct}%"></span></div>
+          <ul class="ov-rows">${rows}</ul>
+          <p class="ov-legend">${ORDER.filter(v => v !== "Not Set").map(v => `<span><i class="dot ${F.cls(v)}"></i>${esc(SHORT[v] || v)}</span>`).join("")}<span class="ov-legend-note">Full results follow on the next pages</span></p>
+          ${notSet ? `<p class="ov-warn">${plural(notSet, IS_DFE ? "standard is" : "requirement is", IS_DFE ? "standards are" : "requirements are")} not assessed yet, so this picture is incomplete.</p>` : ""}
+        </div>
+        <div class="ov-tiles">${tiles.join("")}
+          ${opts.comment.trim() ? `<div class="ov-box ov-comment"><h3>Commentary</h3><p class="text">${esc(shortComment(opts.comment.trim()))}</p></div>` : ""}
+        </div>
+      </div>
+
+      <div class="ov-bottom${upcoming ? "" : " ov-single"}">
+        <div class="ov-box">
+          <h3>Top priorities</h3>
+          ${prio}
+        </div>
+        ${upcoming}
+      </div>
+
+
+    </section>`;
+  }
+
+  // Shorter status words for the overview page, where space is tight
+  const SHORT = IS_DFE
+    ? { Red: "Not met", Amber: "Partly met", Green: "Met", "Not Set": "Not assessed" }
+    : { "Not Met": "Not met", "Partially Met": "Partly met", Met: "Met", "N/A": "N/A", "Not Set": "Not assessed" };
+  const shortPill = v => `<span class="pill ${F.cls(v)}">${esc(SHORT[v] || v)}</span>`;
+
+  // Page 1 has room for a short commentary; the full text is in the Summary
+  const COMMENT_MAX = 260;
+  function shortComment(t) {
+    if (t.length <= COMMENT_MAX) return t;
+    const cut = t.slice(0, COMMENT_MAX).replace(/\s+\S*$/, "");
+    return cut + "\u2026 (the full commentary is in the Summary)";
   }
 
   function statCard(big, label, sub, cls) {
@@ -191,23 +312,29 @@
     return `<section class="section keep-together" aria-labelledby="h-areas">
       <h2 id="h-areas">${num()}. Results by ${IS_DFE ? "standard area" : "control area"}</h2>
       <p class="intro">${IS_DFE ? "Each area takes its lowest rating, so an area is only Green when every standard in it is Green." : "Each area takes its lowest result, so an area is only Met when every requirement in it is met or not applicable."}</p>
-      <table class="data-table areas">
+      <div class="table-wrap"><table class="data-table areas">
         <thead><tr><th scope="col">${IS_DFE ? "Standard area" : "Control area"}</th><th scope="col">Overall</th><th scope="col">${IS_DFE ? "Met" : "Met or N/A"}</th><th scope="col">Progress</th></tr></thead>
         <tbody>${rows}</tbody>
-      </table>
+      </table></div>
     </section>`;
   }
 
-  function actionsSection(sum) {
+  // Outstanding items in priority order: worst rating first, then core
+  // standards, then area order
+  function priorityItems(sum) {
     const assessed = new Set(sum.categories.filter(c => c.assessed).map(c => c.id));
     const catOrder = new Map(sum.categories.map((c, i) => [c.id, i]));
-    const items = sum.outstanding.filter(o => assessed.has(o.categoryId)).sort((a, b) =>
+    return sum.outstanding.filter(o => assessed.has(o.categoryId)).sort((a, b) =>
       (b.severity - a.severity) || (Number(b.isCore) - Number(a.isCore)) || (catOrder.get(a.categoryId) - catOrder.get(b.categoryId)));
+  }
+
+  function actionsSection(sum) {
+    const items = priorityItems(sum);
     let body;
     if (!items.length) {
       body = `<p class="good">There are no ${IS_DFE ? "standards rated Red or Amber" : "requirements marked Not met or Partly met"}.</p>`;
     } else {
-      body = `<table class="data-table actions">
+      body = `<div class="table-wrap"><table class="data-table actions">
         <thead><tr><th scope="col">${IS_DFE ? "Standard" : "Requirement"}</th><th scope="col">Rating</th><th scope="col">${IS_DFE ? "Recommendation" : "Action needed"}</th><th scope="col">Owner</th>${IS_DFE ? '<th scope="col">Target</th>' : ""}</tr></thead>
         <tbody>${items.map(o => `<tr>
           <td><span class="area">${esc(o.categoryTitle)}${o.isCore ? " (core)" : ""}</span>${esc(o.itemTitle)}
@@ -217,7 +344,7 @@
           <td class="text">${o.owner.trim() ? esc(o.owner.trim()) : '<span class="missing">Not assigned</span>'}</td>
           ${IS_DFE ? `<td>${dateCell(AM.dateStatus(o.date, o.dateType, o.status))}</td>` : ""}
         </tr>`).join("")}</tbody>
-      </table>`;
+      </table></div>`;
     }
     return `<section class="section" aria-labelledby="h-actions">
       <h2 id="h-actions">${num()}. Priority actions</h2>
@@ -258,15 +385,17 @@
     </section>`;
   }
 
-  function aboutSection() {
+  function aboutSection(snap, opts) {
     const n = num();
     const sources = IS_DFE
       ? [["Meeting digital and technology standards in schools and colleges (GOV.UK)", STANDARDS_INDEX_URL]]
       : [["Cyber Essentials requirements (NCSC): " + CE_VERSION, CE_SOURCE_URL], ["Cyber Essentials overview (NCSC)", CE_OVERVIEW_URL]];
     return `<section class="section about keep-together" aria-labelledby="h-about">
       <h2 id="h-about">${n}. About this report</h2>
+      <h3>Report details</h3>
+      <div class="rounded-box">${detailsTable(snap, opts)}</div>
       <h3>Rating key</h3>
-      <table class="key-table"><tbody>${KEY.map(([v, m]) => `<tr><td>${pill(v)}</td><td>${esc(m)}</td></tr>`).join("")}</tbody></table>
+      <div class="rounded-box"><table class="key-table"><tbody>${KEY.map(([v, m]) => `<tr><td>${pill(v)}</td><td>${esc(m)}</td></tr>`).join("")}</tbody></table></div>
       <h3>Sources</h3>
       <ul class="sources">${sources.map(([t, u]) => `<li>${esc(t)}<br /><span class="url">${esc(u)}</span></li>`).join("")}</ul>
       <p class="muted">This is the school's own self-assessment, made with the School Compliance Toolkit. It is not an official DfE or NCSC assessment${IS_DFE ? "" : " or certification"}.</p>
@@ -301,7 +430,7 @@
     const noDate = open.filter(d => !itemDate(d)).length;
     const count = st => all.filter(x => x.dt.state === st).length;
     const body = all.length
-      ? `<table class="data-table plan">
+      ? `<div class="table-wrap"><table class="data-table plan">
           <thead><tr><th scope="col">Date</th><th scope="col">Standard</th><th scope="col">Rating</th><th scope="col">Owner</th></tr></thead>
           <tbody>${all.map(x => `<tr>
             <td>${dateCell(x.dt)}</td>
@@ -309,7 +438,7 @@
             <td>${pill(x.d.status)}</td>
             <td class="text">${x.d.owner.trim() ? esc(x.d.owner.trim()) : '<span class="missing">Not assigned</span>'}</td>
           </tr>`).join("")}</tbody>
-        </table>`
+        </table></div>`
       : `<p class="muted">No target or review dates have been set in the tracker.</p>`;
     const facts = [];
     if (count("overdue")) facts.push(`<strong>${plural(count("overdue"), "date has", "dates have")} passed</strong> without the standard being met or reviewed.`);
@@ -346,19 +475,14 @@
 
     sectionNo = 0;
     const parts = [
-      `<header class="cover keep-together">
-        <p class="kicker">Report to governors</p>
-        <h1>${esc(TITLE)}</h1>
-        <p class="school">${esc(snap.school.name || "School name not entered")}</p>
-        ${detailsTable(snap, opts)}
-      </header>`,
+      overviewPage(snap, sum, opts),
       summarySection(snap, sum, opts),
       areasSection(sum),
       actionsSection(sum)
     ];
     if (IS_DFE) parts.push(planSection(snap));
     if (opts.detail) parts.push(detailSection(snap, sum, opts));
-    parts.push(aboutSection());
+    parts.push(aboutSection(snap, opts));
     root.innerHTML = parts.join("");
   }
 
