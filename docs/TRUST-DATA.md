@@ -184,3 +184,22 @@ They are used by **Fill from trust central answers** in the tracker's trust
 banner (one school), or **Apply central answers to all schools** on the Trust
 central page, which saves a new version for every school that changes (its
 previous version is kept) and starts an assessment for schools without one.
+
+## Sending schools their updated files
+
+**Download school files** (above the schools grid) and **Download this school's
+file** (on a school's page) build each school's DfE tracker Excel file from its
+newest assessment here, using the same `buildDfeWorkbook` the tracker's own
+Export Excel uses (`export.js`). The People sheet lists the trust's central team
+and every owner named on the school's standards. Several files are bundled into
+one ZIP (SheetJS's `XLSX.CFB`). The choice is "Schools changed by the trust"
+(newest DfE record made in the tracker or by central answers) or "All schools
+with an assessment". The site can't send email: the trust sends each school its
+file, and the school uses **Import Excel** in its tracker.
+
+## Several owners per standard
+
+A standard's owner can be several people. They are stored in the existing
+`ownership` / `owner` text, separated by "; " (for example
+"Chris Morgan (DSL); Riley Evans (IT)"), so snapshots, exports, the report and
+older files need no change. People names and roles can't contain ";".

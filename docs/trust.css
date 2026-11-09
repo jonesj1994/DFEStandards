@@ -182,3 +182,6 @@ details.older summary { cursor: pointer; color: var(--dfe-blue); }
   .ct-add { grid-template-columns: 1fr; }
   .ca-grid { grid-template-columns: 1fr 1fr; }
 }
+
+/* Send schools their updated files */
+.send-files { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 16px; background: #e8f3f8; border: 1px solid #b8d7e6; border-radius: 10px; padding: 10px 14px; margin: 0 0 14px; font-size: 14px; }

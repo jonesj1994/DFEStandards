@@ -601,3 +601,14 @@ select.rag-select option[value="Met"]     { background: #eee; }
 .tl-dialog p { font-size: 14px; line-height: 1.5; margin: 0 0 10px; overflow-wrap: anywhere; }
 .tl-dialog-buttons { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 14px; }
 .central-tag { display: inline-block; margin-top: 4px; font-size: 11px; font-weight: 700; color: var(--dfe-navy); background: #e8f3f8; border-radius: 999px; padding: 1px 8px; }
+
+/* ── Several owners per standard ── */
+.owners { display: flex; flex-direction: column; gap: 6px; }
+.owner-chips { display: flex; flex-wrap: wrap; gap: 6px; min-height: 30px; align-items: center; }
+.owner-chip { display: inline-flex; align-items: center; gap: 4px; background: #e8f3f8; color: var(--dfe-navy); border: 1px solid #b8d7e6; border-radius: 999px; padding: 3px 4px 3px 10px; font-size: 13px; font-weight: 600; max-width: 100%; overflow-wrap: anywhere; }
+.owner-chip.unlisted { background: #fef3e9; border-color: #f3c08f; }
+.owner-chip em { font-weight: 400; font-size: 11px; }
+.owner-remove { border: 0; background: transparent; color: inherit; font-size: 16px; line-height: 1; width: 22px; height: 22px; border-radius: 50%; cursor: pointer; padding: 0; }
+.owner-remove:hover, .owner-remove:focus-visible { background: rgba(11,60,93,0.12); }
+.owner-none { font-size: 13px; color: #505a5f; }
+.form-field .owner-add { width: 100%; }

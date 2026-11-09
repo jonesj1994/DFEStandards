@@ -63,8 +63,9 @@ function cleanPeople(list) {
   for (const p of list) {
     if (out.length >= MAX_PEOPLE) break;
     if (!p || typeof p !== "object") continue;
-    const name = typeof p.name === "string" ? p.name.replace(/\s+/g, " ").trim().slice(0, MAX_PERSON_TEXT) : "";
-    const role = typeof p.role === "string" ? p.role.replace(/\s+/g, " ").trim().slice(0, MAX_PERSON_TEXT) : "";
+    // ";" separates owners on a standard, so it can't be part of a name
+    const name = typeof p.name === "string" ? p.name.replace(/;/g, ",").replace(/\s+/g, " ").trim().slice(0, MAX_PERSON_TEXT) : "";
+    const role = typeof p.role === "string" ? p.role.replace(/;/g, ",").replace(/\s+/g, " ").trim().slice(0, MAX_PERSON_TEXT) : "";
     if (!name) continue;
     let id = typeof p.id === "string" && /^p[a-z0-9]{1,20}$/.test(p.id) ? p.id : newPersonId();
     while (ids.has(id)) id = newPersonId();
@@ -656,25 +657,41 @@ function renderPlan() {
 // ── People (owners) ────────────────────────────────────────────────────────
 const ADD_PERSON = "__add_person__";
 
-// Options for a standard's Ownership drop-down. An owner typed in an older
-// version (or imported) who isn't in the list is kept as its own option, so
-// nothing is lost.
-function ownerOptions(current) {
+// A standard can have several owners. They are saved as one text value,
+// "Chris Morgan (DSL); Riley Evans (IT)", so exports, reports, the trust
+// overview and older saves all keep working.
+const OWNER_SEP = "; ";
+function splitOwners(v) {
+  const out = [];
+  String(v == null ? "" : v).split(";").map(x => x.trim()).filter(Boolean).forEach(x => { if (!out.includes(x)) out.push(x); });
+  return out;
+}
+function ownersOf(id) { return splitOwners(state.ownership[id]); }
+function setOwners(id, list) { state.ownership[id] = splitOwners(list.join(";")).join(OWNER_SEP); }
+
+// The owner tags and "+ Add owner" drop-down for one standard
+function ownersBlock(id) {
+  const current = ownersOf(id);
   const labels = state.people.map(personLabel);
-  const opt = (v, text, sel) => `<option value="${escAttr(v)}"${sel ? " selected" : ""}>${escHtml(text)}</option>`;
-  let html = opt("", "Not assigned", !current);
+  const chips = current.map(l => `<span class="owner-chip${labels.includes(l) ? "" : " unlisted"}">${escHtml(l)}${labels.includes(l) ? "" : ' <em>(not in People list)</em>'}
+      <button type="button" class="owner-remove" data-owner-remove="${escAttr(l)}" aria-label="Remove ${escAttr(l)} as an owner">&times;</button></span>`).join("");
+  const opt = (v, text) => `<option value="${escAttr(v)}">${escHtml(text)}</option>`;
+  const avail = list => list.filter(p => !current.includes(personLabel(p))).map(p => opt(personLabel(p), personLabel(p))).join("");
   const central = state.people.filter(p => p.central), local = state.people.filter(p => !p.central);
-  const opts = list => list.map(p => opt(personLabel(p), personLabel(p), personLabel(p) === current)).join("");
   // Trust central staff are grouped separately from the school's own staff
-  if (central.length) html += `<optgroup label="Trust central team">${opts(central)}</optgroup><optgroup label="School staff">${opts(local)}</optgroup>`;
-  else html += opts(local);
-  if (current && !labels.includes(current)) html += opt(current, current + " (not in People list)", true);
-  html += opt(ADD_PERSON, "+ Add someone to the People list…", false);
-  return html;
+  const groups = central.length
+    ? `${avail(central) ? `<optgroup label="Trust central team">${avail(central)}</optgroup>` : ""}${avail(local) ? `<optgroup label="School staff">${avail(local)}</optgroup>` : ""}`
+    : avail(local);
+  return `<div class="owner-chips">${chips || '<span class="owner-none">Not assigned</span>'}</div>
+    <select class="owner-add" data-owner-add="${escAttr(id)}" aria-label="Add an owner">
+      <option value="">${current.length ? "+ Add another owner…" : "+ Add owner…"}</option>
+      ${groups}
+      ${opt(ADD_PERSON, "+ Add someone to the People list…")}
+    </select>`;
 }
 
 function assignedCount(label) {
-  return STANDARDS_DATA.reduce((n, c) => n + c.items.filter(i => state.ownership[i.id] === label).length, 0);
+  return STANDARDS_DATA.reduce((n, c) => n + c.items.filter(i => ownersOf(i.id).includes(label)).length, 0);
 }
 
 // Owners used on standards but not in the People list (e.g. from older files)
@@ -682,8 +699,7 @@ function unlistedOwners() {
   const labels = new Set(state.people.map(personLabel));
   const found = new Set();
   STANDARDS_DATA.forEach(c => c.items.forEach(i => {
-    const o = (state.ownership[i.id] || "").trim();
-    if (o && !labels.has(o)) found.add(o);
+    ownersOf(i.id).forEach(o => { if (!labels.has(o)) found.add(o); });
   }));
   return [...found].sort((a, b) => a.localeCompare(b));
 }
@@ -941,7 +957,7 @@ function renderCategory(catId) {
           </div>
           <div class="form-field">
             <label>Ownership</label>
-            <select data-field="ownership" data-id="${item.id}" aria-label="Ownership">${ownerOptions(state.ownership[item.id] || "")}</select>
+            <div class="owners" data-owners="${escAttr(item.id)}" role="group" aria-label="Owners">${ownersBlock(item.id)}</div>
           </div>
           <div class="form-field">
             <label for="dt-${item.id}">Date type</label>
@@ -1190,7 +1206,7 @@ function attachViewEvents() {
         person.name = updated.name; person.role = updated.role;
         // Update every standard this person owns
         let moved = 0;
-        if (oldLabel !== newLabel) Object.keys(state.ownership).forEach(id => { if (state.ownership[id] === oldLabel) { state.ownership[id] = newLabel; moved++; } });
+        if (oldLabel !== newLabel) Object.keys(state.ownership).forEach(id => { const o = ownersOf(id); if (o.includes(oldLabel)) { setOwners(id, o.map(x => x === oldLabel ? newLabel : x)); moved++; } });
         saveStateNow(); showSaved(true);
         renderView();
         document.getElementById("person-msg").textContent = `Saved ${newLabel}.` + (moved ? ` Updated ${moved} standard${moved === 1 ? "" : "s"}.` : "");
@@ -1199,7 +1215,7 @@ function attachViewEvents() {
         const label = personLabel(person), n = assignedCount(label);
         if (n && !window.confirm(`${label} owns ${n} standard${n === 1 ? "" : "s"}. Remove them from the list and set ${n === 1 ? "that standard" : "those standards"} to Not assigned?`)) return;
         state.people = state.people.filter(p => p !== person);
-        Object.keys(state.ownership).forEach(id => { if (state.ownership[id] === label) state.ownership[id] = ""; });
+        Object.keys(state.ownership).forEach(id => { const o = ownersOf(id); if (o.includes(label)) setOwners(id, o.filter(x => x !== label)); });
         saveStateNow(); showSaved(true);
         renderView();
         document.getElementById("person-msg").textContent = `Removed ${label}.`;
@@ -1221,6 +1237,9 @@ function attachViewEvents() {
     });
   });
 
+  // Owners: add from the drop-down, remove with a tag's ×
+  content.querySelectorAll(".owners[data-owners]").forEach(box => bindOwners(box));
+
   // Notes boxes grow with their text, so there's no scrolling inside them
   content.querySelectorAll("textarea[data-field]").forEach(t => t.addEventListener("input", () => growTextarea(t)));
 
@@ -1230,14 +1249,6 @@ function attachViewEvents() {
     el.addEventListener(event, () => {
       const field = el.dataset.field;
       const id = el.dataset.id;
-      // "+ Add someone" in an Ownership drop-down opens the People page
-      if (field === "ownership" && el.value === ADD_PERSON) {
-        el.value = state.ownership[id] || "";
-        navigate("people");
-        const nameBox = document.getElementById("pa-name");
-        if (nameBox) nameBox.focus();
-        return;
-      }
       // Only real dates and known date types are kept
       if (field === "targetDates") {
         state.targetDates[id] = AssessmentModel.validDate(el.value);
@@ -1309,6 +1320,34 @@ document.getElementById("file-input").addEventListener("change", e => {
 document.getElementById("menu-toggle").addEventListener("click", () => {
   document.getElementById("sidebar").classList.toggle("open");
 });
+
+// Owner tags for one standard (redrawn in place after each change)
+function bindOwners(box) {
+  const id = box.dataset.owners;
+  const redraw = focusAdd => {
+    box.innerHTML = ownersBlock(id);
+    bindOwners(box);
+    if (focusAdd) box.querySelector(".owner-add").focus();
+  };
+  box.querySelector(".owner-add").addEventListener("change", e => {
+    const v = e.target.value;
+    if (!v) return;
+    if (v === ADD_PERSON) {
+      navigate("people");
+      const nameBox = document.getElementById("pa-name");
+      if (nameBox) nameBox.focus();
+      return;
+    }
+    setOwners(id, [...ownersOf(id), v]);
+    saveState();
+    redraw(true);
+  });
+  box.querySelectorAll("[data-owner-remove]").forEach(b => b.addEventListener("click", () => {
+    setOwners(id, ownersOf(id).filter(x => x !== b.dataset.ownerRemove));
+    saveState();
+    redraw(true);
+  }));
+}
 
 // ── Helpers ────────────────────────────────────────────────────────────────
 // Size a textarea to fit its text (it can only be measured while visible)
