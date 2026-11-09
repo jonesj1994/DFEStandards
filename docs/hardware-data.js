@@ -405,14 +405,175 @@
   // A Map, not a plain object, so untrusted keys can never reach the prototype
   const FIELD_BY_KEY = new Map(FIELDS.map(f => [f.key, f]));
 
-  // ── Quick add: device categories only ─────────────────────────────────────
-  // No makes, models, dates or prices: the school fills those in.
-  const QUICK_TYPES = [
-    "Laptop", "Desktop", "Chromebook", "Tablet", "Mobile phone", "Server", "Firewall", "Router", "Switch",
-    "Wireless access point", "Printer or copier", "Interactive panel or whiteboard", "Projector or display",
-    "Desk phone (VoIP)", "UPS (uninterruptible power supply)"
+  // ── Starter catalogue for "Quick add" ────────────────────────────────────
+  // Common hardware in UK schools, grouped into sections (and sub-groups) so a
+  // school can open a heading such as Laptops and tick what it has.
+  // Each product is [make, model family, device type, operating system or
+  // firmware, hint]. Only the make and model FAMILY are given (e.g. "Dell
+  // Latitude"), never a generation or exact model number, because those go
+  // out of date. The operating system or firmware is only given where it is
+  // unambiguous for the family; otherwise it is left blank. Each section ends
+  // with "Something else": generic devices added by type only.
+  // Listing a product here is not a recommendation.
+  const QUICK_MAX = 500;                  // per item, per go
+  const P = (make, model, type, os, hint) => ({ make, model, type, os: os || "", hint: hint || "" });
+  const G = (label, type) => ({ make: "", model: "", type, os: "", hint: "", label });
+  const T_UPS = "UPS (uninterruptible power supply)", T_NAS = "Network storage (NAS or SAN)";
+  const T_PANEL = "Interactive panel or whiteboard", T_DISPLAY = "Projector or display";
+  const T_CCTV = "CCTV, door entry or other networked device";
+  const STARTER_SECTIONS = [
+    { id: "laptops", title: "Laptops", groups: [
+      { title: "Windows laptops", items: [
+        P("Dell", "Latitude", "Laptop"), P("Dell", "Vostro", "Laptop"),
+        P("HP", "ProBook", "Laptop"), P("HP", "EliteBook", "Laptop"),
+        P("Lenovo", "ThinkPad", "Laptop"), P("Lenovo", "ThinkBook", "Laptop"),
+        P("Acer", "TravelMate", "Laptop"), P("ASUS", "ExpertBook", "Laptop"),
+        P("Dynabook", "Satellite Pro", "Laptop"),
+        P("Microsoft", "Surface Laptop", "Laptop", "Windows"), P("Microsoft", "Surface Pro", "Laptop", "Windows", "2-in-1")
+      ] },
+      { title: "Apple laptops", items: [
+        P("Apple", "MacBook Air", "Laptop", "macOS"), P("Apple", "MacBook Pro", "Laptop", "macOS")
+      ] },
+      { title: "Something else", items: [G("Any other laptop", "Laptop")] }
+    ] },
+    { id: "desktops", title: "Desktops and all-in-ones", groups: [
+      { title: "Desktops", items: [
+        P("Dell", "OptiPlex", "Desktop"), P("HP", "ProDesk", "Desktop"), P("HP", "EliteDesk", "Desktop"),
+        P("Lenovo", "ThinkCentre", "Desktop"), P("Acer", "Veriton", "Desktop"), P("Apple", "Mac mini", "Desktop", "macOS")
+      ] },
+      { title: "All-in-ones", items: [
+        P("HP", "ProOne", "Desktop", "", "all-in-one"), P("Apple", "iMac", "Desktop", "macOS", "all-in-one")
+      ] },
+      { title: "Thin clients", items: [P("Dell", "Wyse", "Thin client")] },
+      { title: "Something else", items: [G("Any other desktop or all-in-one", "Desktop"), G("Any other thin client", "Thin client")] }
+    ] },
+    { id: "tablets", title: "Tablets", groups: [
+      { title: "iPads", items: [
+        P("Apple", "iPad", "Tablet", "iPadOS"), P("Apple", "iPad Air", "Tablet", "iPadOS"),
+        P("Apple", "iPad mini", "Tablet", "iPadOS"), P("Apple", "iPad Pro", "Tablet", "iPadOS")
+      ] },
+      { title: "Android tablets", items: [P("Samsung", "Galaxy Tab", "Tablet", "Android")] },
+      { title: "Something else", items: [G("Any other tablet", "Tablet")] }
+    ] },
+    { id: "chromebooks", title: "Chromebooks", groups: [
+      { title: "Chromebooks", items: [
+        P("Acer", "Chromebook", "Chromebook", "ChromeOS"), P("ASUS", "Chromebook", "Chromebook", "ChromeOS"),
+        P("Dell", "Chromebook", "Chromebook", "ChromeOS"), P("HP", "Chromebook", "Chromebook", "ChromeOS"),
+        P("Lenovo", "Chromebook", "Chromebook", "ChromeOS")
+      ] },
+      { title: "Something else", items: [G("Any other Chromebook", "Chromebook")] }
+    ] },
+    { id: "av", title: "Interactive displays and classroom AV", groups: [
+      { title: "Interactive panels and whiteboards", items: [
+        P("Promethean", "ActivPanel", T_PANEL), P("Promethean", "ActivBoard", T_PANEL, "", "interactive whiteboard"),
+        P("Clevertouch", "Impact", T_PANEL), P("SMART Technologies", "SMART Board", T_PANEL),
+        P("ViewSonic", "ViewBoard", T_PANEL)
+      ] },
+      { title: "Projectors", items: [P("Epson", "EB", T_DISPLAY, "", "projectors")] },
+      { title: "Something else", items: [G("Any other interactive panel or whiteboard", T_PANEL), G("Any other projector or display", T_DISPLAY)] }
+    ] },
+    { id: "network", title: "Network equipment", groups: [
+      { title: "Switches", items: [
+        P("Aruba", "CX", "Switch", "AOS-CX", "switches"), P("HPE", "OfficeConnect", "Switch", "", "switches"),
+        P("Cisco", "Catalyst", "Switch", "", "switches"), P("Cisco Meraki", "MS", "Switch", "", "switches"),
+        P("Ubiquiti", "UniFi Switch", "Switch"), P("Ruckus", "ICX", "Switch", "FastIron", "switches")
+      ] },
+      { title: "Wireless access points", items: [
+        P("Ubiquiti", "UniFi", "Wireless access point", "", "access points"), P("Cisco Meraki", "MR", "Wireless access point", "", "access points"),
+        P("Aruba", "AP", "Wireless access point", "", "access points"), P("Ruckus", "R", "Wireless access point", "", "R-series access points"),
+        P("TP-Link", "EAP", "Wireless access point", "", "Omada access points")
+      ] },
+      { title: "Firewalls and routers", items: [
+        P("Fortinet", "FortiGate", "Firewall", "FortiOS"), P("Sophos", "XGS", "Firewall", "", "firewalls"),
+        P("WatchGuard", "Firebox", "Firewall", "Fireware"), P("SonicWall", "TZ", "Firewall", "SonicOS", "firewalls"),
+        P("Cisco Meraki", "MX", "Firewall", "", "security appliances"), P("DrayTek", "Vigor", "Router"),
+        P("Ubiquiti", "UniFi Dream Machine", "Router", "", "gateway")
+      ] },
+      { title: "Something else", items: [
+        G("Any other switch", "Switch"), G("Any other wireless access point", "Wireless access point"),
+        G("Wireless controller", "Wireless controller"), G("Any other firewall", "Firewall"), G("Any other router", "Router")
+      ] }
+    ] },
+    { id: "servers", title: "Servers and storage", groups: [
+      { title: "Servers", items: [
+        P("Dell", "PowerEdge", "Server"), P("HPE", "ProLiant", "Server"), P("Lenovo", "ThinkSystem", "Server")
+      ] },
+      { title: "Network storage (NAS)", items: [
+        P("Synology", "DiskStation", T_NAS, "DSM"), P("Synology", "RackStation", T_NAS, "DSM"), P("QNAP", "TS", T_NAS, "", "Turbo NAS")
+      ] },
+      { title: "UPS", items: [P("APC", "Smart-UPS", T_UPS), P("APC", "Back-UPS", T_UPS)] },
+      { title: "Something else", items: [G("Any other server", "Server"), G("Any other NAS or SAN", T_NAS), G("Any other UPS", T_UPS)] }
+    ] },
+    { id: "printers", title: "Printers and copiers", groups: [
+      { title: "Copiers and multifunction printers", items: [
+        P("Ricoh", "IM", "Printer or copier", "", "multifunction printers"), P("Konica Minolta", "bizhub", "Printer or copier"),
+        P("Kyocera", "TASKalfa", "Printer or copier"), P("Canon", "imageRUNNER", "Printer or copier"),
+        P("Sharp", "MX", "Printer or copier", "", "multifunction printers"), P("Xerox", "VersaLink", "Printer or copier"),
+        P("Xerox", "AltaLink", "Printer or copier"), P("Brother", "MFC", "Printer or copier", "", "multifunction printers")
+      ] },
+      { title: "Printers", items: [
+        P("HP", "LaserJet", "Printer or copier"), P("Kyocera", "ECOSYS", "Printer or copier"), P("Brother", "HL", "Printer or copier", "", "laser printers")
+      ] },
+      { title: "Something else", items: [G("Any other printer or copier", "Printer or copier")] }
+    ] },
+    { id: "other", title: "Phones and other devices", groups: [
+      { title: "Mobile phones", items: [P("Apple", "iPhone", "Mobile phone", "iOS"), P("Samsung", "Galaxy", "Mobile phone", "Android", "phones")] },
+      { title: "Desk phones", items: [
+        P("Yealink", "T", "Desk phone (VoIP)", "", "T-series desk phones"), P("Poly", "VVX", "Desk phone (VoIP)"),
+        P("Poly", "Edge", "Desk phone (VoIP)"), P("Snom", "D", "Desk phone (VoIP)", "", "D-series desk phones")
+      ] },
+      { title: "Door entry and access control", items: [P("Paxton", "Net2", T_CCTV, "", "door access control")] },
+      { title: "Something else", items: [
+        G("Any other mobile phone", "Mobile phone"), G("Any other desk phone", "Desk phone (VoIP)"),
+        G("CCTV camera or recorder", T_CCTV), G("Any other networked device", T_CCTV), G("Anything else", "Other")
+      ] }
+    ] }
   ];
-  const QUICK_MAX = 500;                  // per type, per go
+
+  // Flat list (index = position), each entry with its section, group and label
+  const STARTERS = [];
+  STARTER_SECTIONS.forEach(sec => sec.groups.forEach(g => g.items.forEach(it => {
+    STARTERS.push(Object.assign({}, it, {
+      label: it.label || (it.make + " " + it.model), generic: !it.make,
+      section: sec.id, sectionTitle: sec.title, group: g.title
+    }));
+  })));
+
+  // ── Typical details for Quick add ────────────────────────────────────────
+  // Only what follows from the make and model family: device type, make,
+  // model family, and the operating system or firmware name where it is
+  // unambiguous. Nothing about the school or the individual device (asset
+  // number, serial, location, dates, versions, security answers...) is ever
+  // filled in.
+  const PREFILL_NOTE = "Pre-filled by Quick add: the device type, make, model family and (where there is one) the usual operating system or firmware are typical for this product. Add the exact model, serial number, version and dates from the device and your own records, and check the rest.";
+  const squash = s => String(s == null ? "" : s).trim().toLowerCase().replace(/\s+/g, " ");
+
+  // The Quick add product an entry matches, or null. The make must be the
+  // same, and the model must be the family or start with it (followed by
+  // anything but a letter, so "Latitude 5440", "MS120-8" and "EB-695Wi" match
+  // but "iPadOS" doesn't). The longest matching family wins, so "iPad Air
+  // (5th generation)" matches iPad Air, not iPad.
+  function findStarter(make, model) {
+    const mk = squash(make), md = squash(model);
+    if (!mk || !md) return null;
+    let best = null;
+    STARTERS.forEach(s => {
+      if (s.generic || squash(s.make) !== mk) return;
+      const fam = squash(s.model);
+      if (md !== fam && !(md.startsWith(fam) && !/[a-z]/.test(md.charAt(fam.length)))) return;
+      if (!best || fam.length > best.model.length) best = s;
+    });
+    return best;
+  }
+
+  // Typical details for an entry's make and model, or null
+  function starterDetails(make, model) {
+    const s = findStarter(make, model);
+    if (!s) return null;
+    const out = { type: s.type, make: s.make, model: s.model };
+    if (s.os) out.os = s.os;
+    return out;
+  }
 
   // ── Helpers ───────────────────────────────────────────────────────────────
   const hasOwn = (o, k) => !!o && typeof o === "object" && Object.prototype.hasOwnProperty.call(o, k);
@@ -805,7 +966,7 @@
 
   window.HardwareModel = {
     STATE_KEY, SCHEMA_VERSION, MAX_ITEMS, THRESHOLDS, SOURCES, GROUPS, FIELDS, FIELD_BY_KEY, RULES,
-    TYPES, STATUSES, OWNERSHIP, QUICK_TYPES, QUICK_MAX, MIN_SUPPORT_YEARS, MIN_WARRANTY_YEARS,
+    TYPES, STATUSES, OWNERSHIP, QUICK_MAX, STARTER_SECTIONS, STARTERS, PREFILL_NOTE, findStarter, starterDetails, MIN_SUPPORT_YEARS, MIN_WARRANTY_YEARS,
     ST_IN_USE, ST_DISPOSED, ST_LOST, ST_RETIRED,
     blankEntry, sanitiseEntry, sanitiseState, emptyState, loadState, matchType, matchStatus,
     evaluate, summarise, registerReviewDue, ceScope, validDate, isoToday, addDays, addMonths, formatDate, ageText, newId

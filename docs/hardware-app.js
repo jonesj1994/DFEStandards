@@ -273,7 +273,7 @@
         <div class="card card-body">
           <p style="margin-top:0">Your register is empty. Record every device and piece of network equipment your school has, so you can show it is supported, secure, and disposed of safely.</p>
           <div class="hw-actions">
-            <a href="#" class="btn btn-primary" data-view="quick">Quick add by device type</a>
+            <a href="#" class="btn btn-primary" data-view="quick">Quick add common devices</a>
             <a href="#" class="btn btn-secondary" data-view="add">Add an asset by hand</a>
             <button type="button" class="btn btn-secondary" data-action="import">Import an Excel register or the DfE template</button>
           </div>
@@ -508,6 +508,11 @@
       <p><a href="#" data-view="list">&#8592; Back to the asset list</a></p>
       <h2 id="edit-title">${esc(displayName(e))}</h2>
       <p class="hw-muted">Changes save automatically. Fields marked <span class="hw-basis req">Required by a standard</span> support a DfE standard, Cyber Essentials, UK GDPR or waste law; the others are good practice. Questions that don't apply to this device are hidden.</p>
+      <div class="card card-body hw-prefill" id="prefill-box"${canFillDetails(e) ? "" : " hidden"}>
+        <p style="margin:0 0 8px"><strong id="prefill-name">${esc(makeModel(e))}</strong> is in the Quick add list, which has typical details for it: the device type and, where there is one, the usual operating system or firmware.</p>
+        <button type="button" class="btn btn-primary btn-sm" id="btn-prefill">Fill in typical details</button>
+        <span class="hw-muted" style="margin-left:8px">Only empty fields are filled in. Check them afterwards.</span>
+      </div>
       <div id="rag-panel" class="card card-body hw-rag-panel" aria-live="polite"></div>
       ${groups}
       <div class="hw-actions" id="edit-actions">
@@ -552,19 +557,60 @@
   }
 
   // ── Quick add and CSV ──────────────────────────────────────────────────────
+  // How many assets in the register already match each Quick add product
+  function starterCounts() {
+    const m = new Map();
+    reg.items.forEach(e => {
+      const s = HM.findStarter(e.make, e.model);
+      if (s) m.set(s, (m.get(s) || 0) + 1);
+    });
+    return m;
+  }
+
   function viewQuick() {
-    const rows = HM.QUICK_TYPES.map((t, i) => `<tr><td><label for="q-${i}">${esc(t)}</label></td>
-      <td><input type="number" id="q-${i}" data-quick="${i}" min="0" max="${HM.QUICK_MAX}" step="1" inputmode="numeric" value="" /></td></tr>`).join("");
+    const have = starterCounts();
+    const item = (s, i) => {
+      const n = have.get(s) || 0;
+      const search = [s.label, s.make, s.model, s.hint, s.type, s.group, s.sectionTitle].join(" ").toLowerCase();
+      return `<li data-search="${esc(search)}"><label class="hw-check qa-item"><input type="checkbox" data-starter="${i}" />
+        <span><span class="qa-name">${esc(s.label)}</span>${s.hint ? ` <span class="hw-muted">${esc(s.hint)}</span>` : ""}${s.generic ? ' <span class="hw-muted">(type only)</span>' : ""}${n ? ` <span class="qa-have">${n} in the register</span>` : ""}</span></label>
+        <label class="qa-qty"><span class="visually-hidden">How many ${esc(s.label)}</span><input type="number" data-qty="${i}" min="1" max="${HM.QUICK_MAX}" step="1" inputmode="numeric" value="1" /></label></li>`;
+    };
+    const sections = HM.STARTER_SECTIONS.map(sec => {
+      const idx = HM.STARTERS.map((s, i) => [s, i]).filter(([s]) => s.section === sec.id);
+      const groups = sec.groups.map(g => {
+        const list = idx.filter(([s]) => s.group === g.title);
+        return `<div class="qa-group"><h4>${esc(g.title)}</h4><ul class="hw-starters">${list.map(([s, i]) => item(s, i)).join("")}</ul></div>`;
+      }).join("");
+      return `<details class="qa-section" data-section="${esc(sec.id)}">
+        <summary><span class="qa-title">${esc(sec.title)}</span>
+          <span class="qa-meta">${idx.length} item${idx.length === 1 ? "" : "s"}</span>
+          <span class="qa-picked" data-picked="${esc(sec.id)}"></span></summary>
+        <div class="qa-body">
+          <p class="qa-tools"><button type="button" class="btn btn-secondary btn-sm" data-select-section="${esc(sec.id)}">Select all in this section</button></p>
+          ${groups}
+        </div>
+      </details>`;
+    }).join("");
     return `<div class="hw-page">
       <h2>Quick add</h2>
-      <p>Enter how many of each type of device you have. Each one is added as a separate asset with its type only: fill in the asset number, make, model, serial number and dates from your own records, or import them from a CSV file below.</p>
+      <p>Open a heading, tick the devices your school has, enter how many of each, then select <strong>Add selected</strong>. Each device is added as a separate asset with its type, make, model family and, where there is one, its usual operating system or firmware. Fill in the asset number, exact model, serial number, version and dates from the device and your own records. Use <strong>Something else</strong> at the end of each heading to add a device by its type only. Listing a product here is not a recommendation.</p>
       <div class="card card-body">
         <div class="form-grid">
           <div class="form-field"><label for="q-site">Site or building (optional)</label><input type="text" id="q-site" autocomplete="off" /></div>
           <div class="form-field"><label for="q-room">Room (optional)</label><input type="text" id="q-room" autocomplete="off" /></div>
         </div>
-        <table class="summary-table hw-quick"><thead><tr><th scope="col">Device type</th><th scope="col">How many</th></tr></thead><tbody>${rows}</tbody></table>
-        <p><button type="button" class="btn btn-primary" id="btn-quick-add">Add these assets</button></p>
+        <div class="qa-search form-field">
+          <label for="qa-search">Search the list</label>
+          <input type="search" id="qa-search" placeholder="e.g. Latitude, iPad, switch" autocomplete="off" />
+        </div>
+        <p class="qa-none hw-muted" id="qa-none" hidden>Nothing matches. You can <a href="#" data-view="add">add an asset yourself</a> instead.</p>
+        <div class="qa-sections">${sections}</div>
+        <div class="qa-bar">
+          <button type="button" class="btn btn-primary" id="btn-quick-add">Add selected</button>
+          <span class="hw-muted" id="qa-count" role="status" aria-live="polite">Nothing selected yet.</span>
+          <span class="qa-own">Can't find it? <a href="#" data-view="add">Add an asset yourself</a>.</span>
+        </div>
       </div>
       <h2>Import a list from CSV</h2>
       <div class="card card-body">
@@ -576,26 +622,61 @@
     </div>`;
   }
 
+  // Fill in the typical details for a Quick add product (device type, make,
+  // model family, operating system or firmware). Only empty fields are
+  // filled, so nothing the school has entered is changed. Returns how many
+  // fields were filled.
+  function applyDetails(e) {
+    const d = HM.starterDetails(e.make, e.model);
+    if (!d) return 0;
+    const clean = HM.sanitiseEntry(d);
+    let n = 0;
+    Object.keys(d).forEach(k => {
+      if (!HM.FIELD_BY_KEY.has(k)) return;
+      if (!String(e[k] || "").trim() && clean[k]) { e[k] = clean[k]; n++; }
+    });
+    if (n && !String(e.notes || "").includes(HM.PREFILL_NOTE)) {
+      e.notes = AM.limitText((String(e.notes || "").trim() ? e.notes.trim() + "\n\n" : "") + HM.PREFILL_NOTE);
+    }
+    return n;
+  }
+
+  // Can this entry be filled in from the Quick add list? (some fields empty)
+  function canFillDetails(e) {
+    const d = HM.starterDetails(e.make, e.model);
+    return !!d && Object.keys(d).some(k => d[k] && !String(e[k] || "").trim());
+  }
+
   function quickAdd() {
     const c = $("content");
     const site = AM.limitText($("q-site").value).trim().slice(0, 300);
     const room = AM.limitText($("q-room").value).trim().slice(0, 300);
     const picks = [];
     let bad = false;
-    c.querySelectorAll("[data-quick]").forEach(el => {
-      const raw = el.value.trim();
-      if (!raw) return;
-      const n = Number(raw);
-      if (!Number.isInteger(n) || n < 0 || n > HM.QUICK_MAX) { bad = true; return; }
-      if (n) picks.push([HM.QUICK_TYPES[Number(el.dataset.quick)], n]);
+    c.querySelectorAll("[data-starter]:checked").forEach(el => {
+      const i = Number(el.dataset.starter);
+      const s = HM.STARTERS[i];
+      const q = c.querySelector(`[data-qty="${i}"]`);
+      const n = Number(String(q ? q.value : "1").trim());
+      if (!s) return;
+      if (!Number.isInteger(n) || n < 1 || n > HM.QUICK_MAX) { bad = true; return; }
+      picks.push([s, n]);
     });
-    if (bad) { toast(`Enter whole numbers from 0 to ${HM.QUICK_MAX}.`); return; }
-    const total = picks.reduce((s, [, n]) => s + n, 0);
-    if (!total) { toast("Enter how many of at least one device type."); return; }
+    if (bad) { toast(`Enter a whole number from 1 to ${HM.QUICK_MAX} for each device ticked.`); return; }
+    const total = picks.reduce((t, [, n]) => t + n, 0);
+    if (!total) { toast("Tick the devices you want to add first."); return; }
     const room2 = HM.MAX_ITEMS - reg.items.length;
     if (total > room2) { toast(`Only ${room2} more can be added: the register holds up to ${HM.MAX_ITEMS} assets.`); return; }
-    picks.forEach(([type, n]) => {
-      for (let i = 0; i < n; i++) reg.items.push(HM.sanitiseEntry({ type, site, room, status: HM.ST_IN_USE }));
+    picks.forEach(([s, n]) => {
+      for (let i = 0; i < n; i++) {
+        // Generic items: type only. Products: make and model family, then
+        // applyDetails fills the type and operating system and adds the note.
+        const e = s.generic
+          ? HM.sanitiseEntry({ type: s.type, site, room, status: HM.ST_IN_USE })
+          : HM.sanitiseEntry({ make: s.make, model: s.model, site, room, status: HM.ST_IN_USE });
+        if (!s.generic) applyDetails(e);
+        reg.items.push(e);
+      }
     });
     saveNow();
     filters = Object.assign({}, BLANK_FILTERS);
@@ -754,6 +835,18 @@
     if (view === "edit") {
       const e = findItem(editId);
       bindRowActions($("edit-actions"));
+      // Typical details from the Quick add list (shown when the make and model match)
+      const prefillBox = $("prefill-box");
+      const updatePrefill = () => {
+        prefillBox.hidden = !canFillDetails(e);
+        $("prefill-name").textContent = makeModel(e);
+      };
+      $("btn-prefill").addEventListener("click", () => {
+        const n = applyDetails(e);
+        saveNow();
+        render();
+        toast(n ? `Filled in ${plural(n, "field")}. Check them against the device.` : "Nothing to fill in: those fields already have answers.");
+      });
       c.querySelectorAll("[data-key]").forEach(el => {
         const handler = () => {
           const key = el.dataset.key;
@@ -765,6 +858,7 @@
           if (["assetTag", "make", "model", "type", "serialNumber"].includes(key)) $("edit-title").textContent = displayName(e);
           updateVisibility(e);
           updateRagPanel(e);
+          updatePrefill();
           save();
         };
         el.addEventListener(el.tagName === "SELECT" || el.type === "checkbox" || el.type === "date" ? "change" : "input", handler);
@@ -774,6 +868,55 @@
     }
 
     if (view === "quick") {
+      const qtyOf = box => c.querySelector(`[data-qty="${box.dataset.starter}"]`);
+      // Live counts: items ticked per section heading, and overall with the
+      // number of assets that will be added
+      const updateCounts = () => {
+        let total = 0, assets = 0;
+        c.querySelectorAll(".qa-section").forEach(sec => {
+          const ticked = Array.from(sec.querySelectorAll("[data-starter]:checked"));
+          total += ticked.length;
+          ticked.forEach(x => {
+            const n = Number(qtyOf(x).value);
+            if (Number.isInteger(n) && n > 0 && n <= HM.QUICK_MAX) assets += n;
+          });
+          sec.querySelector(".qa-picked").textContent = ticked.length ? `${ticked.length} selected` : "";
+        });
+        $("qa-count").textContent = total ? `${total} selected (${plural(assets, "asset")})` : "Nothing selected yet.";
+      };
+      c.querySelectorAll("[data-starter]").forEach(x => x.addEventListener("change", updateCounts));
+      // Typing a quantity ticks the item
+      c.querySelectorAll("[data-qty]").forEach(q => q.addEventListener("input", () => {
+        const box = c.querySelector(`[data-starter="${q.dataset.qty}"]`);
+        if (box && q.value.trim()) box.checked = true;
+        updateCounts();
+      }));
+      c.querySelectorAll("[data-select-section]").forEach(b => b.addEventListener("click", () => {
+        const sec = b.closest(".qa-section");
+        const list = Array.from(sec.querySelectorAll("li:not([hidden]) [data-starter]"));
+        const allOn = list.length && list.every(x => x.checked);
+        list.forEach(x => { x.checked = !allOn; });
+        b.textContent = allOn ? "Select all in this section" : "Clear this section";
+        updateCounts();
+      }));
+      // Search: show matching items and open the sections they are in
+      $("qa-search").addEventListener("input", () => {
+        const q = $("qa-search").value.trim().toLowerCase();
+        let any = false;
+        c.querySelectorAll(".qa-section").forEach(sec => {
+          let hits = 0;
+          sec.querySelectorAll("li[data-search]").forEach(li => {
+            const show = !q || li.dataset.search.includes(q);
+            li.hidden = !show;
+            if (show) hits++;
+          });
+          sec.querySelectorAll(".qa-group").forEach(g => { g.hidden = !g.querySelector("li:not([hidden])"); });
+          sec.hidden = !hits;
+          sec.open = !!q && hits > 0;
+          if (hits) any = true;
+        });
+        $("qa-none").hidden = any;
+      });
       $("btn-quick-add").addEventListener("click", quickAdd);
       $("btn-csv").addEventListener("click", () => $("csv-input").click());
     }
