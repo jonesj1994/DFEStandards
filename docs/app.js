@@ -886,7 +886,7 @@ function renderCategory(catId) {
       </div>
       <div class="item-body" id="body-${item.id}">
         <div class="dfe-description"><strong>DfE guidance:</strong> ${escHtml(item.description)}</div>
-        <div class="form-grid">
+        <div class="form-grid item-form">
           <div class="form-field full-width">
             <label>Current Status &amp; Notes</label>
             <textarea data-field="notes" data-id="${item.id}" rows="3">${n}</textarea>
@@ -920,7 +920,7 @@ function renderCategory(catId) {
   }).join("");
 
   return `
-  <div style="max-width:860px">
+  <div class="area-page">
     <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px">
       <h2 style="margin:0">${escHtml(cat.title)}</h2>${core}
     </div>
@@ -1008,6 +1008,7 @@ function attachViewEvents() {
         const header = document.querySelector(`.item-header[data-item="${CSS.escape(focus)}"]`);
         if (body && header) {
           body.classList.add("open");
+          growTextareas(body);
           const ch = header.querySelector(".chevron");
           if (ch) ch.classList.add("open");
           header.scrollIntoView({ block: "start" });
@@ -1148,9 +1149,13 @@ function attachViewEvents() {
       if (body) {
         body.classList.toggle("open");
         chevron && chevron.classList.toggle("open");
+        growTextareas(body);
       }
     });
   });
+
+  // Notes boxes grow with their text, so there's no scrolling inside them
+  content.querySelectorAll("textarea[data-field]").forEach(t => t.addEventListener("input", () => growTextarea(t)));
 
   // Field inputs (textarea, select, input)
   content.querySelectorAll("[data-field][data-id]").forEach(el => {
@@ -1239,6 +1244,15 @@ document.getElementById("menu-toggle").addEventListener("click", () => {
 });
 
 // ── Helpers ────────────────────────────────────────────────────────────────
+// Size a textarea to fit its text (it can only be measured while visible)
+function growTextarea(t) {
+  if (!t.offsetParent) return;
+  t.style.height = "auto";
+  t.style.height = (t.scrollHeight + 4) + "px";
+}
+function growTextareas(root) {
+  root.querySelectorAll("textarea[data-field]").forEach(growTextarea);
+}
 function escHtml(str) {
   return String(str == null ? "" : str)
     .replace(/&/g, "&amp;")

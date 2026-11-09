@@ -20,7 +20,8 @@
     "home_trust_v1",           // Trust selected on the home page
     "home_area_v1",            // School / trust tab choice
     "trust_view_settings_v1",  // Trust overview settings
-    "report_options_v1"        // Governors' report settings
+    "report_options_v1",       // Governors' report settings
+    "sidebar_collapsed_v1"     // Menu hidden or shown on the tool pages
   ];
   const INDEXED_DBS = ["trust_view_v1"]; // Trust overview imported files
 

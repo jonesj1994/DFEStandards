@@ -199,8 +199,6 @@ body {
   border-radius: 0 4px 4px 0;
   line-height: 1.5;
   white-space: pre-line;
-  max-height: 320px;
-  overflow-y: auto;
 }
 
 .guidance-link { font-size: 13px; color: var(--dfe-blue); }
@@ -542,7 +540,12 @@ select.rag-select option[value="Met"]     { background: #eee; }
 #topbar h1 + .preview-tag { margin-right: auto; }
 
 /* ── Quick navigation (back to Start here / Dashboard, next area) ── */
-.qnav { display: flex; gap: 8px; flex-wrap: wrap; margin: 0 0 14px; }
+.qnav {
+  display: flex; gap: 8px; flex-wrap: wrap;
+  /* Stays at the top of the screen while scrolling, on every screen size */
+  position: sticky; top: 0; z-index: 5; background: #f6f8f9;
+  margin: -24px -24px 16px; padding: 10px 24px; border-bottom: 1px solid #e3e8eb;
+}
 .qnav-btn {
   display: inline-flex; align-items: center; gap: 4px; padding: 6px 12px; border-radius: 999px;
   font-size: 13px; font-weight: 600; text-decoration: none; color: var(--dfe-navy);
@@ -568,3 +571,16 @@ select.rag-select option[value="Met"]     { background: #eee; }
   .qnav { position: sticky; top: 0; z-index: 5; background: #f6f8f9; margin: -16px -16px 12px; padding: 10px 16px; border-bottom: 1px solid #e3e8eb; }
   .pager-btn { padding: 12px; }
 }
+
+/* ── Wide screens: use the space ── */
+/* Standard area pages widen with the screen; on wide screens an open standard
+   shows the DfE guidance and the form side by side, the form staying in view
+   while you read. */
+.area-page { max-width: 1500px; }
+.item-form textarea { overflow: hidden; }
+@media (min-width: 1200px) {
+  .item-body.open { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); gap: 22px; align-items: start; }
+  .item-body.open .dfe-description { margin-bottom: 0; }
+  .item-body.open .item-form { position: sticky; top: 64px; }
+}
+.area-pager { max-width: 1500px; }
