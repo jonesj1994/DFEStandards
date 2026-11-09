@@ -383,7 +383,7 @@ function renderDashboard() {
   }).join("");
 
   return `
-  <div style="max-width:900px">
+  <div style="max-width:1200px">
     <h2 style="margin-top:0">Overview</h2>
     ${typeof STANDARDS_META !== "undefined" && STANDARDS_META.lastUpdated ? `<p class="guidance-date">Guidance last updated on GOV.UK: <strong>${escHtml(formatUkDate(STANDARDS_META.lastUpdated))}</strong> &middot; <a class="guidance-link" href="${escAttr(STANDARDS_INDEX_URL)}" target="_blank" rel="noopener">View on GOV.UK &#8599;</a></p>` : ""}
     ${profileNotice()}
