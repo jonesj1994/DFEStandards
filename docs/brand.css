@@ -105,3 +105,9 @@ body.sidebar-animating #sidebar, body.sidebar-animating #main { transition: tran
 @media (prefers-reduced-motion: reduce) {
   #sidebar, #main { transition: none; }
 }
+
+/* ── Centre page content on wide screens ── */
+/* Each view sets its own maximum width; centre it in the space beside the
+   menu (or the whole screen when the menu is hidden). The pinned quick
+   links bar stays full width. */
+#content > :not(.qnav) { margin-left: auto; margin-right: auto; }

@@ -579,8 +579,10 @@ select.rag-select option[value="Met"]     { background: #eee; }
 .area-page { max-width: 1500px; }
 .item-form textarea { overflow: hidden; }
 @media (min-width: 1200px) {
-  .item-body.open { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); gap: 22px; align-items: start; }
-  .item-body.open .dfe-description { margin-bottom: 0; }
-  .item-body.open .item-form { position: sticky; top: 64px; }
+  .item-body.open { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); gap: 22px; align-items: stretch; }
+  /* The guidance box is as tall as the form beside it (height 0 stops it
+     setting the row height; min-height 100% then fills the row). Longer
+     guidance scrolls inside the box. As the notes boxes grow, so does this. */
+  .item-body.open .dfe-description { margin-bottom: 0; height: 0; min-height: 100%; overflow-y: auto; }
 }
 .area-pager { max-width: 1500px; }
