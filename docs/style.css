@@ -586,3 +586,17 @@ select.rag-select option[value="Met"]     { background: #eee; }
   .item-body.open .dfe-description { margin-bottom: 0; height: 0; min-height: 100%; overflow-y: auto; }
 }
 .area-pager { max-width: 1500px; }
+
+/* ── Editing a school for the trust overview ── */
+.trust-banner {
+  max-width: 1500px; display: flex; flex-wrap: wrap; align-items: center; gap: 10px 16px; justify-content: space-between;
+  background: #e8f3f8; border: 1px solid #b8d7e6; border-left: 5px solid var(--dfe-navy); border-radius: 10px;
+  padding: 10px 14px; margin-bottom: 16px; font-size: 14px; line-height: 1.45;
+}
+.trust-banner-text { flex: 1 1 320px; overflow-wrap: anywhere; }
+.trust-banner-btns { display: flex; gap: 8px; flex-wrap: wrap; }
+.tl-dialog { border: none; border-radius: 12px; padding: 20px 22px; max-width: min(540px, calc(100vw - 32px)); box-shadow: 0 10px 30px rgba(0,0,0,0.3); }
+.tl-dialog::backdrop { background: rgba(11,12,12,0.5); }
+.tl-dialog h2 { margin: 0 0 10px; font-size: 18px; color: var(--dfe-navy); }
+.tl-dialog p { font-size: 14px; line-height: 1.5; margin: 0 0 10px; overflow-wrap: anywhere; }
+.tl-dialog-buttons { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 14px; }
