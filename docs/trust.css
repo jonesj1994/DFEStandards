@@ -145,3 +145,14 @@ details.older summary { cursor: pointer; color: var(--dfe-blue); }
 
 /* Long file names must wrap on small screens */
 .card > p, details.older li, .school-head { overflow-wrap: anywhere; }
+
+/* Edit / start a school's DfE assessment in the tracker */
+.open-tracker-btn { display: block; margin-top: 4px; padding: 0; border: 0; background: none; font: inherit; font-size: 12px; font-weight: 600; color: var(--dfe-blue); cursor: pointer; text-decoration: underline; text-underline-offset: 2px; }
+.open-tracker-btn:hover { color: var(--dfe-navy); }
+.open-tracker-box { background: #fff; border: 1px solid #d8e0e4; border-radius: 12px; padding: 12px 16px; margin: 12px 0 16px; }
+.open-tracker-box p { margin: 8px 0 0; }
+.tl-dialog { border: none; border-radius: 12px; padding: 20px 22px; max-width: min(540px, calc(100vw - 32px)); box-shadow: 0 10px 30px rgba(0,0,0,0.3); }
+.tl-dialog::backdrop { background: rgba(11,12,12,0.5); }
+.tl-dialog h2 { margin: 0 0 10px; font-size: 18px; color: var(--dfe-navy); }
+.tl-dialog p { font-size: 14px; line-height: 1.5; margin: 0 0 10px; overflow-wrap: anywhere; }
+.tl-dialog-buttons { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 14px; }

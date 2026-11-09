@@ -1,5 +1,6 @@
 // Trust overview: combines many schools' tracker exports into one trust-wide view.
-// Read-only: it never writes into the trackers' own saved data.
+// It only writes into the DfE tracker's saved data when the user chooses to
+// edit a school there (trust-link.js), after offering to keep what was there.
 (function () {
   "use strict";
   const AM = window.AssessmentModel;
@@ -28,7 +29,8 @@
     sort: { key: "name", dir: 1 },
     filters: { phase: "", worst: "", unassessed: false, outside: true, text: "" },
     staleMonths: STALE_DEFAULT,
-    trustSearch: { text: "", results: null, error: "" }
+    trustSearch: { text: "", results: null, error: "" },
+    returnSchool: window.TrustLink ? TrustLink.takeReturnSchool() : null   // back from the DfE tracker
   };
 
   function loadSettings() {
@@ -282,6 +284,10 @@
   }
 
   function renderNow() {
+    // Back from editing a school in the DfE tracker: show that school
+    if (app.returnSchool && schools.some(x => x.key === app.returnSchool)) {
+      app.view = "school"; app.schoolKey = app.returnSchool; app.returnSchool = null; app.viewing = {};
+    }
     const views = { overview: viewOverview, import: viewImport, trust: viewTrust, about: viewAbout, school: viewSchool };
     const titles = { overview: "Trust overview", import: "Import school files", trust: "Choose trust", about: "About this data", school: "School detail" };
     document.getElementById("content").innerHTML = (views[app.view] || viewOverview)();
@@ -491,7 +497,8 @@
       };
       const w = WORST.find(x => x.sev === s.worst);
       return `<tr class="${cls}">
-        <th scope="row" class="sticky"><button type="button" class="school-btn" data-school="${esc(s.key)}">${esc(s.name)}</button>${tags.trim() ? `<div class="row-tags">${tags}</div>` : ""}</th>
+        <th scope="row" class="sticky"><button type="button" class="school-btn" data-school="${esc(s.key)}">${esc(s.name)}</button>${tags.trim() ? `<div class="row-tags">${tags}</div>` : ""}
+          <button type="button" class="open-tracker-btn" data-open-tracker="${esc(s.key)}" aria-label="${esc((s.records.dfe.length ? "Edit DfE standards for " : "Start DfE standards for ") + s.name)}">${s.records.dfe.length ? "Edit DfE standards" : "Start DfE standards"} &#8594;</button></th>
         <td>${esc(s.urn)}</td><td>${esc(s.phase)}</td><td>${esc(s.pupils)}</td>
         ${cells(DFE)}${cells(CE)}
         <td>${w ? `<span class="rag-pill ${w.cls}">${esc(w.label)}</span>` : `<span class="rag-pill not-set">Not assessed</span>`}</td>
@@ -747,7 +754,13 @@
         ${s.trust ? `<span>Trust <strong>${esc(s.trust)}</strong></span>` : ""}
         ${s.outside ? `<span class="tag warn">Outside ${esc(app.trust.name)}</span>` : ""}
       </div>
-      <p class="small muted">This is a read-only view of the imported files. To change an assessment, the school updates its tracker and sends a new export.</p>
+      <div class="open-tracker-box">
+        <button type="button" class="btn btn-primary" data-open-tracker="${esc(s.key)}">${s.records.dfe.length ? "Edit DfE standards in the tracker" : "Start DfE standards for this school"} &#8594;</button>
+        <p class="small muted">${s.records.dfe.length
+          ? "Opens this school's newest DfE assessment in the standards tracker. Your changes are copied back here as you work; the imported version is kept as an earlier version."
+          : "Opens the standards tracker with this school's details filled in, so you can start its assessment. Your work is copied back here as you go."}
+          Use <strong>Back to trust overview</strong> in the tracker to return.</p>
+      </div>
       ${sections}
     </div>`;
   }
@@ -761,9 +774,10 @@
     const isNewest = rec === list[0];
     const snap = rec.snapshot;
     const sum = AM.summarise(snap);
-    const statusCols = f.id === "dfe" ? ["Met", "Green", "Amber", "Red", "Not Set"] : ["Met", "Partially Met", "Not Met", "N/A", "Not Set"];
+    // DfE ratings are Green/Amber/Red/Not Set (an old "Met" is read as Green)
+    const statusCols = f.id === "dfe" ? ["Green", "Amber", "Red", "Not Set"] : ["Met", "Partially Met", "Not Met", "N/A", "Not Set"];
     const rows = sum.categories.map(c => `<tr><td>${esc(c.title)}${c.isCore ? " ★" : ""}${c.assessed ? "" : ' <span class="tag">not assessed</span>'}</td><td>${c.total}</td>
-      ${statusCols.map(k => `<td>${c.counts[k]}</td>`).join("")}<td><span class="rag-pill ${c.cls}">${esc(c.overall)}</span></td></tr>`).join("");
+      ${statusCols.map(k => `<td>${c.counts[k] || 0}</td>`).join("")}<td><span class="rag-pill ${c.cls}">${esc(c.overall)}</span></td></tr>`).join("");
     const actions = sum.outstanding.sort((a, b) => b.severity - a.severity);
     const notesLabel = f.id === "dfe" ? "Notes" : "Evidence";
     const actionLabel = f.id === "dfe" ? "Recommendations" : "Action needed";
@@ -902,6 +916,14 @@
     const c = document.getElementById("content");
     c.querySelectorAll("a[data-view]").forEach(a => a.addEventListener("click", e => { e.preventDefault(); navigate(a.dataset.view); }));
     c.querySelectorAll("[data-school]").forEach(b => b.addEventListener("click", e => { e.preventDefault(); navigate("school", b.dataset.school); }));
+    // Edit or start a school's DfE assessment in the tracker (trust-link.js)
+    c.querySelectorAll("[data-open-tracker]").forEach(b => b.addEventListener("click", async e => {
+      e.preventDefault();
+      const row = schools.find(x => x.key === b.dataset.openTracker);
+      if (!row || !window.TrustLink) return;
+      b.disabled = true;
+      try { await TrustLink.openInTracker(row); } finally { b.disabled = false; }
+    }));
     c.querySelectorAll("[data-sort]").forEach(b => b.addEventListener("click", () => {
       const k = b.dataset.sort;
       // Status columns start worst first; text columns A to Z

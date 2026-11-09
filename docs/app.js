@@ -110,6 +110,8 @@ function syncFromProfile() {
   const SL = window.SchoolLookup;
   const profile = SL && SL.loadProfile();
   profileConflict = null;
+  // A trust editing one of its schools: the home page's school doesn't apply
+  if (state.trustSession) return;
   if (!profile) return;
   if (SL.differs(state.schoolURN, state.schoolName, profile)) {
     // "Keep" was chosen for this profile before: don't ask again
@@ -170,6 +172,9 @@ function loadState() {
     pick("targetDates", v => typeof v === "string" && AssessmentModel.validDate(v) === v);
     pick("dateTypes", v => typeof v === "string" && AssessmentModel.validDateType(v) === v);
     out.people = cleanPeople(saved.people);
+    // Opened from the trust overview (trust-link.js): changes are copied back
+    const session = window.TrustLink ? TrustLink.cleanSession(saved.trustSession) : null;
+    if (session) out.trustSession = session;
     return out;
   } catch (e) {
     return defaultState();
@@ -180,6 +185,7 @@ function loadState() {
 function saveStateNow() {
   clearTimeout(saveTimer);
   try { localStorage.setItem(STATE_KEY, JSON.stringify(state)); } catch (e) { /* storage unavailable */ }
+  queueTrustSync();
 }
 
 let saveTimer = null;
@@ -189,7 +195,34 @@ function saveState() {
     let ok = true;
     try { localStorage.setItem(STATE_KEY, JSON.stringify(state)); } catch (e) { ok = false; }
     showSaved(ok);
+    queueTrustSync();
   }, 500);
+}
+
+// ── Editing a school for the trust overview (trust-link.js) ────────────────
+// Each save is copied into the trust overview, one copy at a time in order.
+let trustSyncChain = Promise.resolve();
+function queueTrustSync() {
+  if (!state.trustSession || !window.TrustLink) return trustSyncChain;
+  trustSyncChain = trustSyncChain.then(() => TrustLink.syncFromTracker(state)).then(key => {
+    if (key && state.trustSession) {
+      state.trustSession.recordKey = key;
+      try { localStorage.setItem(STATE_KEY, JSON.stringify(state)); } catch (e) { /* storage unavailable */ }
+    }
+  }).catch(() => showToast("Couldn't update the trust overview in this browser. Use Export Excel to keep a copy."));
+  return trustSyncChain;
+}
+
+function trustBanner() {
+  if (!state.trustSession) return "";
+  const name = state.trustSession.name || state.schoolName || "this school";
+  return `<div class="trust-banner" role="status">
+    <span class="trust-banner-text">Editing <strong>${escHtml(name)}</strong> for the trust overview. Your changes are copied to the trust overview as you work.</span>
+    <span class="trust-banner-btns">
+      <button type="button" class="btn btn-primary btn-sm" id="btn-trust-back">&#8592; Back to trust overview</button>
+      <button type="button" class="btn btn-secondary btn-sm" id="btn-trust-unlink">Stop linking</button>
+    </span>
+  </div>`;
 }
 
 // Top bar indicator: "✓ Saved" for a moment after each save, or a warning that
@@ -322,7 +355,7 @@ function renderView() {
   else if (currentView === "people") content.innerHTML = renderPeople();
   else if (currentView === "category") content.innerHTML = renderCategory(currentCategoryId);
   // Quick ways back, so phone users don't have to open the menu
-  if (currentView !== "home") content.insertAdjacentHTML("afterbegin", quickNavTop());
+  content.insertAdjacentHTML("afterbegin", (currentView !== "home" ? quickNavTop() : "") + trustBanner());
   if (currentView === "category") content.insertAdjacentHTML("beforeend", areaPager(currentCategoryId));
   attachViewEvents();
   buildSidebarNav();
@@ -1016,6 +1049,25 @@ function attachViewEvents() {
       }
     });
   });
+
+  // Trust editing: back to the trust overview, or stop linking
+  const trustBack = document.getElementById("btn-trust-back");
+  if (trustBack) {
+    trustBack.addEventListener("click", async () => {
+      trustBack.disabled = true;
+      saveStateNow();
+      await trustSyncChain;
+      if (state.trustSession) TrustLink.setReturnSchool(state.trustSession.key);
+      location.href = "trust.html";
+    });
+    document.getElementById("btn-trust-unlink").addEventListener("click", () => {
+      if (!window.confirm("Stop linking this assessment to the trust overview? It stays in the tracker, and what has already been copied stays in the trust overview, but new changes won't be copied.")) return;
+      delete state.trustSession;
+      saveStateNow();
+      renderView();
+      showToast("No longer linked to the trust overview.");
+    });
+  }
 
   // Buttons that trigger a top bar action (Export Excel, Governors' report)
   content.querySelectorAll("[data-click]").forEach(b => {

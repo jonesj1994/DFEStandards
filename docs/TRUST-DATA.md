@@ -146,3 +146,23 @@ SheetJS and kept in IndexedDB (`trust_view_v1`) until the user selects
 kept in `localStorage` (`trust_view_settings_v1`). The trust view never writes
 to the trackers' own storage (`dfe_tracker_v1`, `ce_tracker_v1`,
 `school_profile_v1`).
+
+## Editing a school's DfE assessment from the trust overview
+
+`trust-link.js` lets a trust open any school's DfE standards assessment in the
+tracker and edit it:
+
+- **Edit DfE standards** (or **Start DfE standards** if none has been imported)
+  on the overview grid and on each school's page loads that school's newest
+  imported DfE snapshot into the tracker (`AssessmentModel.toTrackerState`), or
+  a fresh assessment with the school's details, and opens `dfe.html`. The
+  tracker's saved data gets a `trustSession` marker `{ key, urn, name, recordKey }`.
+- While the marker is set, every save in the tracker is copied back into this
+  browser's trust store as a new snapshot (`AssessmentModel.fromTrackerState`,
+  provenance "Edited in the DfE tracker"), replacing the copy made by the
+  previous save. The imported original stays as an older version.
+- **Back to trust overview** finishes the last copy and returns to that
+  school's page. **Stop linking** removes the marker; the assessment stays in
+  the tracker.
+- If the tracker already holds an assessment that isn't linked to the trust,
+  the user is asked to add it to the trust store first, replace it, or cancel.
