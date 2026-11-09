@@ -83,3 +83,25 @@ a:focus-visible, button:focus-visible, summary:focus-visible { outline: 3px soli
 /* Plain text links (not buttons or cards) in the brand teal */
 #content a:not([class]), .tp-note a { color: var(--brand-teal); }
 #content a:not([class]):hover { color: var(--brand-teal-dark); }
+
+/* ── Hide / show the menu on larger screens (layout.js) ── */
+.sidebar-collapse {
+  display: inline-flex; align-items: center; gap: 6px; flex-shrink: 0;
+  font: inherit; font-size: 13px; font-weight: 600; cursor: pointer;
+  padding: 6px 12px; border-radius: 999px; border: 1px solid #c9d3d9; background: #fff; color: var(--brand-navy);
+}
+.sidebar-collapse:hover { background: #eef4f6; }
+/* Animate only when the button is pressed (layout.js adds .sidebar-animating),
+   not when the window is resized or a phone is rotated */
+body.sidebar-animating #sidebar, body.sidebar-animating #main { transition: transform 0.2s ease, margin-left 0.2s ease; }
+@media (min-width: 769px) {
+  body.sidebar-collapsed #sidebar { transform: translateX(-100%); visibility: hidden; }
+  body.sidebar-collapsed.sidebar-animating #sidebar { transition: transform 0.2s ease, visibility 0s 0.2s; }
+  body.sidebar-collapsed #main { margin-left: 0; }
+}
+@media (max-width: 768px) {
+  .sidebar-collapse { display: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  #sidebar, #main { transition: none; }
+}
