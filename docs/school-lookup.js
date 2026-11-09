@@ -7,15 +7,14 @@
 //   schools/names.json       open schools, for search by name (loaded only when needed)
 //   schools/trusts.json      trusts: [UID, name, [open URNs]] (loaded only when needed)
 //   schools/meta.json        build date and source file
-// If the local data cannot be loaded, URN lookups fall back to the older
-// dfe-digital.github.io/gias-data service (archived January 2025, no DfE numbers).
+// Only this site's own data files are used: no third-party service is
+// contacted (the pages' security policy allows connections to this site only).
 (function () {
   "use strict";
 
   const PROFILE_KEY = "school_profile_v1";
   const DATA = "schools/";
   const SHARDS = 100;
-  const FALLBACK = "https://dfe-digital.github.io/gias-data/schools/";
   const GIAS_PAGE = "https://get-information-schools.service.gov.uk/Establishments/Establishment/Details/";
 
   const cache = new Map();
@@ -92,19 +91,6 @@
     };
   }
 
-  // Older gias-data service (URN only, no DfE number, pupils or trust)
-  function normaliseFallback(d) {
-    const addressParts = [d.address_1, d.address_2, d.address_3, d.county, d.postcode].filter(Boolean);
-    return {
-      ...normalise(d.urn, {}),
-      name: d.name || "", laCode: d.local_authority_code || "", la: d.local_authority || "",
-      type: d.type || "", phase: d.phase_of_education || "", status: d.status || "",
-      isClosed: d.status === "Closed", openDate: d.open_date || "", closeDate: d.close_date || "",
-      addressParts, address: addressParts.join(", "), postcode: d.postcode || "",
-      phone: d.phone || "", website: d.school_website || "", source: "gias-data (archived)"
-    };
-  }
-
   // ── Lookups ───────────────────────────────────────────────────────────────
   async function byURN(urn) {
     urn = String(parseInt(urn, 10));
@@ -112,13 +98,7 @@
     try {
       shard = await getJSON(DATA + "urn/" + String(urn % SHARDS).padStart(2, "0") + ".json");
     } catch (e) {
-      // Local data unavailable: try the archived service instead
-      try {
-        return normaliseFallback(await getJSON(FALLBACK + urn + ".json"));
-      } catch (e2) {
-        if (e2.status === 404) return null;
-        throw new LookupError("The school data could not be loaded. Check your internet connection and try again.", "network");
-      }
+      throw new LookupError("The school data could not be loaded. Check your internet connection and try again.", "network");
     }
     return shard[urn] ? normalise(urn, shard[urn]) : null;
   }
