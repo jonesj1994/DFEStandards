@@ -321,8 +321,37 @@ function renderView() {
   else if (currentView === "plan") content.innerHTML = renderPlan();
   else if (currentView === "people") content.innerHTML = renderPeople();
   else if (currentView === "category") content.innerHTML = renderCategory(currentCategoryId);
+  // Quick ways back, so phone users don't have to open the menu
+  if (currentView !== "home") content.insertAdjacentHTML("afterbegin", quickNavTop());
+  if (currentView === "category") content.insertAdjacentHTML("beforeend", areaPager(currentCategoryId));
   attachViewEvents();
   buildSidebarNav();
+}
+
+// ── Quick navigation ──────────────────────────────────────────────────────
+// Top of every page except Start here: back to Start here or the Dashboard
+function quickNavTop() {
+  const dash = currentView === "dashboard" ? "" : `<a href="#" class="qnav-btn" data-view="dashboard">&#9632; Dashboard</a>`;
+  return `<nav class="qnav" aria-label="Quick links">
+    <a href="#" class="qnav-btn qnav-home" data-view="home">&#8592; Start here</a>${dash}
+  </nav>`;
+}
+
+// Bottom of each standard area: previous and next area, and back to Start here
+function areaPager(catId) {
+  const i = STANDARDS_DATA.findIndex(c => c.id === catId);
+  if (i < 0) return "";
+  const prev = STANDARDS_DATA[i - 1], next = STANDARDS_DATA[i + 1];
+  const link = (c, dir) => `<a href="#" class="pager-btn pager-${dir}" data-view="category" data-category="${escAttr(c.id)}">
+      <span class="pager-dir">${dir === "prev" ? "&#8592; Previous area" : "Next area &#8594;"}</span>
+      <span class="pager-name">${escHtml(c.title)}</span></a>`;
+  return `<nav class="area-pager" aria-label="Standard areas">
+    <div class="pager-row">
+      ${prev ? link(prev, "prev") : "<span></span>"}
+      ${next ? link(next, "next") : `<a href="#" class="pager-btn pager-next" data-view="plan"><span class="pager-dir">Last area: next step &#8594;</span><span class="pager-name">Working towards</span></a>`}
+    </div>
+    <p class="pager-sub">Area ${i + 1} of ${STANDARDS_DATA.length} &middot; <a href="#" data-view="home">Back to Start here</a> &middot; <a href="#" data-view="dashboard">Dashboard</a></p>
+  </nav>`;
 }
 
 // Dashboard
