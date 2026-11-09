@@ -40,8 +40,46 @@ function defaultState() {
     // "complete" (complete by), "review" (next review) or "" to follow the rating
     // (complete by until the standard is Green, then next review).
     targetDates,
-    dateTypes
+    dateTypes,
+    // People who can own standards, managed on the People page:
+    // [{ id, name, role }]. A standard's ownership is saved as the person's
+    // label (see personLabel), so exports and reports need no lookup.
+    people: []
   };
+}
+
+// People list limits and validation. Declared before loadState() runs.
+const MAX_PEOPLE = 200;
+const MAX_PERSON_TEXT = 100;
+
+function personLabel(p) {
+  return p.role ? `${p.name} (${p.role})` : p.name;
+}
+
+// Keep only well-formed people: plain text, trimmed, no duplicate labels
+function cleanPeople(list) {
+  const out = [], seen = new Set(), ids = new Set();
+  if (!Array.isArray(list)) return out;
+  for (const p of list) {
+    if (out.length >= MAX_PEOPLE) break;
+    if (!p || typeof p !== "object") continue;
+    const name = typeof p.name === "string" ? p.name.replace(/\s+/g, " ").trim().slice(0, MAX_PERSON_TEXT) : "";
+    const role = typeof p.role === "string" ? p.role.replace(/\s+/g, " ").trim().slice(0, MAX_PERSON_TEXT) : "";
+    if (!name) continue;
+    let id = typeof p.id === "string" && /^p[a-z0-9]{1,20}$/.test(p.id) ? p.id : newPersonId();
+    while (ids.has(id)) id = newPersonId();
+    const person = { id, name, role };
+    const key = personLabel(person).toLowerCase();
+    if (seen.has(key)) continue;
+    seen.add(key);
+    ids.add(id);
+    out.push(person);
+  }
+  return out;
+}
+
+function newPersonId() {
+  return "p" + Date.now().toString(36) + Math.floor(Math.random() * 1e6).toString(36);
 }
 
 // Ratings. Declared before loadState() runs, because loadState() uses them.
@@ -131,6 +169,7 @@ function loadState() {
     ["notes", "recommendations", "ownership"].forEach(f => pick(f, v => typeof v === "string"));
     pick("targetDates", v => typeof v === "string" && AssessmentModel.validDate(v) === v);
     pick("dateTypes", v => typeof v === "string" && AssessmentModel.validDateType(v) === v);
+    out.people = cleanPeople(saved.people);
     return out;
   } catch (e) {
     return defaultState();
@@ -189,6 +228,7 @@ function viewTitle() {
   if (currentView === "school-info") return "School Information";
   if (currentView === "summary") return "Summary";
   if (currentView === "plan") return "Working towards";
+  if (currentView === "people") return "People";
   if (currentView === "category") {
     const cat = STANDARDS_DATA.find(c => c.id === currentCategoryId);
     return cat ? cat.title : "";
@@ -275,6 +315,7 @@ function renderView() {
   else if (currentView === "school-info") content.innerHTML = renderSchoolInfo();
   else if (currentView === "summary") content.innerHTML = renderSummary();
   else if (currentView === "plan") content.innerHTML = renderPlan();
+  else if (currentView === "people") content.innerHTML = renderPeople();
   else if (currentView === "category") content.innerHTML = renderCategory(currentCategoryId);
   attachViewEvents();
   buildSidebarNav();
@@ -543,6 +584,88 @@ function renderPlan() {
   </div>`;
 }
 
+// ── People (owners) ────────────────────────────────────────────────────────
+const ADD_PERSON = "__add_person__";
+
+// Options for a standard's Ownership drop-down. An owner typed in an older
+// version (or imported) who isn't in the list is kept as its own option, so
+// nothing is lost.
+function ownerOptions(current) {
+  const labels = state.people.map(personLabel);
+  const opt = (v, text, sel) => `<option value="${escAttr(v)}"${sel ? " selected" : ""}>${escHtml(text)}</option>`;
+  let html = opt("", "Not assigned", !current);
+  html += state.people.map(p => opt(personLabel(p), personLabel(p), personLabel(p) === current)).join("");
+  if (current && !labels.includes(current)) html += opt(current, current + " (not in People list)", true);
+  html += opt(ADD_PERSON, "+ Add someone to the People list…", false);
+  return html;
+}
+
+function assignedCount(label) {
+  return STANDARDS_DATA.reduce((n, c) => n + c.items.filter(i => state.ownership[i.id] === label).length, 0);
+}
+
+// Owners used on standards but not in the People list (e.g. from older files)
+function unlistedOwners() {
+  const labels = new Set(state.people.map(personLabel));
+  const found = new Set();
+  STANDARDS_DATA.forEach(c => c.items.forEach(i => {
+    const o = (state.ownership[i.id] || "").trim();
+    if (o && !labels.has(o)) found.add(o);
+  }));
+  return [...found].sort((a, b) => a.localeCompare(b));
+}
+
+function renderPeople() {
+  const rows = state.people.map(p => {
+    const n = assignedCount(personLabel(p));
+    return `<tr data-person="${escAttr(p.id)}">
+      <td><input type="text" class="person-name" value="${escAttr(p.name)}" maxlength="${MAX_PERSON_TEXT}" aria-label="Name" /></td>
+      <td><input type="text" class="person-role" value="${escAttr(p.role)}" maxlength="${MAX_PERSON_TEXT}" aria-label="Role" placeholder="Optional" /></td>
+      <td>${n ? `${n} standard${n === 1 ? "" : "s"}` : '<span style="color:#505a5f">None</span>'}</td>
+      <td style="white-space:nowrap">
+        <button type="button" class="btn btn-primary btn-sm person-save">Save</button>
+        <button type="button" class="btn btn-secondary btn-sm person-remove">Remove</button>
+      </td>
+    </tr>`;
+  }).join("");
+  const unlisted = unlistedOwners();
+  return `
+  <div style="max-width:900px">
+    <h2 style="margin-top:0">People</h2>
+    <p style="color:#505a5f;font-size:14px;margin-top:0">Add the people who look after the standards. They appear in the <strong>Ownership</strong> drop-down on every standard. Renaming someone here updates every standard they own.</p>
+    <div class="card">
+      <div class="card-header"><h3>Add a person</h3></div>
+      <div class="card-body">
+        <form id="person-add-form" class="person-add" novalidate>
+          <div class="form-field"><label for="pa-name">Name</label><input type="text" id="pa-name" maxlength="${MAX_PERSON_TEXT}" placeholder="e.g. Alex Taylor" autocomplete="off" /></div>
+          <div class="form-field"><label for="pa-role">Role (optional)</label><input type="text" id="pa-role" maxlength="${MAX_PERSON_TEXT}" placeholder="e.g. Business Manager" autocomplete="off" /></div>
+          <button type="submit" class="btn btn-primary">+ Add</button>
+        </form>
+        <p class="person-msg" id="person-msg" role="status" aria-live="polite"></p>
+      </div>
+    </div>
+    ${unlisted.length ? `<div class="profile-notice">${unlisted.length === 1 ? "One owner is" : unlisted.length + " owners are"} used on standards but not in this list: <strong>${unlisted.map(escHtml).join("</strong>, <strong>")}</strong>.
+      <div style="margin-top:8px"><button type="button" class="btn btn-primary btn-sm" id="btn-add-unlisted">Add ${unlisted.length === 1 ? "them" : "all " + unlisted.length} to the list</button></div></div>` : ""}
+    <div class="card" style="overflow:auto">
+      ${state.people.length ? `<table class="summary-table people-table">
+        <thead><tr><th scope="col">Name</th><th scope="col">Role</th><th scope="col">Owns</th><th scope="col"><span class="visually-hidden">Actions</span></th></tr></thead>
+        <tbody>${rows}</tbody>
+      </table>` : `<div class="card-body" style="color:#505a5f">No people added yet.</div>`}
+    </div>
+  </div>`;
+}
+
+// Add a person; returns an error message, or "" when added
+function addPerson(name, role) {
+  const list = cleanPeople([...state.people, { name, role }]);
+  if (!String(name || "").trim()) return "Enter a name.";
+  if (list.length === state.people.length) {
+    return state.people.length >= MAX_PEOPLE ? `The list is full (${MAX_PEOPLE} people).` : "That person is already in the list.";
+  }
+  state.people = list;
+  return "";
+}
+
 function coreYear() {
   return (typeof STANDARDS_META !== "undefined" && STANDARDS_META.coreDeadlineYear) || 2030;
 }
@@ -602,7 +725,7 @@ function renderCategory(catId) {
           </div>
           <div class="form-field">
             <label>Ownership</label>
-            <input type="text" data-field="ownership" data-id="${item.id}" value="${o}" placeholder="e.g. IT Manager" />
+            <select data-field="ownership" data-id="${item.id}" aria-label="Ownership">${ownerOptions(state.ownership[item.id] || "")}</select>
           </div>
           <div class="form-field">
             <label for="dt-${item.id}">Date type</label>
@@ -769,6 +892,63 @@ function attachViewEvents() {
     });
   }
 
+  // People page
+  const addForm = document.getElementById("person-add-form");
+  if (addForm) {
+    addForm.addEventListener("submit", e => {
+      e.preventDefault();
+      const name = document.getElementById("pa-name").value, role = document.getElementById("pa-role").value;
+      const err = addPerson(name, role);
+      if (err) { document.getElementById("person-msg").textContent = err; return; }
+      saveStateNow(); showSaved(true);
+      renderView();
+      document.getElementById("person-msg").textContent = "Added " + personLabel(state.people[state.people.length - 1]) + ".";
+      document.getElementById("pa-name").focus();
+    });
+    const addUnlisted = document.getElementById("btn-add-unlisted");
+    if (addUnlisted) addUnlisted.addEventListener("click", () => {
+      // Labels like "Jo Smith (IT Lead)" become name "Jo Smith", role "IT Lead",
+      // so the label (and the standards using it) stay exactly the same
+      const add = unlistedOwners().map(label => {
+        const m = /^(.*\S) \(([^()]+)\)$/.exec(label);
+        const split = m ? cleanPeople([{ name: m[1], role: m[2] }])[0] : null;
+        return split && personLabel(split) === label ? split : { name: label, role: "" };
+      });
+      state.people = cleanPeople([...state.people, ...add]);
+      saveStateNow(); showSaved(true);
+      renderView();
+    });
+    content.querySelectorAll("tr[data-person]").forEach(row => {
+      const person = state.people.find(p => p.id === row.dataset.person);
+      if (!person) return;
+      row.querySelector(".person-save").addEventListener("click", () => {
+        const name = row.querySelector(".person-name").value, role = row.querySelector(".person-role").value;
+        const others = state.people.filter(p => p !== person);
+        const updated = cleanPeople([{ id: person.id, name, role }])[0];
+        const msg = document.getElementById("person-msg");
+        if (!updated) { msg.textContent = "Enter a name."; return; }
+        if (others.some(p => personLabel(p).toLowerCase() === personLabel(updated).toLowerCase())) { msg.textContent = "Someone with that name and role is already in the list."; return; }
+        const oldLabel = personLabel(person), newLabel = personLabel(updated);
+        person.name = updated.name; person.role = updated.role;
+        // Update every standard this person owns
+        let moved = 0;
+        if (oldLabel !== newLabel) Object.keys(state.ownership).forEach(id => { if (state.ownership[id] === oldLabel) { state.ownership[id] = newLabel; moved++; } });
+        saveStateNow(); showSaved(true);
+        renderView();
+        document.getElementById("person-msg").textContent = `Saved ${newLabel}.` + (moved ? ` Updated ${moved} standard${moved === 1 ? "" : "s"}.` : "");
+      });
+      row.querySelector(".person-remove").addEventListener("click", () => {
+        const label = personLabel(person), n = assignedCount(label);
+        if (n && !window.confirm(`${label} owns ${n} standard${n === 1 ? "" : "s"}. Remove them from the list and set ${n === 1 ? "that standard" : "those standards"} to Not assigned?`)) return;
+        state.people = state.people.filter(p => p !== person);
+        Object.keys(state.ownership).forEach(id => { if (state.ownership[id] === label) state.ownership[id] = ""; });
+        saveStateNow(); showSaved(true);
+        renderView();
+        document.getElementById("person-msg").textContent = `Removed ${label}.`;
+      });
+    });
+  }
+
   // Item expand/collapse
   content.querySelectorAll(".item-header").forEach(header => {
     header.addEventListener("click", () => {
@@ -788,6 +968,14 @@ function attachViewEvents() {
     el.addEventListener(event, () => {
       const field = el.dataset.field;
       const id = el.dataset.id;
+      // "+ Add someone" in an Ownership drop-down opens the People page
+      if (field === "ownership" && el.value === ADD_PERSON) {
+        el.value = state.ownership[id] || "";
+        navigate("people");
+        const nameBox = document.getElementById("pa-name");
+        if (nameBox) nameBox.focus();
+        return;
+      }
       // Only real dates and known date types are kept
       if (field === "targetDates") {
         state.targetDates[id] = AssessmentModel.validDate(el.value);
@@ -845,7 +1033,9 @@ document.getElementById("file-input").addEventListener("change", e => {
   const file = e.target.files[0];
   if (!file) return;
   importFromExcel(file, imported => {
-    state = { ...state, ...imported };
+    // People from the file are added to this tracker's list (nobody is removed)
+    const people = cleanPeople([...state.people, ...(imported.people || [])]);
+    state = { ...state, ...imported, people };
     saveState();
     renderView();
     showToast("Data imported successfully.");
