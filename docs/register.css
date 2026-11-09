@@ -129,3 +129,7 @@ a.btn { text-decoration: none; }
 .qa-own { font-size: 13px; margin-left: auto; }
 .qa-own a, .qa-none a { color: var(--dfe-blue); }
 @media (max-width: 640px) { .qa-own { margin-left: 0; } }
+
+/* "Fill in typical details" box on the edit page */
+.reg-prefill { border-left: 4px solid var(--dfe-blue); font-size: 14px; margin-bottom: 16px; }
+.reg-prefill[hidden] { display: none; }
