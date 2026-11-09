@@ -534,3 +534,9 @@ select.rag-select option[value="Met"]     { background: #eee; }
   .step > .btn, .step-btns { grid-column: 2; justify-self: start; justify-content: flex-start; }
   .example-grid { grid-template-columns: 1fr 1fr; }
 }
+
+/* Coming-soon page opened directly (see features.js) */
+.preview-tag { display: inline-block; font-size: 11px; font-weight: 700; background: #ffdd00; color: #0b0c0c; border-radius: 3px; padding: 3px 8px; white-space: nowrap; }
+/* Sit next to the title rather than in the middle of the bar */
+#topbar h1:has(+ .preview-tag) { flex: 0 1 auto; }
+#topbar h1 + .preview-tag { margin-right: auto; }

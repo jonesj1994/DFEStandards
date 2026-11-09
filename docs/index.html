@@ -38,6 +38,14 @@
     .tracker-progress { font-size: 13px; color: #505a5f; margin-bottom: 14px; min-height: 18px; }
     .tracker-school { font-size: 13px; color: #0b0c0c; margin-bottom: 6px; overflow-wrap: anywhere; }
     .tracker-card .btn { align-self: flex-start; background: var(--accent); color: #fff; }
+    /* Not released yet (see features.js) */
+    .tracker-card.coming-soon { background: #f8f8f8; box-shadow: none; border: 2px dashed #b1b4b6; cursor: default; color: #505a5f; }
+    .tracker-card.coming-soon h3 { color: #505a5f; }
+    .tracker-card.coming-soon ul { color: #505a5f; }
+    .tracker-card.coming-soon .tracker-progress, .tracker-card.coming-soon .tracker-school { display: none; }
+    .tracker-card.coming-soon .btn { background: #b1b4b6; color: #0b0c0c; cursor: default; }
+    .tracker-card.coming-soon:hover { transform: none; box-shadow: none; }
+    .soon-tag { display: inline-block; font-size: 11px; font-weight: 700; background: #0b0c0c; color: #fff; border-radius: 3px; padding: 2px 6px; vertical-align: middle; letter-spacing: 0.3px; }
     .home-footer { padding: 0 16px 32px; font-size: 12px; color: #505a5f; }
     .reset-area { margin: 0 16px 24px; padding: 16px 18px; background: #fff; border-radius: 8px; border-left: 4px solid var(--rag-red); box-shadow: 0 1px 3px rgba(0,0,0,0.12); }
     .reset-area h2 { margin: 0 0 6px; font-size: 16px; }
@@ -195,7 +203,7 @@
       <h2 class="home-area-title" id="assessments-title">Assessments</h2>
       <p class="home-area-intro">Rate your school against each framework, record evidence and actions, and export the results.</p>
       <div class="home-grid">
-        <a class="tracker-card" href="dfe.html" style="--accent: var(--dfe-blue)">
+        <a class="tracker-card" data-feature="dfe" href="dfe.html" style="--accent: var(--dfe-blue)">
           <h3>DfE Digital &amp; Technology Standards</h3>
           <p>Rate your school or college against the Department for Education's digital and technology standards, including the six core standards.</p>
           <ul>
@@ -209,7 +217,7 @@
           <span class="btn">Open DfE tracker &#8594;</span>
         </a>
 
-        <a class="tracker-card" href="ce.html" style="--accent: var(--rag-green)">
+        <a class="tracker-card" data-feature="ce" href="ce.html" style="--accent: var(--rag-green)">
           <h3>Cyber Essentials</h3>
           <p>Check readiness for Cyber Essentials certification against the NCSC's current requirements, with notes on how each applies in schools.</p>
           <ul>
@@ -229,7 +237,7 @@
       <h2 class="home-area-title" id="registers-title">Registers</h2>
       <p class="home-area-intro">The DfE standards and Cyber Essentials expect schools to keep records of their software, hardware, user accounts, backups and cyber incidents. Each register here is built around what those standards ask you to track.</p>
       <div class="home-grid">
-        <a class="tracker-card" href="register.html" id="software-register-tile" style="--accent: #6f72af">
+        <a class="tracker-card" data-feature="register" href="register.html" id="software-register-tile" style="--accent: #6f72af">
           <h3>Software Register</h3>
           <p>Keep a record of every piece of software and cloud service your school uses, with the details the DfE cyber security standard and Cyber Essentials ask for.</p>
           <ul>
@@ -243,7 +251,7 @@
         </a>
 
         <!-- TILE: hardware-register-tile (replace this whole block with a link card when the register is built) -->
-        <a class="tracker-card" href="hardware.html" id="hardware-register-tile" style="--accent: #1d70b8">
+        <a class="tracker-card" data-feature="hardware" href="hardware.html" id="hardware-register-tile" style="--accent: #1d70b8">
           <h3>Hardware and Asset Register</h3>
           <p>Record every device and piece of network equipment, with the details the DfE standards and Cyber Essentials ask for.</p>
           <ul>
@@ -258,7 +266,7 @@
         <!-- END TILE: hardware-register-tile -->
 
         <!-- TILE: accounts-register-tile (built: see accounts.html) -->
-        <a class="tracker-card" href="accounts.html" id="accounts-register-tile" style="--accent: #4c2c92">
+        <a class="tracker-card" data-feature="accounts" href="accounts.html" id="accounts-register-tile" style="--accent: #4c2c92">
           <h3>User Accounts and Access Privileges Register</h3>
           <p>Keep track of who has access to what, especially administrator and third-party accounts, and when access was last reviewed.</p>
           <ul>
@@ -273,7 +281,7 @@
         <!-- END TILE: accounts-register-tile -->
 
         <!-- TILE: backup-register-tile (replace this whole block with a link card when the register is built) -->
-        <a class="tracker-card" href="backup.html" id="backup-register-tile" style="--accent: #00703c">
+        <a class="tracker-card" data-feature="backup" href="backup.html" id="backup-register-tile" style="--accent: #00703c">
           <h3>Backup and Disaster Recovery Register</h3>
           <p>Record what is backed up, where and how often, and log restore tests, so you know you can recover after an incident.</p>
           <ul>
@@ -288,7 +296,7 @@
         <!-- END TILE: backup-register-tile -->
 
         <!-- TILE: incident-log-tile (replace this whole block with a link card when the register is built) -->
-        <a class="tracker-card" href="incidents.html" id="incident-log-tile" style="--accent: #d4351c">
+        <a class="tracker-card" data-feature="incidents" href="incidents.html" id="incident-log-tile" style="--accent: #d4351c">
           <h3>Cyber Incident and Breach Log</h3>
           <p>Log cyber incidents, near misses and personal data breaches, what was done, and who was told and when, as the DfE cyber security standard and UK GDPR ask.</p>
           <ul>
@@ -308,7 +316,7 @@
       <h2 class="home-area-title" id="for-trusts-title">For trusts</h2>
       <p class="home-area-intro">Bring together the exports from each of your academies. Use the <strong>I'm a trust</strong> tab above to find your trust first.</p>
       <div class="home-grid">
-        <a class="tracker-card" href="trust.html" id="trust-tile" style="--accent: var(--dfe-navy)">
+        <a class="tracker-card" data-feature="trust" href="trust.html" id="trust-tile" style="--accent: var(--dfe-navy)">
           <h3>Trust Overview</h3>
           <p>For multi-academy trusts: bring together the tracker exports from each of your schools and see the whole trust at a glance.</p>
           <ul>
@@ -355,6 +363,7 @@
     </p>
   </main>
 
+  <script src="features.js"></script>
   <script src="school-lookup.js"></script>
   <script src="register-data.js"></script>
   <script src="home-trust.js" defer></script>

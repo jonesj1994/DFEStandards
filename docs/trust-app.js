@@ -55,6 +55,9 @@
     const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso || "");
     return m ? `${parseInt(m[3], 10)} ${MONTHS[+m[2] - 1]} ${m[1]}` : (iso || "");
   }
+  // Is the Cyber Essentials tracker released? (features.js)
+  const ceLive = () => !window.Features || window.Features.isLive("ce");
+
   // Target date of an outstanding DfE standard (Complete by / Next review)
   const TARGET_TYPE = { complete: "Complete by", review: "Next review" };
   const TARGET_STATE = { overdue: "Overdue", soon: "Due soon", ok: "On track", done: "Done" };
@@ -325,7 +328,7 @@
         <div class="card" style="padding:16px">
           <p style="margin-top:0">Nothing to show yet. To build the overview:</p>
           <ol style="line-height:1.7;margin-bottom:0">
-            <li>Ask each school to open the <a href="dfe.html">DfE standards</a> and <a href="ce.html">Cyber Essentials</a> trackers and select <strong>Export Excel</strong>.</li>
+            <li>Ask each school to open the <a href="dfe.html">DfE standards</a>${ceLive() ? ' and <a href="ce.html">Cyber Essentials</a> trackers' : " tracker"} and select <strong>Export Excel</strong>.</li>
             <li><a href="#" data-view="trust">Choose your trust</a> (optional, but it shows which academies are missing).</li>
             <li><a href="#" data-view="import">Import the files</a> here. You can add them all at once.</li>
           </ol>

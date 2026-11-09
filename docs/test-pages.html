@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self' https://dfe-digital.github.io; object-src 'none'; base-uri 'self'; form-action 'self'" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="robots" content="noindex, nofollow" />
+  <title>Test Pages</title>
+  <link rel="stylesheet" href="style.css" />
+  <style>
+    body { background: #f3f2f1; }
+    .tp-header { background: var(--dfe-navy); color: #fff; padding: 28px 16px 22px; }
+    .tp-header-inner { max-width: 928px; margin: 0 auto; }
+    .tp-header h1 { margin: 0 0 6px; font-size: 24px; }
+    .tp-header p { margin: 0; color: rgba(255,255,255,0.85); font-size: 15px; max-width: 760px; }
+    .tp-wrap { max-width: 960px; margin: 0 auto; padding: 20px 16px 40px; }
+    .tp-wrap h2 { font-size: 18px; margin: 26px 0 10px; color: var(--dfe-navy); }
+    .tp-note { background: #fff; border-left: 4px solid var(--dfe-blue); padding: 12px 16px; border-radius: 0 6px 6px 0; font-size: 14px; line-height: 1.55; }
+    .tp-note a { color: var(--dfe-blue); }
+    .tp-open.btn { color: #fff; }
+    .tp-list { display: grid; gap: 12px; }
+    .tp-item { background: #fff; border-radius: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); padding: 14px 16px; display: grid; grid-template-columns: 1fr auto; gap: 6px 16px; align-items: start; }
+    .tp-item h3 { margin: 0; font-size: 15px; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+    .tp-item p { margin: 0; font-size: 13px; color: #505a5f; line-height: 1.5; }
+    .tp-item ul { margin: 4px 0 0; padding-left: 18px; font-size: 13px; line-height: 1.6; }
+    .tp-body { min-width: 0; }
+    .tp-open { white-space: nowrap; text-decoration: none; }
+    .tp-status { font-size: 11px; font-weight: 700; border-radius: 3px; padding: 2px 7px; }
+    .tp-status.live { background: #e3f5ec; color: #005a30; border: 1px solid var(--rag-green); }
+    .tp-status.soon { background: #ffdd00; color: #0b0c0c; border: 1px solid #b38f00; }
+    .tp-path { font-family: monospace; font-size: 12px; color: #505a5f; font-weight: 400; }
+    @media (max-width: 640px) { .tp-item { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+  <header class="tp-header">
+    <div class="tp-header-inner">
+      <h1>Test pages</h1>
+      <p>Every page in the School Compliance Toolkit, including the ones not released yet, so you can look through and test each one. This page isn't linked from the home page.</p>
+    </div>
+  </header>
+
+  <main class="tp-wrap">
+    <div class="tp-note">
+      <strong>Test data:</strong> <a href="samples/DfE_Standards_TEST_DATA_Oakfield_Demo_Primary.xlsx" download>download the demo DfE standards file</a> (a fictional school with every standard filled in), then use <strong>Import Excel</strong> in the DfE tracker.
+      Importing replaces what's in the tracker in this browser. To start again from nothing, use <strong>Clear all data</strong> at the bottom of the <a href="index.html">home page</a>.
+      <br />Pages marked <span class="tp-status soon">Coming soon</span> are greyed out on the home page and show a "Preview" label when opened from here. To release one, remove it from the list at the top of <code>docs/features.js</code>.
+    </div>
+
+    <h2 id="tp-live-h">Released</h2>
+    <div class="tp-list" id="tp-live">
+      <div class="tp-item" data-page="index.html">
+        <div class="tp-body">
+          <h3>Home page <span class="tp-path">index.html</span></h3>
+          <p>School and trust search, cards for each tool, and Clear all data.</p>
+          <ul><li>Search for a school by name, URN or DfE number</li><li>Switch to "I'm a trust" and search for a trust</li><li>Check the coming-soon cards are greyed out and don't open</li></ul>
+        </div>
+        <a class="btn btn-primary btn-sm tp-open" href="index.html">Open &#8594;</a>
+      </div>
+      <div class="tp-item" data-feature="dfe">
+        <div class="tp-body">
+          <h3>DfE Standards Tracker <span class="tp-path">dfe.html</span></h3>
+          <p>Start here guide, People, ratings, dates, Working towards, Excel export and import.</p>
+          <ul><li>Follow the Start here checklist</li><li>Add people, then pick them in Ownership</li><li>Set ratings and dates, then check Working towards and the Dashboard</li><li>Export Excel, then Import it again</li></ul>
+        </div>
+        <a class="btn btn-primary btn-sm tp-open" href="dfe.html">Open &#8594;</a>
+      </div>
+      <div class="tp-item" data-page="report.html?f=dfe">
+        <div class="tp-body">
+          <h3>Governors' report: DfE standards <span class="tp-path">report.html?f=dfe</span></h3>
+          <p>Print-ready report made from the DfE tracker's answers in this browser.</p>
+          <ul><li>Add meeting details and commentary</li><li>Print or save as PDF and check page breaks</li></ul>
+        </div>
+        <a class="btn btn-primary btn-sm tp-open" href="report.html?f=dfe">Open &#8594;</a>
+      </div>
+      <div class="tp-item" data-feature="trust">
+        <div class="tp-body">
+          <h3>Trust Overview <span class="tp-path">trust.html</span></h3>
+          <p>For trusts: import schools' Excel exports and see every academy together.</p>
+          <ul><li>Import the demo file (or several exports)</li><li>Open a school for its outstanding actions and target dates</li><li>Export the trust Excel file</li></ul>
+        </div>
+        <a class="btn btn-primary btn-sm tp-open" href="trust.html">Open &#8594;</a>
+      </div>
+    </div>
+
+    <h2 id="tp-soon-h">Coming soon</h2>
+    <div class="tp-list" id="tp-soon">
+      <div class="tp-item" data-feature="ce">
+        <div class="tp-body">
+          <h3>Cyber Essentials Tracker <span class="tp-path">ce.html</span></h3>
+          <p>Readiness against the NCSC's Cyber Essentials requirements, with certification and renewal dates.</p>
+          <ul><li>Set statuses, evidence and owners</li><li>Fill in certification details</li><li>Export and import Excel</li></ul>
+        </div>
+        <a class="btn btn-primary btn-sm tp-open" href="ce.html">Open &#8594;</a>
+      </div>
+      <div class="tp-item" data-page="report.html?f=ce" data-feature="ce">
+        <div class="tp-body">
+          <h3>Governors' report: Cyber Essentials <span class="tp-path">report.html?f=ce</span></h3>
+          <p>Print-ready report made from the Cyber Essentials tracker's answers.</p>
+        </div>
+        <a class="btn btn-primary btn-sm tp-open" href="report.html?f=ce">Open &#8594;</a>
+      </div>
+      <div class="tp-item" data-feature="register">
+        <div class="tp-body">
+          <h3>Software Register <span class="tp-path">register.html</span></h3>
+          <p>Software and cloud services, with licensing, support, MFA and data protection checks.</p>
+          <ul><li>Use Quick add, then edit an entry</li><li>Check the dashboard flags</li><li>Export and import Excel</li></ul>
+        </div>
+        <a class="btn btn-primary btn-sm tp-open" href="register.html">Open &#8594;</a>
+      </div>
+      <div class="tp-item" data-feature="hardware">
+        <div class="tp-body">
+          <h3>Hardware and Asset Register <span class="tp-path">hardware.html</span></h3>
+          <p>Devices and network kit, with operating system support, warranty, replacement and disposal.</p>
+          <ul><li>Use Quick add, then edit an asset</li><li>Check items needing attention</li><li>Export and import Excel</li></ul>
+        </div>
+        <a class="btn btn-primary btn-sm tp-open" href="hardware.html">Open &#8594;</a>
+      </div>
+      <div class="tp-item" data-feature="accounts">
+        <div class="tp-body">
+          <h3>User Accounts and Access Privileges Register <span class="tp-path">accounts.html</span></h3>
+          <p>Admin, staff, service and supplier accounts, MFA, leavers and termly access reviews.</p>
+          <ul><li>Add accounts and record a review</li><li>Check the leavers list</li><li>Export and import Excel</li></ul>
+        </div>
+        <a class="btn btn-primary btn-sm tp-open" href="accounts.html">Open &#8594;</a>
+      </div>
+      <div class="tp-item" data-feature="backup">
+        <div class="tp-body">
+          <h3>Backup and Disaster Recovery Register <span class="tp-path">backup.html</span></h3>
+          <p>What is backed up, where and how often, restore tests and the disaster recovery plan.</p>
+          <ul><li>Add backups and log a restore test</li><li>Fill in the DR plan details</li><li>Export and import Excel</li></ul>
+        </div>
+        <a class="btn btn-primary btn-sm tp-open" href="backup.html">Open &#8594;</a>
+      </div>
+      <div class="tp-item" data-feature="incidents">
+        <div class="tp-body">
+          <h3>Cyber Incident and Breach Log <span class="tp-path">incidents.html</span></h3>
+          <p>Incidents, near misses and personal data breaches, with the ICO 72-hour countdown and who to tell.</p>
+          <ul><li>Log an incident with a personal data breach and check the countdown</li><li>Check the "Who to tell" page</li><li>Export (confirm the sensitive-file warning) and import</li></ul>
+        </div>
+        <a class="btn btn-primary btn-sm tp-open" href="incidents.html">Open &#8594;</a>
+      </div>
+    </div>
+  </main>
+
+  <script src="features.js"></script>
+  <script src="test-pages.js"></script>
+</body>
+</html>
