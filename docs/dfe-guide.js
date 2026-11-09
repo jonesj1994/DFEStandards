@@ -21,7 +21,7 @@ const AREA_GUIDE = {
       "How staff and pupils sign in (single sign-on, multi-factor authentication)",
       "How cloud data is backed up"
     ],
-    tip: "The Software register in this toolkit is a good place to list your cloud services first."
+    tip: "List your cloud services first, for example in a software register. It makes the other standards in this area quicker to check."
   },
   "cyber-security": {
     who: "IT support, business manager, headteacher and your DPO.",
@@ -34,7 +34,7 @@ const AREA_GUIDE = {
       "Backup plan and the date of the last restore test",
       "Who you would report a cyber incident to"
     ],
-    tip: "The Cyber Essentials tracker, User accounts register, Backup register and Incident log in this toolkit each give evidence for these standards."
+    tip: "If you are working towards Cyber Essentials, much of the same evidence counts for these standards. Registers of user accounts, backups and cyber incidents also help."
   },
   "digital-accessibility": {
     who: "SENCO, IT support and whoever runs the website and communications.",
@@ -53,7 +53,7 @@ const AREA_GUIDE = {
       "Business continuity and disaster recovery plans that include IT",
       "Digital technology strategy and its last review date"
     ],
-    tip: "The Hardware and Software registers in this toolkit can be your up-to-date registers."
+    tip: "Keep your hardware and software registers somewhere everyone can find them, with the date they were last updated."
   },
   "filtering-monitoring": {
     who: "Designated safeguarding lead (DSL), IT support and the safeguarding governor.",
