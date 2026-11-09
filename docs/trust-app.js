@@ -288,8 +288,8 @@
     if (app.returnSchool && schools.some(x => x.key === app.returnSchool)) {
       app.view = "school"; app.schoolKey = app.returnSchool; app.returnSchool = null; app.viewing = {};
     }
-    const views = { overview: viewOverview, import: viewImport, trust: viewTrust, about: viewAbout, school: viewSchool };
-    const titles = { overview: "Trust overview", import: "Import school files", trust: "Choose trust", about: "About this data", school: "School detail" };
+    const views = { overview: viewOverview, import: viewImport, trust: viewTrust, about: viewAbout, school: viewSchool, central: viewCentral };
+    const titles = { overview: "Trust overview", import: "Import school files", trust: "Choose trust", about: "About this data", school: "School detail", central: "Trust central" };
     document.getElementById("content").innerHTML = (views[app.view] || viewOverview)();
     document.getElementById("topbar-title").textContent = titles[app.view] || "";
     document.title = (titles[app.view] || "Trust overview") + (app.trust ? " – " + app.trust.name : "") + " | Trust Overview";
@@ -812,6 +812,185 @@
   }
 
   // ── About ────────────────────────────────────────────────────────────────
+  // ── Trust central: central team and central answers (trust-central.js) ──
+  let central = window.TrustCentral ? TrustCentral.load() : { people: [], answers: {} };
+  const RATING_LABEL = { "Not Set": "Not set", Red: "Red: not met", Amber: "Amber: partly met", Green: "Green: met" };
+
+  // Schools the central answers apply to: the chosen trust's academies, or
+  // every imported school when no trust is chosen
+  function centralTargets() { return schools.filter(s => !app.trust || s.inTrust); }
+
+  function viewCentral() {
+    if (!window.TrustCentral) return "<p>Not available.</p>";
+    const C = TrustCentral, labels = central.people.map(C.label);
+    const peopleRows = central.people.map(p => `<tr data-cp="${esc(p.id)}">
+        <td><input type="text" class="cp-name" value="${esc(p.name)}" maxlength="100" aria-label="Name" /></td>
+        <td><input type="text" class="cp-role" value="${esc(p.role)}" maxlength="100" aria-label="Role" placeholder="Optional" /></td>
+        <td class="cp-btns"><button type="button" class="btn btn-primary btn-sm cp-save">Save</button> <button type="button" class="btn btn-secondary btn-sm cp-remove">Remove</button></td>
+      </tr>`).join("");
+    const ownerOpts = cur => `<option value="">Not assigned</option>` + labels.map(l => `<option value="${esc(l)}"${l === cur ? " selected" : ""}>${esc(l)}</option>`).join("") +
+      (cur && !labels.includes(cur) ? `<option value="${esc(cur)}" selected>${esc(cur)} (not in central team)</option>` : "");
+    const areas = STANDARDS_DATA.map(cat => {
+      const set = cat.items.filter(i => central.answers[i.id]).length;
+      const items = cat.items.map(i => {
+        const a = central.answers[i.id] || { rating: "Not Set", notes: "", recommendations: "", owner: "", date: "", dateType: "" };
+        const on = !!central.answers[i.id];
+        return `<div class="ca-item${on ? " on" : ""}" data-ca="${esc(i.id)}">
+          <label class="ca-use"><input type="checkbox" class="ca-on"${on ? " checked" : ""} /> <span>${esc(i.title)}</span></label>
+          <div class="ca-fields"${on ? "" : " hidden"}>
+            <div class="ca-grid">
+              <label>Rating<select class="ca-rating">${C.RATINGS.map(r => `<option value="${esc(r)}"${a.rating === r ? " selected" : ""}>${esc(RATING_LABEL[r])}</option>`).join("")}</select></label>
+              <label>Owner<select class="ca-owner">${ownerOpts(a.owner)}</select></label>
+              <label>Date type<select class="ca-datetype"><option value="complete"${a.dateType !== "review" ? " selected" : ""}>Complete by</option><option value="review"${a.dateType === "review" ? " selected" : ""}>Next review</option></select></label>
+              <label>Date<input type="date" class="ca-date" value="${esc(a.date)}" /></label>
+            </div>
+            <label class="ca-wide">Current position (as it applies to every school)<textarea class="ca-notes" rows="2" maxlength="20000">${esc(a.notes)}</textarea></label>
+            <label class="ca-wide">Recommendations<textarea class="ca-recs" rows="2" maxlength="20000">${esc(a.recommendations)}</textarea></label>
+          </div>
+        </div>`;
+      }).join("");
+      return `<details class="ca-area"${set ? " open" : ""}><summary><span>${esc(cat.title)}${cat.isCore ? " ★" : ""}</span><span class="ca-count" data-ca-count="${esc(cat.id)}">${set ? `${set} set` : ""}</span></summary>${items}</details>`;
+    }).join("");
+    const targets = centralTargets();
+    const count = C.answerCount(central);
+    return `<div class="page" style="max-width:1100px">
+      <h2 style="margin-top:0">Trust central</h2>
+      <p class="muted">Set up what is the same across all your schools: the trust's central team, and answers for standards the trust handles centrally (for example a trust-wide filtering service or IT support contract).</p>
+
+      <section class="card central-card" aria-labelledby="ct-title">
+        <h3 id="ct-title">Central team</h3>
+        <p class="small muted">Trust staff who own standards across schools. When you open a school from the trust overview, they are added to its People list and appear under <strong>Trust central team</strong> in every Ownership drop-down.</p>
+        <form id="ct-add" class="ct-add" novalidate>
+          <label>Name<input type="text" id="ct-name" maxlength="100" placeholder="e.g. Sam Lee" autocomplete="off" /></label>
+          <label>Role (optional)<input type="text" id="ct-role" maxlength="100" placeholder="e.g. Trust IT Director" autocomplete="off" /></label>
+          <button type="submit" class="btn btn-primary">+ Add</button>
+        </form>
+        <p class="small" id="ct-msg" role="status" aria-live="polite"></p>
+        ${central.people.length ? `<div class="table-wrap"><table class="summary-table ct-table"><thead><tr><th>Name</th><th>Role</th><th><span class="visually-hidden">Actions</span></th></tr></thead><tbody>${peopleRows}</tbody></table></div>` : `<p class="small muted">No central staff added yet.</p>`}
+      </section>
+
+      <section class="card central-card" aria-labelledby="ca-title">
+        <h3 id="ca-title">Central answers</h3>
+        <p class="small muted">Tick the DfE standards the trust handles centrally and set the answer once. Schools are filled from these <strong>only where they have no answer yet</strong>: a rating that is Not set, or an empty current position, recommendation, owner or date. Nothing a school has entered is ever changed.</p>
+        <p class="small"><strong id="ca-total">${count}</strong> standard${count === 1 ? "" : "s"} set.</p>
+        ${areas}
+      </section>
+
+      <section class="card central-card" aria-labelledby="cap-title">
+        <h3 id="cap-title">Use the central answers</h3>
+        <ul class="small">
+          <li><strong>One school at a time:</strong> open a school with <strong>Edit DfE standards</strong> and select <strong>Fill from trust central answers</strong> in the tracker.</li>
+          <li><strong>All schools at once:</strong> fill every school in the trust overview now. Schools without an assessment get one started, with their details and the central answers.</li>
+        </ul>
+        <button type="button" class="btn btn-primary" id="ca-apply-all"${count && targets.length ? "" : " disabled"}>Apply central answers to all ${plural(targets.length, "school")}</button>
+        ${!targets.length ? `<p class="small muted">Choose a trust or import school files first.</p>` : ""}
+        <p class="small" id="ca-apply-msg" role="status" aria-live="polite"></p>
+      </section>
+    </div>`;
+  }
+
+  function bindCentral(c) {
+    const C = window.TrustCentral;
+    if (!C || !document.getElementById("ct-add")) return;
+    const msg = t => { const m = document.getElementById("ct-msg"); if (m) m.textContent = t; };
+    const persist = () => { if (!C.save(central)) toast("Couldn't save in this browser."); central = C.load(); };
+    document.getElementById("ct-add").addEventListener("submit", e => {
+      e.preventDefault();
+      const name = document.getElementById("ct-name").value, role = document.getElementById("ct-role").value;
+      if (!name.trim()) { msg("Enter a name."); return; }
+      const before = central.people.length;
+      central.people = C.cleanPeople([...central.people, { name, role }]);
+      if (central.people.length === before) { msg("That person is already in the central team."); return; }
+      persist(); render();
+      msg("Added " + C.label(central.people[central.people.length - 1]) + ".");
+      const n = document.getElementById("ct-name"); if (n) n.focus();
+    });
+    c.querySelectorAll("tr[data-cp]").forEach(row => {
+      const person = central.people.find(p => p.id === row.dataset.cp);
+      if (!person) return;
+      row.querySelector(".cp-save").addEventListener("click", () => {
+        const upd = C.cleanPeople([{ id: person.id, name: row.querySelector(".cp-name").value, role: row.querySelector(".cp-role").value }])[0];
+        if (!upd) { msg("Enter a name."); return; }
+        if (central.people.some(p => p !== person && C.label(p).toLowerCase() === C.label(upd).toLowerCase())) { msg("Someone with that name and role is already in the central team."); return; }
+        const oldLabel = C.label(person), newLabel = C.label(upd);
+        person.name = upd.name; person.role = upd.role;
+        Object.values(central.answers).forEach(a => { if (a.owner === oldLabel) a.owner = newLabel; });
+        persist(); render(); msg("Saved " + newLabel + ".");
+      });
+      row.querySelector(".cp-remove").addEventListener("click", () => {
+        const lbl = C.label(person);
+        central.people = central.people.filter(p => p !== person);
+        Object.values(central.answers).forEach(a => { if (a.owner === lbl) a.owner = ""; });
+        persist(); render(); msg("Removed " + lbl + ".");
+      });
+    });
+    // Central answers: save as the user types, without redrawing the page
+    const updateCounts = () => {
+      STANDARDS_DATA.forEach(cat => {
+        const el = c.querySelector(`[data-ca-count="${CSS.escape(cat.id)}"]`);
+        const n = cat.items.filter(i => central.answers[i.id]).length;
+        if (el) el.textContent = n ? `${n} set` : "";
+      });
+      const t = document.getElementById("ca-total"); if (t) t.textContent = String(C.answerCount(central));
+      const btn = document.getElementById("ca-apply-all");
+      if (btn) btn.disabled = !(C.answerCount(central) && centralTargets().length);
+    };
+    c.querySelectorAll(".ca-item").forEach(item => {
+      const id = item.dataset.ca;
+      const read = () => C.cleanAnswer({
+        rating: item.querySelector(".ca-rating").value, owner: item.querySelector(".ca-owner").value,
+        dateType: item.querySelector(".ca-datetype").value, date: item.querySelector(".ca-date").value,
+        notes: item.querySelector(".ca-notes").value, recommendations: item.querySelector(".ca-recs").value
+      });
+      item.querySelector(".ca-on").addEventListener("change", e => {
+        const on = e.target.checked;
+        item.classList.toggle("on", on);
+        item.querySelector(".ca-fields").hidden = !on;
+        if (on) central.answers[id] = read(); else delete central.answers[id];
+        C.save(central); updateCounts();
+      });
+      item.querySelectorAll("select, input:not(.ca-on), textarea").forEach(el => el.addEventListener(el.tagName === "SELECT" || el.type === "date" ? "change" : "input", () => {
+        if (!item.querySelector(".ca-on").checked) return;
+        central.answers[id] = read();
+        C.save(central);
+      }));
+    });
+    const applyBtn = document.getElementById("ca-apply-all");
+    if (applyBtn) applyBtn.addEventListener("click", applyCentralToAll);
+  }
+
+  async function applyCentralToAll() {
+    const C = window.TrustCentral, TL = window.TrustLink;
+    const targets = centralTargets();
+    if (!C || !TL || !targets.length || !C.answerCount(central)) return;
+    const choice = await TL.chooseDialog("Apply central answers to all schools?", [
+      `This fills ${plural(C.answerCount(central), "standard")} from the trust's central answers in ${plural(targets.length, "school")}, only where a school has no answer yet. Nothing a school has entered is changed.`,
+      "Each school that changes gets a new version in the trust overview; its previous version is kept. Schools without an assessment get one started."
+    ], [["Apply to all schools", "apply", "btn-primary"], ["Cancel", "cancel"]]);
+    if (choice !== "apply") return;
+    const btn = document.getElementById("ca-apply-all"); if (btn) btn.disabled = true;
+    let updated = 0, failed = 0;
+    for (const row of targets) {
+      try {
+        const state = TL.stateForRow(row);
+        if (C.applyToState(state, central) > 0) { await TL.saveTrackerState(state, "Trust central answers"); updated++; }
+      } catch (e) { failed++; }
+    }
+    // A school open in the DfE tracker right now gets the same answers there,
+    // so its next save doesn't drop them
+    try {
+      const cur = TL.readTracker(), ses = cur && TL.cleanSession(cur.trustSession);
+      if (ses && targets.some(r => r.key === ses.key) && C.applyToState(cur, central) > 0) localStorage.setItem("dfe_tracker_v1", JSON.stringify(cur));
+    } catch (e) { /* ignore */ }
+    try { app.records = await source.listSnapshots(null); } catch (e) { /* keep */ }
+    refreshSchools();
+    render();
+    const m = document.getElementById("ca-apply-msg");
+    const text = updated ? `Filled ${plural(updated, "school")}.${targets.length - updated - failed ? ` ${plural(targets.length - updated - failed, "school")} already had answers for every central standard.` : ""}` : "Every school already had answers for the central standards, so nothing changed.";
+    if (m) m.textContent = text + (failed ? ` ${plural(failed, "school")} could not be updated.` : "");
+    toast(text);
+  }
+
   function viewAbout() {
     return `<div class="narrow">
       <h2 style="margin-top:0">About this data</h2>
@@ -924,6 +1103,7 @@
       b.disabled = true;
       try { await TrustLink.openInTracker(row); } finally { b.disabled = false; }
     }));
+    bindCentral(c);
     c.querySelectorAll("[data-sort]").forEach(b => b.addEventListener("click", () => {
       const k = b.dataset.sort;
       // Status columns start worst first; text columns A to Z

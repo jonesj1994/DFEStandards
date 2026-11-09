@@ -69,6 +69,8 @@ function cleanPeople(list) {
     let id = typeof p.id === "string" && /^p[a-z0-9]{1,20}$/.test(p.id) ? p.id : newPersonId();
     while (ids.has(id)) id = newPersonId();
     const person = { id, name, role };
+    // Trust central staff (added by the trust overview, trust-central.js)
+    if (p.central === true) person.central = true;
     const key = personLabel(person).toLowerCase();
     if (seen.has(key)) continue;
     seen.add(key);
@@ -219,6 +221,7 @@ function trustBanner() {
   return `<div class="trust-banner" role="status">
     <span class="trust-banner-text">Editing <strong>${escHtml(name)}</strong> for the trust overview. Your changes are copied to the trust overview as you work.</span>
     <span class="trust-banner-btns">
+      ${window.TrustCentral && TrustCentral.answerCount() ? `<button type="button" class="btn btn-secondary btn-sm" id="btn-trust-central" title="Fill standards the trust handles centrally. Only empty answers are filled.">Fill from trust central answers</button>` : ""}
       <button type="button" class="btn btn-primary btn-sm" id="btn-trust-back">&#8592; Back to trust overview</button>
       <button type="button" class="btn btn-secondary btn-sm" id="btn-trust-unlink">Stop linking</button>
     </span>
@@ -660,7 +663,11 @@ function ownerOptions(current) {
   const labels = state.people.map(personLabel);
   const opt = (v, text, sel) => `<option value="${escAttr(v)}"${sel ? " selected" : ""}>${escHtml(text)}</option>`;
   let html = opt("", "Not assigned", !current);
-  html += state.people.map(p => opt(personLabel(p), personLabel(p), personLabel(p) === current)).join("");
+  const central = state.people.filter(p => p.central), local = state.people.filter(p => !p.central);
+  const opts = list => list.map(p => opt(personLabel(p), personLabel(p), personLabel(p) === current)).join("");
+  // Trust central staff are grouped separately from the school's own staff
+  if (central.length) html += `<optgroup label="Trust central team">${opts(central)}</optgroup><optgroup label="School staff">${opts(local)}</optgroup>`;
+  else html += opts(local);
   if (current && !labels.includes(current)) html += opt(current, current + " (not in People list)", true);
   html += opt(ADD_PERSON, "+ Add someone to the People list…", false);
   return html;
@@ -685,7 +692,7 @@ function renderPeople() {
   const rows = state.people.map(p => {
     const n = assignedCount(personLabel(p));
     return `<tr data-person="${escAttr(p.id)}">
-      <td><input type="text" class="person-name" value="${escAttr(p.name)}" maxlength="${MAX_PERSON_TEXT}" aria-label="Name" /></td>
+      <td><input type="text" class="person-name" value="${escAttr(p.name)}" maxlength="${MAX_PERSON_TEXT}" aria-label="Name" />${p.central ? '<span class="central-tag">Trust central team</span>' : ""}</td>
       <td><input type="text" class="person-role" value="${escAttr(p.role)}" maxlength="${MAX_PERSON_TEXT}" aria-label="Role" placeholder="Optional" /></td>
       <td>${n ? `${n} standard${n === 1 ? "" : "s"}` : '<span style="color:#505a5f">None</span>'}</td>
       <td style="white-space:nowrap">
@@ -1059,6 +1066,14 @@ function attachViewEvents() {
       await trustSyncChain;
       if (state.trustSession) TrustLink.setReturnSchool(state.trustSession.key);
       location.href = "trust.html";
+    });
+    const fillCentral = document.getElementById("btn-trust-central");
+    if (fillCentral) fillCentral.addEventListener("click", () => {
+      const n = TrustCentral.applyToState(state);
+      state.people = cleanPeople(state.people);
+      saveStateNow();
+      renderView();
+      showToast(n ? `Filled ${n} answer${n === 1 ? "" : "s"} from the trust's central answers. Nothing already entered was changed.` : "Nothing to fill: those standards already have answers.");
     });
     document.getElementById("btn-trust-unlink").addEventListener("click", () => {
       if (!window.confirm("Stop linking this assessment to the trust overview? It stays in the tracker, and what has already been copied stays in the trust overview, but new changes won't be copied.")) return;

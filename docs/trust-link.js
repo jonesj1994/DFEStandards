@@ -116,22 +116,32 @@
       }
     }
 
-    const rec = row.current && row.current.dfe;
-    let state;
-    if (rec) {
-      state = AM.toTrackerState("dfe", rec.snapshot).state;
-    } else {
-      const s = v => (v == null ? "" : String(v));
-      state = {
-        schoolName: s(row.name), schoolURN: s(row.urn), schoolDfENumber: s(row.dfeNumber), schoolPhase: s(row.phase),
-        schoolType: s(row.type), schoolLA: s(row.la), schoolTrust: s(row.trust), schoolPupils: s(row.pupils)
-      };
-    }
-    state.people = people;
+    const state = stateForRow(row);
+    // The trust's central team joins the school's People list (trust-central.js)
+    state.people = window.TrustCentral ? TrustCentral.mergePeople(people) : people;
     state.trustSession = { key: String(row.key), urn: String(row.urn || ""), name: String(row.name || ""), recordKey: "" };
     try { localStorage.setItem(DFE_KEY, JSON.stringify(state)); } catch (e) { return false; }
     location.href = "dfe.html";
     return true;
+  }
+
+  // A school's DfE tracker state: its newest imported assessment, or a fresh
+  // one with the school's details filled in
+  function stateForRow(row) {
+    const rec = row.current && row.current.dfe;
+    if (rec) return AM.toTrackerState("dfe", rec.snapshot).state;
+    const s = v => (v == null ? "" : String(v));
+    return {
+      schoolName: s(row.name), schoolURN: s(row.urn), schoolDfENumber: s(row.dfeNumber), schoolPhase: s(row.phase),
+      schoolType: s(row.type), schoolLA: s(row.la), schoolTrust: s(row.trust), schoolPupils: s(row.pupils)
+    };
+  }
+
+  // Save a tracker state into the trust store as the school's newest assessment
+  async function saveTrackerState(state, fileName) {
+    const rec = recordFor(AM.fromTrackerState("dfe", state), fileName);
+    await getStore().saveSnapshot(rec);
+    return rec;
   }
 
   // On return from the tracker: the school to show, read once
@@ -163,5 +173,5 @@
     try { sessionStorage.setItem(RETURN_KEY, String(key).slice(0, 300)); } catch (e) { /* ignore */ }
   }
 
-  window.TrustLink = { openInTracker, syncFromTracker, cleanSession, takeReturnSchool, setReturnSchool, chooseDialog };
+  window.TrustLink = { openInTracker, syncFromTracker, cleanSession, takeReturnSchool, setReturnSchool, chooseDialog, stateForRow, saveTrackerState, readTracker };
 })();
