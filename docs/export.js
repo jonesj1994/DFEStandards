@@ -119,6 +119,15 @@ function exportToExcel(state) {
   wb.SheetNames.splice(wb.SheetNames.indexOf("Working towards"), 1);
   wb.SheetNames.splice(1, 0, "Working towards");
 
+  // ── People (the Ownership list) ────────────────────────────────────────
+  const peopleRows = [["Name", "Role", "Standards owned"]];
+  (state.people || []).forEach(p => peopleRows.push([
+    p.name, p.role, STANDARDS_DATA.reduce((n, c) => n + c.items.filter(i => state.ownership[i.id] === personLabel(p)).length, 0)
+  ]));
+  const wsPeople = XLSX.utils.aoa_to_sheet(peopleRows);
+  wsPeople["!cols"] = [{ wch: 28 }, { wch: 28 }, { wch: 16 }];
+  XLSX.utils.book_append_sheet(wb, wsPeople, "People");
+
   // ── Save ───────────────────────────────────────────────────────────────
   const school = state.schoolName ? "_" + state.schoolName.replace(/[^a-zA-Z0-9]/g, "_") : "";
   const date = new Date().toISOString().slice(0, 10);
@@ -186,6 +195,9 @@ function importFromExcel(file, callback) {
       // website (not in the hidden sheet), and everything else for older files.
       const visible = readVisibleSheets(wb);
 
+      // The People sheet (the Ownership list), if the file has one
+      const people = readPeopleSheet(wb);
+
       let imported, notes = [];
       if (hidden && hidden.state) {
         imported = {
@@ -206,6 +218,7 @@ function importFromExcel(file, callback) {
         notes = hidden ? hidden.problems : [];
       }
 
+      imported.people = people;
       callback(imported);
       if (notes.length) showToast("Data imported. Note: " + notes.join("; ") + ".");
     } catch (err) {
@@ -213,6 +226,17 @@ function importFromExcel(file, callback) {
     }
   };
   reader.readAsArrayBuffer(file);
+}
+
+// People sheet: Name and Role columns. Validated by cleanPeople in app.js.
+function readPeopleSheet(wb) {
+  const ws = wb.Sheets["People"];
+  if (!ws) return [];
+  const rows = XLSX.utils.sheet_to_json(ws, { header: 1 }).slice(1, 1 + MAX_PEOPLE);
+  return cleanPeople(rows.map(r => ({
+    name: r[0] == null ? "" : String(r[0]).slice(0, MAX_PERSON_TEXT),
+    role: r[1] == null ? "" : String(r[1]).slice(0, MAX_PERSON_TEXT)
+  })));
 }
 
 // A Cyber Essentials tracker export without the hidden sheet (older files)

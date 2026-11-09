@@ -463,3 +463,17 @@ select.rag-select option[value="Met"]     { background: #eee; }
   .item-header { flex-wrap: wrap; }
   .date-slot { order: 5; flex-basis: 100%; padding-left: 32px; }
 }
+
+/* ── People (owners) ── */
+.person-add { display: grid; grid-template-columns: 1fr 1fr auto; gap: 12px; align-items: end; }
+.person-add .form-field { margin: 0; }
+.person-msg { font-size: 13px; color: #0b0c0c; margin: 10px 0 0; min-height: 1em; }
+.people-table td { vertical-align: middle; }
+.people-table td:first-child { font-weight: 400; }
+.people-table input { width: 100%; padding: 6px 8px; border: 2px solid #b1b4b6; border-radius: 4px; font: inherit; font-size: 13px; }
+.people-table input:focus { outline: none; border-color: var(--dfe-blue); }
+.people-table a { color: var(--dfe-blue); }
+.visually-hidden { position: absolute !important; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+@media (max-width: 768px) {
+  .person-add { grid-template-columns: 1fr; }
+}
