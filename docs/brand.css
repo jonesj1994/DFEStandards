@@ -1,0 +1,85 @@
+/* School Compliance Toolkit brand, applied to every tool page (loaded last).
+   Same palette, font and feel as the home page (home.css). The toolkit's own
+   colours, not GOV.UK's, so it is not mistaken for a government service.
+   RAG colours (--rag-*) are left alone: they carry meaning. */
+:root {
+  --brand-navy: #0b3c5d;
+  --brand-navy-dark: #082c45;
+  --brand-teal: #0f7b72;
+  --brand-teal-dark: #0a5c55;
+  --brand-mint: #e6f4f1;
+  --brand-sky: #e8f3f8;
+  --brand-sun: #ffd65a;
+  --brand-line: #e3e8eb;
+  --ink: #1d2a33;
+  --muted: #4f5d66;
+  /* The shared variables every page's CSS already uses */
+  --dfe-navy: var(--brand-navy);
+  --dfe-blue: var(--brand-teal);
+}
+
+body {
+  font-family: "Segoe UI", system-ui, -apple-system, Roboto, Arial, sans-serif;
+  background: #f6f8f9;
+  color: var(--ink);
+}
+a:focus-visible, button:focus-visible, summary:focus-visible { outline: 3px solid var(--brand-sun); outline-offset: 2px; }
+
+/* ── Sidebar ── */
+#sidebar { background: linear-gradient(180deg, var(--brand-navy) 0%, var(--brand-navy-dark) 100%); }
+.sidebar-logo { padding: 16px 16px 14px; border-bottom: 1px solid rgba(255,255,255,0.12); letter-spacing: 0; }
+.sb-brand { display: flex; align-items: center; gap: 10px; color: #fff; text-decoration: none; font-size: 14px; font-weight: 800; line-height: 1.2; }
+.sb-brand img { flex-shrink: 0; border-radius: 7px; }
+.sb-brand:hover span { text-decoration: underline; }
+.sb-tool { display: block; margin-top: 12px; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.6px; color: #8fd3c9; }
+.sidebar-nav { padding: 10px 8px; }
+.sidebar-nav li a { border-radius: 8px; padding: 9px 12px; margin: 1px 0; }
+.sidebar-nav li a:hover { background: rgba(255,255,255,0.09); }
+.sidebar-nav li a.active { background: rgba(255,255,255,0.14); box-shadow: inset 3px 0 0 #3fc1b0; color: #fff; }
+.sidebar-nav hr { border-color: rgba(255,255,255,0.12) !important; }
+.sb-foot { margin: 0; padding: 12px 16px 16px; font-size: 11px; line-height: 1.45; color: rgba(255,255,255,0.6); border-top: 1px solid rgba(255,255,255,0.1); }
+.sb-foot a { color: rgba(255,255,255,0.85); }
+
+/* ── Top bar: white, like the home page's brand bar ── */
+#topbar { background: #fff; color: var(--ink); border-bottom: 1px solid var(--brand-line); box-shadow: 0 1px 2px rgba(16,42,58,0.04); min-height: 60px; }
+#topbar h1 { color: var(--brand-navy); font-weight: 800; }
+#menu-toggle { color: var(--brand-navy); }
+#save-indicator { color: var(--muted); }
+#save-indicator.saved { color: var(--brand-teal); font-weight: 700; }
+#save-indicator.error { color: #942514; background: #fde8e4; }
+#topbar .btn-secondary { border-color: var(--brand-navy); color: var(--brand-navy); }
+
+/* ── Buttons ── */
+.btn { border-radius: 8px; }
+.btn-primary { background: var(--brand-teal); }
+.btn-primary:hover { background: var(--brand-teal-dark); opacity: 1; }
+.btn-secondary { border-radius: 8px; }
+
+/* ── Cards, items and tables ── */
+.card, .dash-card { border-radius: 12px; border: 1px solid var(--brand-line); box-shadow: 0 1px 3px rgba(16,42,58,0.06); }
+.dash-card:hover { box-shadow: 0 4px 12px rgba(16,42,58,0.12); }
+.card-header { border-bottom-color: var(--brand-line); }
+.card-header h3 { color: var(--brand-navy); }
+.standard-item { border-radius: 10px; border-color: var(--brand-line); background: #fff; }
+.item-header { background: #fafbfc; }
+.item-header:hover { background: #f1f5f7; }
+.summary-table th { background: var(--brand-navy); }
+.summary-table thead tr:first-child th:first-child { border-top-left-radius: 10px; }
+.summary-table thead tr:first-child th:last-child { border-top-right-radius: 10px; }
+.dfe-description { background: #f4f8f9; border-left-color: var(--brand-teal); }
+.rag-key { border-radius: 10px; border-color: var(--brand-line); }
+.guide-tip { background: var(--brand-mint); }
+.area-guide { border-radius: 0 10px 10px 0; }
+.form-field textarea, .form-field input, .form-field select { border-radius: 6px; }
+.progress-bar-wrap { background: #e9eef1; }
+
+/* Headings on content pages */
+#content h2 { color: var(--brand-navy); letter-spacing: -0.2px; }
+
+@media (max-width: 768px) {
+  .sb-foot { display: none; }
+}
+
+/* Plain text links (not buttons or cards) in the brand teal */
+#content a:not([class]), .tp-note a { color: var(--brand-teal); }
+#content a:not([class]):hover { color: var(--brand-teal-dark); }
