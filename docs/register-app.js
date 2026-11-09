@@ -416,6 +416,11 @@
       <p><a href="#" data-view="list">&#8592; Back to the software list</a></p>
       <h2 id="edit-title">${esc(displayName(e))}</h2>
       <p class="reg-muted">Changes save automatically. Fields marked <span class="reg-basis req">Required by a standard</span> support a DfE standard, Cyber Essentials or data protection law; the others are good practice. Fields that don't apply are hidden.</p>
+      <div class="card card-body reg-prefill" id="prefill-box"${canFillDetails(e) ? "" : " hidden"}>
+        <p style="margin:0 0 8px"><strong id="prefill-name">${esc(e.name)}</strong> is in the Quick add list, which has typical details for it: what it's used for, the data it holds, who uses it and the personal data answers.</p>
+        <button type="button" class="btn btn-primary btn-sm" id="btn-prefill">Fill in typical details</button>
+        <span class="reg-muted" style="margin-left:8px">Only empty fields are filled in. Check them afterwards.</span>
+      </div>
       <div id="rag-panel" class="card card-body reg-rag-panel" aria-live="polite"></div>
       ${groups}
       <div class="reg-actions">
@@ -492,7 +497,7 @@
     }).join("");
     return `<div class="reg-page">
       <h2>Quick add</h2>
-      <p>Open a heading, tick the software your school uses, then select <strong>Add selected</strong>. Each is added with its name, vendor and category (and type where it's obvious): fill in the versions, dates and other details from your own records and suppliers. Listing a product here is not a recommendation.</p>
+      <p>Open a heading, tick the software your school uses, then select <strong>Add selected</strong>. Each is added with its name, vendor and category, plus typical details: what it's used for, the data it usually holds, who uses it and the personal data answers. Check those against how your school uses it, then fill in the versions, dates and other details from your own records and suppliers. Listing a product here is not a recommendation.</p>
       <div class="card card-body">
         <div class="qa-search form-field">
           <label for="qa-search">Search the list</label>
@@ -514,13 +519,42 @@
     </div>`;
   }
 
+  // Fill in the typical details for a Quick add product (what it's used for,
+  // data it holds, who uses it, personal data answers). Only empty fields are
+  // filled, so nothing the school has entered is changed. Returns how many
+  // fields were filled.
+  function applyDetails(e) {
+    const d = RM.starterDetails(e.name);
+    if (!d) return 0;
+    const clean = RM.sanitiseEntry(d);
+    let n = 0;
+    Object.keys(d).forEach(k => {
+      const empty = Array.isArray(e[k]) ? !e[k].length : !String(e[k] || "").trim();
+      const v = clean[k];
+      if (empty && (Array.isArray(v) ? v.length : v)) { e[k] = v; n++; }
+    });
+    if (n && !String(e.notes || "").includes(RM.PREFILL_NOTE)) {
+      e.notes = (String(e.notes || "").trim() ? e.notes.trim() + "\n\n" : "") + RM.PREFILL_NOTE;
+    }
+    return n;
+  }
+
+  // Can this entry be filled in from the Quick add list? (some fields empty)
+  function canFillDetails(e) {
+    const d = RM.starterDetails(e.name);
+    if (!d) return false;
+    return Object.keys(d).some(k => Array.isArray(e[k]) ? !e[k].length : !String(e[k] || "").trim());
+  }
+
   function addStarters(indexes) {
     const have = existingNames();
     let added = 0;
     indexes.forEach(i => {
       const s = RM.STARTERS[i];
       if (!s || have.has(s.name.toLowerCase()) || reg.items.length >= RM.MAX_ITEMS) return;
-      reg.items.push(RM.sanitiseEntry({ name: s.name, vendor: s.vendor, category: s.category, type: s.type, status: "In use" }));
+      const entry = RM.sanitiseEntry({ name: s.name, vendor: s.vendor, category: s.category, type: s.type, status: "In use" });
+      applyDetails(entry);
+      reg.items.push(entry);
       have.add(s.name.toLowerCase());
       added++;
     });
@@ -676,6 +710,18 @@
 
     if (view === "edit") {
       const e = findItem(editId);
+      // Typical details from the Quick add list (shown when the name matches)
+      const prefillBox = $("prefill-box");
+      const updatePrefill = () => {
+        prefillBox.hidden = !canFillDetails(e);
+        $("prefill-name").textContent = e.name;
+      };
+      $("btn-prefill").addEventListener("click", () => {
+        const n = applyDetails(e);
+        saveNow();
+        render();
+        toast(n ? `Filled in ${n} field${n === 1 ? "" : "s"}. Check them against how your school uses ${e.name}.` : "Nothing to fill in: those fields already have answers.");
+      });
       bindRowActions(c.querySelector(".reg-actions:last-child"));
       c.querySelectorAll("[data-key]").forEach(el => {
         const handler = () => {
@@ -689,6 +735,7 @@
           if (RM.FIELD_BY_KEY[key].type === "url") $("preview-" + key).innerHTML = linkPreview(e[key]);
           updateVisibility(e);
           updateRagPanel(e);
+          updatePrefill();
           save();
         };
         el.addEventListener(el.tagName === "SELECT" || el.type === "checkbox" || el.type === "date" ? "change" : "input", handler);

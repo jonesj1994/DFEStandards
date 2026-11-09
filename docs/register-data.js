@@ -157,6 +157,8 @@
           help: "Who makes it, and who you buy it from if different (for example a reseller)." },
         { key: "product", label: "Product, edition or version", type: "text", basis: "good", refs: ["ce-sum-1"],
           help: "Edition or version where it matters for support, e.g. \"Windows 11 Education 24H2\"." },
+        { key: "purpose", label: "What it's used for", type: "textarea", basis: "good", refs: ["dfe-registers"],
+          help: "A sentence or two on what the software does at your school, so anyone reading the register understands it." },
         { key: "category", label: "Category", type: "select", options: CATEGORIES, basis: "good", refs: ["dfe-registers"],
           help: "What it is for. Used to filter and total the register." },
         { key: "type", label: "Type", type: "select", options: TYPES, basis: "required", refs: ["ce-scope-3", "dfe-cloud-dp"],
@@ -234,6 +236,8 @@
       id: "data", title: "Data protection",
       intro: "Work through these with your data protection officer (DPO).",
       fields: [
+        { key: "dataHeld", label: "Data it holds", type: "textarea", basis: "good", refs: ["dp-edtech", "dp-records"],
+          help: "The kinds of information in it, and whose: e.g. pupil names, classes, assessment results, staff log-ins. This helps with your DPIA and information asset register." },
         { key: "personalData", label: "Holds or processes personal data?", type: "select", options: YES_NO, basis: "required", refs: ["dfe-cloud-dp", "dp-policies"],
           help: "Names, email addresses, photos, assessment data and log-ins all count." },
         { key: "childrenData", label: "Includes children's data?", type: "select", options: YES_NO, basis: "required", refs: ["dp-policies", "dp-edtech"],
@@ -497,6 +501,163 @@
     STARTERS.push({ name, vendor, category, type, section: sec.id, sectionTitle: sec.title, group: g.title });
   })));
 
+  // ── Typical details for Quick add ────────────────────────────────────────
+  // What each kind of software usually does and holds, by section and
+  // sub-group ("section/Group title"), with product-specific wording where
+  // it helps. Quick add fills these in as a starting point, with a note
+  // asking the school to check them. Answers that depend on the school (DPIA,
+  // data processing agreement, where data is stored...) are never filled in.
+  //   purpose, dataHeld: text; users: Who uses it; personal, children,
+  //   special: "Yes" or "" (left for the school to answer)
+  const ALL = ["Staff", "Pupils"];
+  const STARTER_PROFILES = {
+    "safeguarding/Online monitoring": {
+      purpose: "Monitors activity on school devices and accounts, and alerts safeguarding staff to words, searches or images that suggest a pupil may be at risk.",
+      dataHeld: "User names and devices; text, searches and screenshots captured when an alert is triggered; alert history and how staff responded. Captures can reveal health, sexuality, self-harm or other sensitive information.",
+      users: ["Staff"], personal: "Yes", children: "Yes", special: "Yes" },
+    "safeguarding/Web filtering": {
+      purpose: "Blocks harmful and inappropriate websites on the school network and devices, and logs web activity.",
+      dataHeld: "Web activity logs linked to users or devices (sites visited, blocked attempts and times), user names and groups.",
+      users: ALL, personal: "Yes", children: "Yes", special: "" },
+    "safeguarding/Safeguarding records": {
+      purpose: "Records safeguarding, behaviour and wellbeing concerns about pupils, with the actions taken and outcomes, for the designated safeguarding lead and team.",
+      dataHeld: "Pupil names and details, concerns and incidents, actions taken, notes about families and contact with other agencies, staff accounts. Usually includes special category data such as health and SEND.",
+      users: ["Staff"], personal: "Yes", children: "Yes", special: "Yes" },
+    "mis/Management information systems": {
+      purpose: "The school's main database: pupil and staff records, admissions, attendance, behaviour, assessment, timetables and parent contacts. Used for statutory returns such as the school census.",
+      dataHeld: "Pupil, parent and staff personal details and contacts; attendance, behaviour, exclusions and assessment; SEND, medical, ethnicity, religion and free school meals.",
+      users: ["Staff"], personal: "Yes", children: "Yes", special: "Yes" },
+    "mis/Data sharing with other apps": {
+      purpose: "Takes data from your MIS and shares it with the other apps you approve, such as learning platforms and parent apps, so they stay up to date.",
+      dataHeld: "Copies of pupil, staff and parent records from the MIS: names, classes and contact details, plus any other fields you allow each app to see.",
+      users: ["IT support only"], personal: "Yes", children: "Yes", special: "" },
+    "mis/Assessment and tracking": {
+      purpose: "Records and analyses pupils' assessment results and progress.",
+      dataHeld: "Pupil names, classes and assessment results; often characteristics such as SEND, gender and disadvantage for analysis.",
+      users: ["Staff"], personal: "Yes", children: "Yes", special: "" },
+    "productivity/": {
+      purpose: "Email, documents, file storage, calendars and video calls for staff (and pupils, if they have accounts).",
+      dataHeld: "Staff and pupil accounts; emails, documents and files, which can contain any kind of school data, including special category data.",
+      users: ALL, personal: "Yes", children: "Yes", special: "Yes" },
+    "parents/": {
+      purpose: "Sends messages to parents and carers, and/or takes payments for meals, trips and clubs.",
+      dataHeld: "Parent and pupil names, contact details and classes; messages sent; payment and dinner-money records.",
+      users: ["Staff", "Parents and carers"], personal: "Yes", children: "Yes", special: "" },
+    "learning/": {
+      purpose: "Online platform for setting, completing and marking work, and sharing learning.",
+      dataHeld: "Pupil and staff accounts and classes; set work, submitted work and feedback; may include photos and videos.",
+      users: ALL, personal: "Yes", children: "Yes", special: "" },
+    "curriculum/": {
+      purpose: "Online learning app that pupils use for practice in class and at home.",
+      dataHeld: "Pupil accounts (name, class or year group), activity, progress and scores; staff accounts.",
+      users: ALL, personal: "Yes", children: "Yes", special: "" },
+    "send/": {
+      purpose: "Supports pupils with special educational needs or disabilities.",
+      dataHeld: "User accounts and the work or documents created.",
+      users: ALL, personal: "Yes", children: "Yes", special: "" },
+    "office/Finance and HR": {
+      purpose: "Budgets, accounts, purchasing and, for some packages, payroll and HR.",
+      dataHeld: "Supplier and staff details, invoices and payments. Payroll and HR packages also hold staff bank details, salaries, tax, National Insurance and absence records.",
+      users: ["Staff"], personal: "Yes", children: "", special: "" },
+    "office/Visitors and trips": {
+      purpose: "Signs visitors, staff and pupils in and out, and records who is on site.",
+      dataHeld: "Names, photos and times on site, and sometimes car registrations and DBS details for visitors; staff and pupil sign-ins.",
+      users: ["Staff"], personal: "Yes", children: "Yes", special: "" },
+    "security/Anti-malware": {
+      purpose: "Protects devices from viruses and other malware, and reports threats to IT support.",
+      dataHeld: "Device names, user names and logs of threats found.",
+      users: ["IT support only"], personal: "Yes", children: "", special: "" },
+    "security/Firewalls": {
+      purpose: "Controls traffic between the school network and the internet, blocking threats and unwanted connections.",
+      dataHeld: "Network logs (IP addresses, devices and sites visited), which can be linked to users.",
+      users: ["IT support only"], personal: "Yes", children: "", special: "" },
+    "security/Backup": {
+      purpose: "Keeps copies of school systems and data so they can be restored after loss, failure or a cyber attack.",
+      dataHeld: "Copies of whatever it backs up, which can include all school data, including special category data.",
+      users: ["IT support only"], personal: "Yes", children: "Yes", special: "Yes" },
+    "devices/Device management": {
+      purpose: "Sets up, secures and updates school devices and apps centrally.",
+      dataHeld: "Device details and serial numbers, the users assigned to them and installed apps; some settings can show location.",
+      users: ["IT support only"], personal: "Yes", children: "Yes", special: "" },
+    "devices/Classroom management": {
+      purpose: "Lets teachers see and control pupils' screens during lessons.",
+      dataHeld: "Pupil and device names; may capture screenshots of pupils' screens.",
+      users: ["Staff"], personal: "Yes", children: "Yes", special: "" },
+    "os/Operating systems": {
+      purpose: "Operating system on school devices.",
+      dataHeld: "User accounts on the device, and usage and diagnostic data sent to the supplier, depending on settings.",
+      users: ALL, personal: "", children: "", special: "" },
+    "os/Browsers": {
+      purpose: "Web browser.",
+      dataHeld: "Browsing history, saved passwords and form data on the device, or synced to the user's account if sign-in is on.",
+      users: ALL, personal: "", children: "", special: "" }
+  };
+
+  // Product wording that replaces or adds to the profile for its group
+  const STARTER_OVERRIDES = {
+    "Microsoft Teams": { purpose: "Chat, video calls, meetings and team sites for staff (and classes, if pupils have accounts)." },
+    "Adobe Creative Cloud": { purpose: "Creative software for design, photo and video work.", dataHeld: "User accounts (names and email addresses) and any files saved to the cloud.", special: "" },
+    "Canva for Education": { purpose: "Online design tool for posters, presentations and classroom work.", dataHeld: "User accounts and designs, which may include photos of pupils.", special: "" },
+    "ClassDojo": { purpose: "Classroom app for sharing behaviour points, photos and messages between teachers and parents.", dataHeld: "Pupil names, behaviour points, photos and work shared with parents; parent and staff accounts and messages.", users: ["Staff", "Pupils", "Parents and carers"] },
+    "ParentPay": { purpose: "Takes online payments from parents for meals, trips and clubs, and records dinner money." },
+    "sQuid": { purpose: "Takes online payments from parents for meals, trips and clubs, and records dinner money." },
+    "Seesaw": { users: ["Staff", "Pupils", "Parents and carers"] },
+    "Tapestry": { purpose: "Early years learning journal: staff record observations, photos and videos of children's learning and share them with parents.", dataHeld: "Children's names, observations and EYFS assessments, photos and videos; parent and staff accounts.", users: ["Staff", "Parents and carers"] },
+    "Evidence Me": { purpose: "Early years and primary learning journal: staff record observations, photos and videos of children's learning.", dataHeld: "Children's names, observations and assessments, photos and videos; staff (and parent, if used) accounts.", users: ["Staff", "Parents and carers"] },
+    "Google Classroom": { purpose: "Sets, collects and marks work for classes, linked to Google Workspace accounts." },
+    "Satchel One": { purpose: "Homework and classroom platform: set and collect homework, and share it with parents." },
+    "Times Tables Rock Stars": { purpose: "Times tables practice for pupils." },
+    "Numbots": { purpose: "Number fluency practice for younger pupils." },
+    "Sparx Maths": { purpose: "Maths homework and practice that adapts to each pupil." },
+    "MyMaths": { purpose: "Online maths lessons and homework." },
+    "Mathletics": { purpose: "Maths practice and activities." },
+    "DoodleMaths": { purpose: "Maths practice that adapts to each pupil." },
+    "Accelerated Reader": { purpose: "Reading practice and quizzes that track pupils' reading." },
+    "Bug Club": { purpose: "Online reading books and phonics." },
+    "Lexia": { purpose: "Reading and literacy practice that adapts to each pupil." },
+    "Spelling Shed": { purpose: "Spelling practice and games." },
+    "Purple Mash": { purpose: "Cross-curricular activities and creative tools, including computing." },
+    "Kerboodle": { purpose: "Online textbooks and resources for secondary subjects." },
+    "Seneca": { purpose: "Revision and homework courses." },
+    "CENTURY": { purpose: "Learning platform with practice that adapts to each pupil across subjects." },
+    "Kahoot!": { purpose: "Quiz games for the classroom.", dataHeld: "Staff accounts and quizzes; pupils' nicknames and answers during games (pupils may join without an account)." },
+    "Scratch": { purpose: "Block-based coding for pupils.", dataHeld: "Projects, and pupil accounts if they are used (Scratch can be used without one).", personal: "" },
+    "Unifrog": { purpose: "Careers and further education guidance platform for pupils.", dataHeld: "Pupil accounts and classes, interests, activities, applications, references and destinations; staff accounts." },
+    "Provision Map": { purpose: "Plans and records SEND provision, support plans and interventions, and their impact.", dataHeld: "Pupil names, SEND needs, support plans, interventions and reviews, which are special category data; staff accounts.", users: ["Staff"], special: "Yes" },
+    "Read&Write": { purpose: "Literacy support toolbar: text to speech, word prediction, dictionaries and highlighting.", dataHeld: "User accounts, and limited usage data.", children: "Yes" },
+    "Clicker": { purpose: "Writing support for pupils: word banks, speech and pictures.", dataHeld: "Usually little personal data: user details and saved work, if used.", personal: "", children: "" },
+    "Widgit Online": { purpose: "Creates symbol-supported resources for communication and learning.", dataHeld: "Staff accounts and the documents they create.", users: ["Staff"], children: "" },
+    "InVentry": {}, "Sign In App": {},
+    "EVOLVE": { purpose: "Plans and approves educational visits and trips, including risk assessments.", dataHeld: "Trip details and risk assessments; staff and pupil participant lists, which may include medical and emergency contact details.", special: "Yes" },
+    "Apple School Manager": { purpose: "Apple's service for enrolling school devices, creating Managed Apple Accounts and buying apps." },
+    "Google Admin console": { purpose: "Manages Google Workspace accounts and settings, and Chromebooks enrolled in the school." },
+    "Windows 10": { purpose: "Operating system on school devices. Microsoft's free security updates for Windows 10 ended on 14 October 2025: plan upgrades to Windows 11, or record any Extended Security Updates you pay for.", supportEnd: "2025-10-14" },
+    "Windows Server": { purpose: "Server operating system for on-site servers, for example files, printing and user accounts.", users: ["IT support only"] },
+    "Wonde": {}, "Groupcall Xporter": {}
+  };
+
+  const PREFILL_NOTE = "Pre-filled by Quick add: \"What it's used for\", \"Data it holds\", who uses it and the personal data answers are typical for this kind of software. Check them against how your school uses it, with your data protection officer.";
+
+  // Typical details for a Quick add product (matched by name), or null
+  function starterDetails(name) {
+    const n = String(name || "").trim().toLowerCase();
+    const s = STARTERS.find(x => x.name.toLowerCase() === n);
+    if (!s) return null;
+    const base = STARTER_PROFILES[s.section + "/" + s.group] || STARTER_PROFILES[s.section + "/"] || null;
+    const over = hasOwnProp(STARTER_OVERRIDES, s.name) ? STARTER_OVERRIDES[s.name] : {};
+    if (!base) return null;
+    const p = Object.assign({}, base, over);
+    const out = { purpose: p.purpose || "", dataHeld: p.dataHeld || "", userGroups: (p.users || []).slice() };
+    if (p.personal === "Yes") {
+      out.personalData = "Yes";
+      if (p.children === "Yes") out.childrenData = "Yes";
+      if (p.special === "Yes") out.specialCategory = "Yes";
+    }
+    if (p.supportEnd) out.supportEnd = p.supportEnd;
+    return out;
+  }
+  function hasOwnProp(o, k) { return Object.prototype.hasOwnProperty.call(o, k); }
+
   // ── Helpers ───────────────────────────────────────────────────────────────
   const hasOwn = (o, k) => !!o && typeof o === "object" && Object.prototype.hasOwnProperty.call(o, k);
   function limitText(v) {
@@ -738,7 +899,7 @@
 
   window.RegisterModel = {
     STATE_KEY, SCHEMA_VERSION, MAX_ITEMS, THRESHOLDS, SOURCES, GROUPS, FIELDS, FIELD_BY_KEY, RULES,
-    CATEGORIES, TYPES, CLOUD_TYPES, STATUSES, STARTERS, STARTER_SECTIONS, SUPPORTED_ROLLING,
+    CATEGORIES, TYPES, CLOUD_TYPES, STATUSES, STARTERS, STARTER_SECTIONS, starterDetails, PREFILL_NOTE, SUPPORTED_ROLLING,
     isCloud, onDevice, blankEntry, sanitiseEntry, sanitiseState, emptyState, loadState,
     evaluate, summarise, validDate, isoToday, addDays, addMonths, formatDate, newId
   };
