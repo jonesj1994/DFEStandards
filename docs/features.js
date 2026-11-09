@@ -37,6 +37,20 @@
     });
   }
 
+  // Home page: put each card under "Available now" or "Coming soon", in a
+  // fixed order, and hide "Coming soon" once everything is released
+  const CARD_ORDER = ["dfe", "trust", "ce", "register", "hardware", "accounts", "backup", "incidents"];
+  function placeCards() {
+    const live = document.getElementById("tools-live"), soon = document.getElementById("tools-soon");
+    if (!live || !soon) return;
+    CARD_ORDER.forEach(id => {
+      const card = document.querySelector(`.tracker-card[data-feature="${id}"]`);
+      if (card) (isLive(id) ? live : soon).appendChild(card);
+    });
+    const wrap = document.getElementById("tools-soon-wrap");
+    if (wrap) wrap.hidden = !soon.querySelector(".tracker-card");
+  }
+
   // A coming-soon page opened directly: label it as a preview
   function markPreview() {
     const page = (location.pathname.split("/").pop() || "index.html").toLowerCase();
@@ -56,7 +70,7 @@
 
   // Run now (this script is loaded at the end of the page, after the cards)
   // and again once the page has loaded, in case it was loaded earlier
-  function run() { markCards(); markPreview(); }
+  function run() { markCards(); placeCards(); markPreview(); }
   run();
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", run);
 })();
