@@ -41,6 +41,10 @@ function defaultState() {
     // (complete by until the standard is Green, then next review).
     targetDates,
     dateTypes,
+    // Evidence checklist ticks per standard: { id: ["e1", "e3"] } (ids from
+    // dfe-howto.js), and which ratings the checklist set: { id: "evidence" }
+    evidenceChecks: {},
+    ratingSource: {},
     // People who can own standards, managed on the People page:
     // [{ id, name, role }]. A standard's ownership is saved as the person's
     // label (see personLabel), so exports and reports need no lookup.
@@ -174,6 +178,16 @@ function loadState() {
     ["notes", "recommendations", "ownership"].forEach(f => pick(f, v => typeof v === "string"));
     pick("targetDates", v => typeof v === "string" && AssessmentModel.validDate(v) === v);
     pick("dateTypes", v => typeof v === "string" && AssessmentModel.validDateType(v) === v);
+    // Evidence ticks: only this standard's current checklist ids
+    const savedEv = saved.evidenceChecks && typeof saved.evidenceChecks === "object" ? saved.evidenceChecks : {};
+    const savedRs = saved.ratingSource && typeof saved.ratingSource === "object" ? saved.ratingSource : {};
+    Object.keys(def.ratings).forEach(id => {
+      if (Object.prototype.hasOwnProperty.call(savedEv, id)) {
+        const ev = AssessmentModel.validEvidence(id, savedEv[id]);
+        if (ev.length) out.evidenceChecks[id] = ev;
+      }
+      if (Object.prototype.hasOwnProperty.call(savedRs, id) && savedRs[id] === "evidence") out.ratingSource[id] = "evidence";
+    });
     out.people = cleanPeople(saved.people);
     // Opened from the trust overview (trust-link.js): changes are copied back
     const session = window.TrustLink ? TrustLink.cleanSession(saved.trustSession) : null;
@@ -937,11 +951,19 @@ function renderCategory(catId) {
         <span class="item-number">${idx + 1}.</span>
         <span class="item-title">${escHtml(item.title)}</span>
         <span class="date-slot">${dateBadge(item.id)}</span>
+        <span class="ev-slot">${evidenceBadge(item.id)}</span>
         <span class="rag-pill ${ragClass(rag)}">${escHtml(rag)}</span>
         <span class="chevron">&#9660;</span>
       </div>
       <div class="item-body" id="body-${item.id}">
-        <div class="dfe-description"><strong>DfE guidance:</strong> ${escHtml(item.description)}</div>
+        <div class="guide-col">
+          ${howto(item.id) ? `<div class="gtabs" role="tablist" aria-label="Guidance for this standard">
+            <button type="button" role="tab" class="gtab" id="gt-how-${item.id}" aria-selected="true" aria-controls="gp-how-${item.id}" data-gtab="how" data-for="${item.id}">How to meet it</button>
+            <button type="button" role="tab" class="gtab" id="gt-dfe-${item.id}" aria-selected="false" aria-controls="gp-dfe-${item.id}" tabindex="-1" data-gtab="dfe" data-for="${item.id}">DfE guidance</button>
+          </div>
+          <div class="howto" id="gp-how-${item.id}" role="tabpanel" aria-labelledby="gt-how-${item.id}" data-gpanel="how" data-for="${item.id}">${howtoPanel(item.id)}</div>` : ""}
+          <div class="dfe-description" ${howto(item.id) ? `id="gp-dfe-${item.id}" role="tabpanel" aria-labelledby="gt-dfe-${item.id}" data-gpanel="dfe" data-for="${item.id}" hidden` : ""}><strong>DfE guidance:</strong> ${escHtml(item.description)}</div>
+        </div>
         <div class="form-grid item-form">
           <div class="form-field full-width">
             <label>Current Status &amp; Notes</label>
@@ -969,6 +991,7 @@ function renderCategory(catId) {
             <label for="td-${item.id}">Date</label>
             <input type="date" id="td-${item.id}" data-field="targetDates" data-id="${item.id}" value="${escAttr(state.targetDates[item.id] || "")}" />
           </div>
+          <div class="ev-wrap full-width" data-ev="${item.id}">${checklistBlock(item.id)}</div>
           <p class="date-help full-width">Use <strong>Complete by</strong> for when you aim to meet this standard. Once it is Green, switch to <strong>Next review</strong> and set when it should next be checked.</p>
         </div>
       </div>
@@ -1259,6 +1282,11 @@ function attachViewEvents() {
       }
       else if (field === "dateTypes") state[field][id] = AssessmentModel.validDateType(el.value);
       else state[field][id] = el.value;
+      // A rating chosen by hand: the evidence checklist stops changing it
+      if (field === "ratings") {
+        delete state.ratingSource[id];
+        refreshChecklist(id);
+      }
       saveState();
 
       // Update the date badge live (a rating change can change the date type)
@@ -1308,7 +1336,9 @@ document.getElementById("file-input").addEventListener("change", e => {
   importFromExcel(file, imported => {
     // People from the file are added to this tracker's list (nobody is removed)
     const people = cleanPeople([...state.people, ...(imported.people || [])]);
-    state = { ...state, ...imported, people };
+    // Evidence ticks come only from the file (older files have none), so a
+    // previous school's ticks never carry over
+    state = { ...state, ...imported, people, evidenceChecks: imported.evidenceChecks || {}, ratingSource: imported.ratingSource || {} };
     saveState();
     renderView();
     showToast("Data imported successfully.");
@@ -1349,6 +1379,136 @@ function bindOwners(box) {
   }));
 }
 
+// ── How to meet it and the evidence checklist (dfe-howto.js) ───────────────
+const howto = id => (typeof HOWTO !== "undefined" && Object.prototype.hasOwnProperty.call(HOWTO, id) ? HOWTO[id] : null);
+// The guide uses *text* for emphasis; everything else is escaped
+const guideText = t => escHtml(t).replace(/\*([^*]+)\*/g, "<em>$1</em>");
+
+function howtoPanel(id) {
+  const h = howto(id);
+  return `<p class="ht-plain">${guideText(h.plain)}</p>
+    <p class="ht-when"><span class="ht-tag">When</span> ${guideText(h.when)}</p>
+    <h4 class="ht-h">Examples of how schools meet it</h4>
+    <div class="ht-examples">${h.examples.map(e => `<div class="ht-ex">${e.label ? `<span class="ht-ex-label">${escHtml(e.label)}</span>` : ""}${guideText(e.text)}</div>`).join("")}</div>
+    <div class="ht-two">
+      <div><h4 class="ht-h">Who can help</h4><p>${guideText(h.who)}</p></div>
+      <div class="ht-watch"><h4 class="ht-h">Watch out for</h4><p>${guideText(h.watch)}</p></div>
+    </div>
+    <details class="ht-asks"><summary>What GOV.UK asks for (summary)</summary><ul>${h.asks.map(a => `<li>${guideText(a)}</li>`).join("")}</ul></details>
+    <p class="ht-note">Practical advice, not DfE wording. The official text is on the <strong>DfE guidance</strong> tab.</p>`;
+}
+
+function evTicks(id) { return Array.isArray(state.evidenceChecks[id]) ? state.evidenceChecks[id] : []; }
+
+// The rating the checklist gives: all ticked = Green, some = Amber, none = no view
+function evidenceRating(id) {
+  const st = AssessmentModel.evidenceStatus(id, evTicks(id));
+  if (!st || !st.done) return null;
+  return st.done === st.total ? "Green" : "Amber";
+}
+
+function evidenceBadge(id) {
+  const st = AssessmentModel.evidenceStatus(id, evTicks(id));
+  if (!st || !st.done) return "";
+  return `<span class="ev-badge${st.done === st.total ? " done" : ""}" title="Evidence checklist">Evidence ${st.done}/${st.total}</span>`;
+}
+
+function checklistBlock(id) {
+  const h = howto(id);
+  if (!h || !h.evidence.length) return "";
+  const ticks = evTicks(id), st = AssessmentModel.evidenceStatus(id, ticks);
+  const auto = state.ratingSource[id] === "evidence", suggested = evidenceRating(id), rating = state.ratings[id] || "Not Set";
+  let note = "";
+  if (auto) note = `<p class="ev-note auto">The rating is set from this checklist: all ticked is Green, some ticked is Amber. Change the rating above to choose it yourself.</p>`;
+  else if (suggested && suggested !== rating) note = `<p class="ev-note">The checklist suggests <strong>${suggested}</strong>. <button type="button" class="link-btn" data-ev-use="${escAttr(id)}">Let the checklist set the rating</button></p>`;
+  return `<div class="ev-list">
+    <div class="ev-head"><strong>Evidence checklist</strong><span class="ev-count">${st.done} of ${st.total} in place</span></div>
+    ${h.evidence.map(e => `<label class="ev-item"><input type="checkbox" data-ev-id="${escAttr(e.id)}"${ticks.includes(e.id) ? " checked" : ""} /> <span>${guideText(e.text)}</span></label>`).join("")}
+    ${note}
+  </div>`;
+}
+
+function refreshChecklist(id) {
+  const box = document.querySelector(`.ev-wrap[data-ev="${CSS.escape(id)}"]`);
+  if (box) box.innerHTML = checklistBlock(id);
+  const slot = document.querySelector(`[data-item="${CSS.escape(id)}"] .ev-slot`);
+  if (slot) slot.innerHTML = evidenceBadge(id);
+}
+
+// Show a rating set by the checklist everywhere it appears
+function showRating(id) {
+  const r = state.ratings[id];
+  const sel = document.querySelector(`select[data-field="ratings"][data-id="${CSS.escape(id)}"]`);
+  if (sel) sel.value = r;
+  const pill = document.querySelector(`[data-item="${CSS.escape(id)}"] .rag-pill`);
+  if (pill) { pill.className = `rag-pill ${ragClass(r)}`; pill.textContent = r; }
+  const slot = document.querySelector(`[data-item="${CSS.escape(id)}"] .date-slot`);
+  if (slot) slot.innerHTML = dateBadge(id);
+  const dt = document.getElementById("dt-" + id);
+  if (dt && !state.dateTypes[id]) dt.value = AssessmentModel.effectiveDateType("", r);
+  buildSidebarNav();
+}
+
+// Ticking evidence sets the rating when the checklist is in charge of it:
+// either it set the rating before, or the standard hasn't been rated yet. A
+// rating the school chose stays until they let the checklist set it again.
+function applyEvidenceRating(id, force) {
+  const sug = evidenceRating(id), cur = state.ratings[id] || "Not Set";
+  const inCharge = force || state.ratingSource[id] === "evidence" || cur === "Not Set";
+  if (!inCharge) return false;
+  const next = sug || (state.ratingSource[id] === "evidence" ? "Not Set" : cur);
+  if (sug) state.ratingSource[id] = "evidence"; else delete state.ratingSource[id];
+  if (next === cur) return false;
+  state.ratings[id] = next;
+  showRating(id);
+  return true;
+}
+
+function bindChecklists(root) {
+  root.addEventListener("change", e => {
+    const box = e.target.closest(".ev-wrap[data-ev]");
+    if (!box || !e.target.matches("input[data-ev-id]")) return;
+    const id = box.dataset.ev;
+    state.evidenceChecks[id] = AssessmentModel.validEvidence(id, [...box.querySelectorAll("input[data-ev-id]:checked")].map(x => x.dataset.evId));
+    if (!state.evidenceChecks[id].length) delete state.evidenceChecks[id];
+    const changed = applyEvidenceRating(id, false);
+    saveState();
+    refreshChecklist(id);
+    const again = document.querySelector(`.ev-wrap[data-ev="${CSS.escape(id)}"] input[data-ev-id="${CSS.escape(e.target.dataset.evId)}"]`);
+    if (again) again.focus();
+    if (changed) showToast(`Rating set to ${state.ratings[id]} from the evidence checklist. You can still change it.`);
+  });
+  root.addEventListener("click", e => {
+    const use = e.target.closest("[data-ev-use]");
+    if (use) {
+      const id = use.dataset.evUse;
+      applyEvidenceRating(id, true);
+      saveState();
+      refreshChecklist(id);
+      showToast(`Rating set to ${state.ratings[id]} from the evidence checklist.`);
+      return;
+    }
+    // Guidance tabs: How to meet it / DfE guidance
+    const tab = e.target.closest("[data-gtab]");
+    if (tab) {
+      const id = tab.dataset.for;
+      root.querySelectorAll(`[data-gtab][data-for="${CSS.escape(id)}"]`).forEach(b => {
+        const on = b === tab;
+        b.setAttribute("aria-selected", String(on));
+        b.tabIndex = on ? 0 : -1;
+      });
+      root.querySelectorAll(`[data-gpanel][data-for="${CSS.escape(id)}"]`).forEach(pn => { pn.hidden = pn.dataset.gpanel !== tab.dataset.gtab; });
+    }
+  });
+  // Arrow keys move between the two tabs
+  root.addEventListener("keydown", e => {
+    const tab = e.target.closest("[data-gtab]");
+    if (!tab || (e.key !== "ArrowRight" && e.key !== "ArrowLeft")) return;
+    const other = root.querySelector(`[data-gtab][data-for="${CSS.escape(tab.dataset.for)}"]:not([data-gtab="${tab.dataset.gtab}"])`);
+    if (other) { other.click(); other.focus(); e.preventDefault(); }
+  });
+}
+
 // ── Helpers ────────────────────────────────────────────────────────────────
 // Size a textarea to fit its text (it can only be measured while visible)
 function growTextarea(t) {
@@ -1382,4 +1542,6 @@ function showToast(msg) {
 }
 
 // ── Init ───────────────────────────────────────────────────────────────────
+// Listeners on #content survive each view being redrawn, so add them once
+bindChecklists(document.getElementById("content"));
 navigate(currentView);

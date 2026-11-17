@@ -79,6 +79,8 @@ jobs:
             echo
             echo "Item ids are unchanged for existing standards, so schools' saved progress carries over."
             echo
+            echo "If a standard was added, renamed or rewritten, also update its entry in guidance/how-to-meet-the-standards.md (the How to meet it panel and evidence checklist) and run python3 scripts/build_howto.py. Until then a new standard simply shows no How to meet it panel."
+            echo
             echo "_Opened by the [Weekly guidance check](${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}) workflow._"
           } > /tmp/pr-body.md
 

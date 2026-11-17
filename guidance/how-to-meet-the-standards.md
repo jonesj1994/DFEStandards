@@ -1,7 +1,7 @@
 # How to meet the DfE digital and technology standards
-## A practical guide for schools (draft for review)
+## A practical guide for schools
 
-_Prepared 2026-11-17 for the School Compliance Toolkit. It isn't in the product yet._
+_Source for the "How to meet it" panels and evidence checklists in the DfE standards tracker. After editing, run `python3 scripts/build_howto.py` to rebuild `docs/dfe-howto.js`._
 
 This guide takes each of the **50 DfE digital and technology standards** and explains, in plain English, what it means and how a school can meet it. It's written for school business managers, headteachers and office staff without much IT knowledge.
 

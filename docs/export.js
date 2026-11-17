@@ -100,7 +100,7 @@ function buildDfeWorkbook(state) {
     const rows = [
       [cat.title + (cat.isCore ? " ★ (Core)" : "")],
       [],
-      ["#", "Standard", "Current Status & Notes", "Recommendations", "RAG Rating", "Ownership", "Date type", "Date"]
+      ["#", "Standard", "Current Status & Notes", "Recommendations", "RAG Rating", "Ownership", "Date type", "Date", "Evidence in place", "Evidence still needed"]
     ];
 
     cat.items.forEach((item, idx) => {
@@ -113,7 +113,8 @@ function buildDfeWorkbook(state) {
         exportRating(state.ratings[item.id] || "Not Set"),
         state.ownership[item.id] || "",
         d ? EXPORT_DATE_TYPES[d.type] : "",
-        d ? d.date : ""
+        d ? d.date : "",
+        ...exportEvidence(state, item.id)
       ]);
     });
 
@@ -126,7 +127,9 @@ function buildDfeWorkbook(state) {
       { wch: 12 },
       { wch: 20 },
       { wch: 12 },
-      { wch: 12 }
+      { wch: 12 },
+      { wch: 16 },
+      { wch: 50 }
     ];
 
     // Sheet name: max 31 chars, strip invalid chars
@@ -170,6 +173,16 @@ function buildDfeWorkbook(state) {
   } catch (e) { console.warn("Assessment sheet not added:", e); }
 
   return { wb, filename };
+}
+
+// A standard's evidence checklist as exported: "2 of 3" and what's missing
+// (blank if the checklist data isn't loaded). The exact ticks are in the
+// hidden "_assessment" sheet, which is what an import reads back.
+function exportEvidence(state, id) {
+  const ev = state.evidenceChecks || {};
+  const st = window.AssessmentModel && AssessmentModel.evidenceStatus(id, ev[id]);
+  if (!st) return ["", ""];
+  return [`${st.done} of ${st.total}`, st.missing.join("; ")];
 }
 
 // A standard's date as exported, or null (see AssessmentModel.dateStatus)

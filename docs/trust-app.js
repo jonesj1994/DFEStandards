@@ -73,6 +73,17 @@
     const d = AM.dateStatus(a.date, a.dateType, a.status);
     return d ? [d.date, `${TARGET_TYPE[d.type]}: ${TARGET_STATE[d.state]}`] : ["", ""];
   }
+  // Evidence checklist for an outstanding DfE standard (dfe-howto.js)
+  function evidenceCell(a) {
+    const ev = AM.evidenceStatus(a.itemId, a.evidence);
+    if (!ev) return '<em class="muted">–</em>';
+    return `<span style="white-space:nowrap">${ev.done} of ${ev.total}</span>${ev.missing.length ? `<div class="small muted">Needed: ${esc(ev.missing.join("; "))}</div>` : ""}`;
+  }
+  function evidenceExport(a) {
+    const ev = a.framework === "cyber-essentials" ? null : AM.evidenceStatus(a.itemId, a.evidence);
+    return ev ? [`${ev.done} of ${ev.total}`, ev.missing.join("; ")] : ["", ""];
+  }
+
   function toast(msg) {
     const t = document.getElementById("toast");
     t.textContent = msg; t.classList.add("show");
@@ -779,8 +790,16 @@
     const sum = AM.summarise(snap);
     // DfE ratings are Green/Amber/Red/Not Set (an old "Met" is read as Green)
     const statusCols = f.id === "dfe" ? ["Green", "Amber", "Red", "Not Set"] : ["Met", "Partially Met", "Not Met", "N/A", "Not Set"];
+    // Evidence checklist ticks in an area (DfE only): "8/12"
+    const catEvidence = c => {
+      if (f.id !== "dfe") return "";
+      const cat = STANDARDS_DATA.find(x => x.id === c.id);
+      let have = 0, total = 0;
+      (cat ? cat.items : []).forEach(i => { const ev = AM.evidenceStatus(i.id, (rec.snapshot.items[i.id] || {}).evidence); if (ev) { have += ev.done; total += ev.total; } });
+      return `<td>${total ? `${have}/${total}` : "–"}</td>`;
+    };
     const rows = sum.categories.map(c => `<tr><td>${esc(c.title)}${c.isCore ? " ★" : ""}${c.assessed ? "" : ' <span class="tag">not assessed</span>'}</td><td>${c.total}</td>
-      ${statusCols.map(k => `<td>${c.counts[k] || 0}</td>`).join("")}<td><span class="rag-pill ${c.cls}">${esc(c.overall)}</span></td></tr>`).join("");
+      ${statusCols.map(k => `<td>${c.counts[k] || 0}</td>`).join("")}<td><span class="rag-pill ${c.cls}">${esc(c.overall)}</span></td>${catEvidence(c)}</tr>`).join("");
     const actions = sum.outstanding.sort((a, b) => b.severity - a.severity);
     const notesLabel = f.id === "dfe" ? "Notes" : "Evidence";
     const actionLabel = f.id === "dfe" ? "Recommendations" : "Action needed";
@@ -802,14 +821,14 @@
              ${cert.level ? ` · Seeking ${esc(cert.level)}` : ""}${cert.renewalDue ? ` · Renewal ${cert.state === "overdue" ? `<strong style="color:var(--rag-red)">overdue since ${esc(ukDate(cert.renewalDue))}</strong>` : `due ${esc(ukDate(cert.renewalDue))}`}${cert.estimated ? " (estimated from certification date)" : ""}` : ""}`}
       </p>
       <div class="table-wrap"><table class="summary-table cat-summary">
-        <thead><tr><th>${f.id === "dfe" ? "Standard" : "Control"}</th><th>Total</th>${statusCols.map(k => `<th>${esc(k)}</th>`).join("")}<th>Overall</th></tr></thead>
+        <thead><tr><th>${f.id === "dfe" ? "Standard" : "Control"}</th><th>Total</th>${statusCols.map(k => `<th>${esc(k)}</th>`).join("")}<th>Overall</th>${f.id === "dfe" ? "<th>Evidence</th>" : ""}</tr></thead>
         <tbody>${rows}</tbody></table></div>
       <h4>Outstanding actions (${actions.length})</h4>
       ${actions.length ? `<div class="table-wrap"><table class="summary-table">
-        <thead><tr><th>Area</th><th>${f.id === "dfe" ? "Standard" : "Requirement"}</th><th>Status</th><th>${notesLabel}</th><th>${actionLabel}</th><th>Owner</th>${f.id === "dfe" ? "<th>Target</th>" : ""}</tr></thead>
+        <thead><tr><th>Area</th><th>${f.id === "dfe" ? "Standard" : "Requirement"}</th><th>Status</th><th>${notesLabel}</th><th>${actionLabel}</th><th>Owner</th>${f.id === "dfe" ? "<th>Target</th><th>Evidence</th>" : ""}</tr></thead>
         <tbody>${actions.map(a => `<tr><td>${esc(a.categoryTitle)}${a.isCore ? " ★" : ""}</td><td class="wrap">${esc(a.itemTitle)}</td>
           <td><span class="rag-pill ${f.cls(a.status)}">${esc(a.status)}</span></td>
-          <td class="wrap">${esc(a.notes) || '<em class="muted">None</em>'}</td><td class="wrap">${esc(a.actions) || '<em class="muted">None recorded</em>'}</td><td>${esc(a.owner)}</td>${f.id === "dfe" ? `<td>${targetCell(a)}</td>` : ""}</tr>`).join("")}</tbody>
+          <td class="wrap">${esc(a.notes) || '<em class="muted">None</em>'}</td><td class="wrap">${esc(a.actions) || '<em class="muted">None recorded</em>'}</td><td>${esc(a.owner)}</td>${f.id === "dfe" ? `<td>${targetCell(a)}</td><td>${evidenceCell(a)}</td>` : ""}</tr>`).join("")}</tbody>
       </table></div>` : `<p class="small muted">Nothing rated ${f.open.join(" or ")}.</p>`}
     </section>`;
   }
@@ -1136,13 +1155,13 @@
     wsG["!cols"] = head.map((h, i) => ({ wch: i === 0 ? 40 : Math.min(Math.max(h.length, 10), 26) }));
     XLSX.utils.book_append_sheet(wb, wsG, "Grid");
 
-    const act = [["School", "URN", "Framework", "Area", "Core", "Standard / requirement", "Status", "Notes / evidence", "Recommendations / action needed", "Owner", "Target date", "Target status", "Exported"]];
+    const act = [["School", "URN", "Framework", "Area", "Core", "Standard / requirement", "Status", "Notes / evidence", "Recommendations / action needed", "Owner", "Target date", "Target status", "Evidence in place", "Evidence still needed", "Exported"]];
     sorted(schools).forEach(s => FW.forEach(f => {
       const sm = s.summary[f.id];
       if (!sm) return;
       sm.outstanding.slice().sort((a, b) => b.severity - a.severity).forEach(a => act.push([
         s.name, s.urn, f.shortLabel, a.categoryTitle, a.isCore ? "Yes" : "", a.itemTitle, a.status, a.notes, a.actions, a.owner,
-        ...targetExport(a),
+        ...targetExport(a), ...evidenceExport(a),
         (s.current[f.id].snapshot.exportedAt || "").slice(0, 10)
       ]));
     }));
