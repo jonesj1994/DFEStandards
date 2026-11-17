@@ -1,0 +1,856 @@
+{
+ "broadband-1": {
+  "items": [
+   {
+    "id": "e1",
+    "text": "Current broadband contract showing connection type (FTTP or leased line) and speeds."
+   },
+   {
+    "id": "e2",
+    "text": "Written availability check from your supplier, if fibre isn't yet available."
+   },
+   {
+    "id": "e3",
+    "text": "A note of the contract end date and your plan to upgrade."
+   }
+  ],
+  "next": 4
+ },
+ "broadband-2": {
+  "items": [
+   {
+    "id": "e1",
+    "text": "Contracts for both connections, showing they are different types."
+   },
+   {
+    "id": "e2",
+    "text": "A simple network diagram showing both routers and the failover."
+   },
+   {
+    "id": "e3",
+    "text": "A record of a failover test (date, result)."
+   }
+  ],
+  "next": 4
+ },
+ "broadband-3": {
+  "items": [
+   {
+    "id": "e1",
+    "text": "Filtering and firewall service details from your supplier or IT support."
+   },
+   {
+    "id": "e2",
+    "text": "A record of the annual filtering review signed by the DSL."
+   },
+   {
+    "id": "e3",
+    "text": "Online safety policy referencing filtering arrangements."
+   }
+  ],
+  "next": 4
+ },
+ "cloud-1": {
+  "items": [
+   {
+    "id": "e1",
+    "text": "An inventory of systems and data, marked \"cloud\", \"local\" or \"to move\"."
+   },
+   {
+    "id": "e2",
+    "text": "Contract wording on data export and exit arrangements."
+   },
+   {
+    "id": "e3",
+    "text": "Records of staff training."
+   }
+  ],
+  "next": 4
+ },
+ "cloud-2": {
+  "items": [
+   {
+    "id": "e1",
+    "text": "DPIAs for each relevant service."
+   },
+   {
+    "id": "e2",
+    "text": "Contracts or data processing and sharing agreements."
+   },
+   {
+    "id": "e3",
+    "text": "Joiners-and-leavers process and breach response roles."
+   }
+  ],
+  "next": 4
+ },
+ "cloud-3": {
+  "items": [
+   {
+    "id": "e1",
+    "text": "List of systems connected to the ID tool."
+   },
+   {
+    "id": "e2",
+    "text": "Written joiners-and-leavers process."
+   },
+   {
+    "id": "e3",
+    "text": "Role and group descriptions."
+   },
+   {
+    "id": "e4",
+    "text": "Note of IT support's separate emergency access."
+   }
+  ],
+  "next": 5
+ },
+ "cloud-4": {
+  "items": [
+   {
+    "id": "e1",
+    "text": "Contracts or service level agreements (SLAs) showing availability targets."
+   },
+   {
+    "id": "e2",
+    "text": "Notes from trials."
+   },
+   {
+    "id": "e3",
+    "text": "A record of outages and how they affected the school."
+   }
+  ],
+  "next": 4
+ },
+ "cloud-5": {
+  "items": [
+   {
+    "id": "e1",
+    "text": "Provider backup details for each service."
+   },
+   {
+    "id": "e2",
+    "text": "A record of your backup decisions per system."
+   },
+   {
+    "id": "e3",
+    "text": "Test restore records."
+   }
+  ],
+  "next": 4
+ },
+ "cyber-1": {
+  "items": [
+   {
+    "id": "e1",
+    "text": "Dated risk assessment and termly review notes."
+   },
+   {
+    "id": "e2",
+    "text": "Risk register entries and governor minutes."
+   },
+   {
+    "id": "e3",
+    "text": "Network diagram, ROPA and cyber response plan."
+   }
+  ],
+  "next": 4
+ },
+ "cyber-2": {
+  "items": [
+   {
+    "id": "e1",
+    "text": "Current AUPs (staff, student, visitor) with governor approval date."
+   },
+   {
+    "id": "e2",
+    "text": "Signed AUP records."
+   },
+   {
+    "id": "e3",
+    "text": "Training attendance and certificates, including for at least one governor."
+   }
+  ],
+  "next": 4
+ },
+ "cyber-3": {
+  "items": [
+   {
+    "id": "e1",
+    "text": "Termly signed firewall rule review."
+   },
+   {
+    "id": "e2",
+    "text": "Anti-malware console report showing all devices protected and up to date."
+   },
+   {
+    "id": "e3",
+    "text": "Approved applications list."
+   },
+   {
+    "id": "e4",
+    "text": "Broadband provider's firewall statement."
+   }
+  ],
+  "next": 5
+ },
+ "cyber-4": {
+  "items": [
+   {
+    "id": "e1",
+    "text": "MFA coverage report for staff and admin accounts."
+   },
+   {
+    "id": "e2",
+    "text": "Joiners, movers and leavers procedure and termly account review record."
+   },
+   {
+    "id": "e3",
+    "text": "Password policy settings."
+   },
+   {
+    "id": "e4",
+    "text": "Sealed record of the emergency admin process."
+   }
+  ],
+  "next": 5
+ },
+ "cyber-5": {
+  "items": [
+   {
+    "id": "e1",
+    "text": "Asset register with end-of-support dates."
+   },
+   {
+    "id": "e2",
+    "text": "Contracts register with licence expiry dates."
+   },
+   {
+    "id": "e3",
+    "text": "Patch compliance reports."
+   },
+   {
+    "id": "e4",
+    "text": "Termly unsupported-technology report to SLT."
+   }
+  ],
+  "next": 5
+ },
+ "cyber-6": {
+  "items": [
+   {
+    "id": "e1",
+    "text": "Written backup plan with recovery priorities."
+   },
+   {
+    "id": "e2",
+    "text": "Termly backup test and restore log."
+   },
+   {
+    "id": "e3",
+    "text": "Information asset register showing what is backed up."
+   },
+   {
+    "id": "e4",
+    "text": "Backup service contract."
+   }
+  ],
+  "next": 5
+ },
+ "cyber-7": {
+  "items": [
+   {
+    "id": "e1",
+    "text": "Incident and near-miss log."
+   },
+   {
+    "id": "e2",
+    "text": "Cyber incident response plan with contact list."
+   },
+   {
+    "id": "e3",
+    "text": "Copies of external reports made."
+   }
+  ],
+  "next": 4
+ },
+ "accessibility-1": {
+  "items": [
+   {
+    "id": "e1",
+    "text": "Updated policies showing the accessibility section and review date."
+   },
+   {
+    "id": "e2",
+    "text": "Survey results or notes from conversations with students, staff and parents."
+   },
+   {
+    "id": "e3",
+    "text": "SLT or governor minutes agreeing which policies will be reviewed."
+   }
+  ],
+  "next": 4
+ },
+ "accessibility-2": {
+  "items": [
+   {
+    "id": "e1",
+    "text": "Supplier accessibility statements for your main systems."
+   },
+   {
+    "id": "e2",
+    "text": "Purchasing checklists or quotes showing accessibility was considered."
+   },
+   {
+    "id": "e3",
+    "text": "Records of staff training on accessibility features."
+   }
+  ],
+  "next": 4
+ },
+ "accessibility-3": {
+  "items": [
+   {
+    "id": "e1",
+    "text": "Staff training records on accessible writing."
+   },
+   {
+    "id": "e2",
+    "text": "An accessible communications checklist or style guide."
+   },
+   {
+    "id": "e3",
+    "text": "Website specification or contract showing accessibility was required."
+   }
+  ],
+  "next": 4
+ },
+ "leadership-1": {
+  "items": [
+   {
+    "id": "e1",
+    "text": "Updated job description or SLT responsibilities list."
+   },
+   {
+    "id": "e2",
+    "text": "Governor minutes recording the appointment and any digital link governor."
+   },
+   {
+    "id": "e3",
+    "text": "Meeting notes between the digital lead and IT support."
+   }
+  ],
+  "next": 4
+ },
+ "leadership-2": {
+  "items": [
+   {
+    "id": "e1",
+    "text": "The three registers, with \"last updated\" dates."
+   },
+   {
+    "id": "e2",
+    "text": "Secure disposal certificates for old equipment."
+   },
+   {
+    "id": "e3",
+    "text": "Notes of the annual review by the SLT digital lead."
+   }
+  ],
+  "next": 4
+ },
+ "leadership-3": {
+  "items": [
+   {
+    "id": "e1",
+    "text": "Current plans with review dates and governor sign-off."
+   },
+   {
+    "id": "e2",
+    "text": "Printed copy locations and the staff summary document."
+   },
+   {
+    "id": "e3",
+    "text": "Notes from the annual test and the actions that followed."
+   }
+  ],
+  "next": 4
+ },
+ "leadership-4": {
+  "items": [
+   {
+    "id": "e1",
+    "text": "The strategy document with dates and the next review date."
+   },
+   {
+    "id": "e2",
+    "text": "The top-level summary shared with stakeholders."
+   },
+   {
+    "id": "e3",
+    "text": "Governor minutes showing review and challenge."
+   }
+  ],
+  "next": 4
+ },
+ "filtering-1": {
+  "items": [
+   {
+    "id": "e1",
+    "text": "Governor minutes naming the SLT lead and governor."
+   },
+   {
+    "id": "e2",
+    "text": "Roles and responsibilities document."
+   },
+   {
+    "id": "e3",
+    "text": "Record of decisions on what is blocked or allowed and why."
+   }
+  ],
+  "next": 4
+ },
+ "filtering-2": {
+  "items": [
+   {
+    "id": "e1",
+    "text": "Annual review record and action plan."
+   },
+   {
+    "id": "e2",
+    "text": "Check log (date, who, what was tested, actions)."
+   },
+   {
+    "id": "e3",
+    "text": "Approvals for temporary filtering exceptions."
+   }
+  ],
+  "next": 4
+ },
+ "filtering-3": {
+  "items": [
+   {
+    "id": "e1",
+    "text": "Provider statement on IWF, CTIRU and the technical requirements."
+   },
+   {
+    "id": "e2",
+    "text": "Filtering profiles list."
+   },
+   {
+    "id": "e3",
+    "text": "Exception approvals and DPIA."
+   }
+  ],
+  "next": 4
+ },
+ "filtering-4": {
+  "items": [
+   {
+    "id": "e1",
+    "text": "Written monitoring plan."
+   },
+   {
+    "id": "e2",
+    "text": "Weekly reports and record of high-risk alerts."
+   },
+   {
+    "id": "e3",
+    "text": "Incident log with actions and outcomes."
+   },
+   {
+    "id": "e4",
+    "text": "AUP wording and DPIA."
+   }
+  ],
+  "next": 5
+ },
+ "devices-1": {
+  "items": [
+   {
+    "id": "e1",
+    "text": "Your digital technology strategy, with the section on devices."
+   },
+   {
+    "id": "e2",
+    "text": "A device needs assessment (who, where, what for, how many)."
+   },
+   {
+    "id": "e3",
+    "text": "Minutes of the SLT meeting where device decisions were agreed."
+   }
+  ],
+  "next": 4
+ },
+ "devices-2": {
+  "items": [
+   {
+    "id": "e1",
+    "text": "The asset register showing each device and its tag number."
+   },
+   {
+    "id": "e2",
+    "text": "A report from the device management tool showing devices enrolled and up to date."
+   },
+   {
+    "id": "e3",
+    "text": "The DPIA for devices, and notes of filtering and monitoring reviews with the DSL."
+   }
+  ],
+  "next": 4
+ },
+ "devices-3": {
+  "items": [
+   {
+    "id": "e1",
+    "text": "An annual device review against the minimum requirements."
+   },
+   {
+    "id": "e2",
+    "text": "Quotes or order confirmations showing warranty length and support period."
+   },
+   {
+    "id": "e3",
+    "text": "Records of any devices upgraded or replaced because of the operating system requirement."
+   }
+  ],
+  "next": 4
+ },
+ "devices-4": {
+  "items": [
+   {
+    "id": "e1",
+    "text": "WEEE, disposal and data destruction certificates for each collection."
+   },
+   {
+    "id": "e2",
+    "text": "The asset register showing disposed items."
+   },
+   {
+    "id": "e3",
+    "text": "A screenshot or note of power settings applied to devices."
+   }
+  ],
+  "next": 4
+ },
+ "cabling-1": {
+  "items": [
+   {
+    "id": "e1",
+    "text": "Installer quote and specification stating Cat 6A U/FTP, the British Standards and the cable and patch lead manufacturer."
+   }
+  ],
+  "next": 2
+ },
+ "cabling-4": {
+  "items": [
+   {
+    "id": "e1",
+    "text": "A site map of fibre links and routes."
+   },
+   {
+    "id": "e2",
+    "text": "Installer specification stating OM4, 16 core and the British Standards."
+   },
+   {
+    "id": "e3",
+    "text": "Test results from the installer."
+   }
+  ],
+  "next": 4
+ },
+ "cabling-2": {
+  "items": [
+   {
+    "id": "e1",
+    "text": "The test report for every cable installed."
+   },
+   {
+    "id": "e2",
+    "text": "The 20-year manufacturer performance warranty certificate."
+   },
+   {
+    "id": "e3",
+    "text": "Proof of the installer's manufacturer approval and accreditations."
+   }
+  ],
+  "next": 4
+ },
+ "switching-1": {
+  "items": [
+   {
+    "id": "e1",
+    "text": "A switch specification or data sheet checked against each requirement."
+   },
+   {
+    "id": "e2",
+    "text": "A network diagram showing switch links and speeds."
+   }
+  ],
+  "next": 3
+ },
+ "switching-2": {
+  "items": [
+   {
+    "id": "e1",
+    "text": "Warranty and support contract showing at least 5 years of cover."
+   },
+   {
+    "id": "e2",
+    "text": "A screenshot of the management tool or a sample alert."
+   },
+   {
+    "id": "e3",
+    "text": "Training records for the system administrator."
+   }
+  ],
+  "next": 4
+ },
+ "switching-3": {
+  "items": [
+   {
+    "id": "e1",
+    "text": "A list of admin accounts and who holds them."
+   },
+   {
+    "id": "e2",
+    "text": "A network diagram showing segregated networks."
+   },
+   {
+    "id": "e3",
+    "text": "Update settings or update history from the management tool."
+   }
+  ],
+  "next": 4
+ },
+ "switching-4": {
+  "items": [
+   {
+    "id": "e1",
+    "text": "A list of critical switches and their duplicate parts and connections."
+   },
+   {
+    "id": "e2",
+    "text": "UPS details and battery test or replacement dates."
+   },
+   {
+    "id": "e3",
+    "text": "A network diagram showing dual links."
+   }
+  ],
+  "next": 4
+ },
+ "servers-1": {
+  "items": [
+   {
+    "id": "e1",
+    "text": "Server list with warranty and end-of-life dates."
+   },
+   {
+    "id": "e2",
+    "text": "SLT-agreed maximum downtime."
+   },
+   {
+    "id": "e3",
+    "text": "Monitoring alert set-up and UPS test records."
+   }
+  ],
+  "next": 4
+ },
+ "servers-2": {
+  "items": [
+   {
+    "id": "e1",
+    "text": "Termly review records."
+   },
+   {
+    "id": "e2",
+    "text": "DPIAs for servers with personal data."
+   },
+   {
+    "id": "e3",
+    "text": "Licence records and joiners-and-leavers process."
+   }
+  ],
+  "next": 4
+ },
+ "servers-3": {
+  "items": [
+   {
+    "id": "e1",
+    "text": "Purchase specifications showing energy requirements."
+   },
+   {
+    "id": "e2",
+    "text": "IT support's note of power settings applied."
+   },
+   {
+    "id": "e3",
+    "text": "Product details showing ENERGY STAR or equivalent."
+   }
+  ],
+  "next": 4
+ },
+ "servers-4": {
+  "items": [
+   {
+    "id": "e1",
+    "text": "Dated photos of the room."
+   },
+   {
+    "id": "e2",
+    "text": "Key or access log."
+   },
+   {
+    "id": "e3",
+    "text": "Cooling and UPS details, and room dimensions."
+   }
+  ],
+  "next": 4
+ },
+ "support-1": {
+  "items": [
+   {
+    "id": "e1",
+    "text": "Progress records from plan technology for your school."
+   },
+   {
+    "id": "e2",
+    "text": "IT support contract or job description referring to the standards."
+   },
+   {
+    "id": "e3",
+    "text": "Copies of relevant certifications."
+   }
+  ],
+  "next": 4
+ },
+ "support-2": {
+  "items": [
+   {
+    "id": "e1",
+    "text": "Your record of IT support services and providers."
+   },
+   {
+    "id": "e2",
+    "text": "Patching and backup test reports."
+   },
+   {
+    "id": "e3",
+    "text": "Leaver account removal records."
+   }
+  ],
+  "next": 4
+ },
+ "support-3": {
+  "items": [
+   {
+    "id": "e1",
+    "text": "Written service expectations (response times, priorities, escalation)."
+   },
+   {
+    "id": "e2",
+    "text": "Helpdesk reports or request log."
+   },
+   {
+    "id": "e3",
+    "text": "Notes of review meetings with IT support."
+   }
+  ],
+  "next": 4
+ },
+ "support-5": {
+  "items": [
+   {
+    "id": "e1",
+    "text": "The written review report."
+   },
+   {
+    "id": "e2",
+    "text": "Governor or trust board minutes considering it."
+   },
+   {
+    "id": "e3",
+    "text": "Staff feedback results and contract comparison notes."
+   }
+  ],
+  "next": 4
+ },
+ "support-6": {
+  "items": [
+   {
+    "id": "e1",
+    "text": "Training records showing who completed what and when."
+   },
+   {
+    "id": "e2",
+    "text": "Copies of staff guides with review dates."
+   },
+   {
+    "id": "e3",
+    "text": "Acceptable use policy and staff sign-off."
+   }
+  ],
+  "next": 4
+ },
+ "wireless-1": {
+  "items": [
+   {
+    "id": "e1",
+    "text": "The current Wi-Fi equipment list and its support end dates."
+   },
+   {
+    "id": "e2",
+    "text": "Upgrade quotes stating Wi-Fi 7 (802.11be)."
+   }
+  ],
+  "next": 3
+ },
+ "wireless-2": {
+  "items": [
+   {
+    "id": "e1",
+    "text": "Wireless heat map or site survey reports."
+   },
+   {
+    "id": "e2",
+    "text": "A floor plan showing access point locations."
+   }
+  ],
+  "next": 3
+ },
+ "wireless-3": {
+  "items": [
+   {
+    "id": "e1",
+    "text": "Warranty, support and licence agreements with end dates."
+   },
+   {
+    "id": "e2",
+    "text": "A screenshot of the management tool or a sample alert."
+   },
+   {
+    "id": "e3",
+    "text": "Training records and a stored configuration backup."
+   }
+  ],
+  "next": 4
+ },
+ "wireless-4": {
+  "items": [
+   {
+    "id": "e1",
+    "text": "A description of Wi-Fi networks (staff, pupil, guest) and how each authenticates."
+   },
+   {
+    "id": "e2",
+    "text": "A list of admin accounts, showing MFA is on."
+   },
+   {
+    "id": "e3",
+    "text": "Notes from the latest configuration review."
+   }
+  ],
+  "next": 4
+ }
+}

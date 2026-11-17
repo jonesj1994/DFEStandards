@@ -151,6 +151,11 @@
       const overdue = datedItems(snap).filter(x => x.dt.state === "overdue").length;
       if (overdue) bullets.push(`<strong>${plural(overdue, "target date has", "target dates have")} passed.</strong> These are listed under Working towards.`);
     }
+    if (IS_DFE) {
+      let have = 0, total = 0;
+      STANDARDS_DATA.forEach(c => c.items.forEach(i => { const ev = AM.evidenceStatus(i.id, snap.items[i.id].evidence); if (ev) { have += ev.done; total += ev.total; } }));
+      if (total && have) bullets.push(`Evidence checklist: ${have} of ${total} evidence items are in place across all the standards (${Math.round(have / total * 100)}%).`);
+    }
     if (notSet) bullets.push(`<strong>${plural(notSet, IS_DFE ? "standard has" : "requirement has", IS_DFE ? "standards have" : "requirements have")} not been assessed yet</strong>, so this report is incomplete.`);
 
     return `<section class="section keep-together" aria-labelledby="h-summary">
@@ -283,6 +288,14 @@
     return cut + "\u2026 (the full commentary is in the Summary)";
   }
 
+  // "Evidence still needed" for a standard in Priority actions (DfE only)
+  function evidenceLine(itemId, ticked, missingOnly) {
+    if (!IS_DFE) return "";
+    const ev = AM.evidenceStatus(itemId, ticked);
+    if (!ev || !ev.missing.length) return "";
+    return `<div class="sub"><span class="sub-label">Evidence still needed${ev.done ? ` (${ev.done} of ${ev.total} in place)` : ""}:</span> <span class="text">${esc(ev.missing.join("; "))}</span></div>`;
+  }
+
   function statCard(big, label, sub, cls) {
     return `<div class="stat ${cls ? "stat-" + esc(cls) : ""}"><div class="stat-big">${esc(big)}</div><div class="stat-label">${esc(label)}</div>${sub ? `<div class="stat-sub">${esc(sub)}</div>` : ""}</div>`;
   }
@@ -338,7 +351,8 @@
         <thead><tr><th scope="col">${IS_DFE ? "Standard" : "Requirement"}</th><th scope="col">Rating</th><th scope="col">${IS_DFE ? "Recommendation" : "Action needed"}</th><th scope="col">Owner</th>${IS_DFE ? '<th scope="col">Target</th>' : ""}</tr></thead>
         <tbody>${items.map(o => `<tr>
           <td><span class="area">${esc(o.categoryTitle)}${o.isCore ? " (core)" : ""}</span>${esc(o.itemTitle)}
-            ${o.notes.trim() ? `<div class="sub"><span class="sub-label">Current position:</span> <span class="text">${esc(o.notes.trim())}</span></div>` : ""}</td>
+            ${o.notes.trim() ? `<div class="sub"><span class="sub-label">Current position:</span> <span class="text">${esc(o.notes.trim())}</span></div>` : ""}
+            ${evidenceLine(o.itemId, o.evidence, true)}</td>
           <td>${pill(o.status)}</td>
           <td class="text">${o.actions.trim() ? esc(o.actions.trim()) : '<span class="missing">None recorded</span>'}</td>
           <td class="text">${o.owner.trim() ? esc(o.owner.trim()) : '<span class="missing">Not assigned</span>'}</td>
@@ -368,6 +382,11 @@
         ].filter(([, v]) => v.trim());
         const dt = IS_DFE ? itemDate(d) : null;
         if (dt) fields.push([DATE_TYPE[dt.type], fmtDate(dt.date) + (dt.state === "overdue" ? " (overdue)" : "")]);
+        const ev = IS_DFE ? AM.evidenceStatus(i.id, d.evidence) : null;
+        if (ev && (ev.done || F.open.includes(d.status))) {
+          fields.push(["Evidence", `${ev.done} of ${ev.total} in place`]);
+          if (ev.missing.length && ev.done < ev.total) fields.push(["Evidence still needed", ev.missing.join("; ")]);
+        }
         return `<li class="item">
           <div class="item-head"><span class="item-title">${esc(i.title)}</span>${pill(d.status)}</div>
           ${fields.map(([k, v]) => `<div class="sub"><span class="sub-label">${esc(k)}:</span> <span class="text">${esc(v.trim())}</span></div>`).join("")}

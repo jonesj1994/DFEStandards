@@ -27,6 +27,9 @@
 //        by) or "review" (next review). The tracker fixes the type when a date is
 //        entered; "" (older or hand-made data) is read as next review for a Green
 //        standard, otherwise complete by. Older files have neither.
+//        evidence = ids of the evidence checklist items ticked (["e1","e3"],
+//        see dfe-howto.js); ratingSource = "evidence" when the checklist set
+//        the rating (otherwise ""). Older files have neither.
 //   CE   status = Status, notes = "Evidence / current position",
 //        actions = "Action needed", owner = "Owner"
 //        (date and dateType are always "" for Cyber Essentials)
@@ -162,10 +165,12 @@
       snap.assessmentDate = str(s.assessmentDate);
       const r = s.ratings || {}, n = s.notes || {}, a = s.recommendations || {}, o = s.ownership || {};
       const d = s.targetDates || {}, dt = s.dateTypes || {};
+      const ev = s.evidenceChecks || {}, rs = s.ratingSource || {};
       items.forEach(i => {
         snap.items[i.id] = {
           status: validStatus(f, r[i.id]), notes: txt(n[i.id]), actions: txt(a[i.id]), owner: txt(o[i.id]),
-          date: validDate(d[i.id]), dateType: validDateType(dt[i.id])
+          date: validDate(d[i.id]), dateType: validDateType(dt[i.id]),
+          evidence: validEvidence(i.id, ev[i.id]), ratingSource: rs[i.id] === "evidence" ? "evidence" : ""
         };
       });
     } else {
@@ -219,13 +224,16 @@
         schoolName: sc.name, schoolURN: sc.urn, schoolDfENumber: sc.dfeNumber, schoolTrust: sc.trust,
         schoolType: sc.type, schoolPhase: sc.phase, schoolLA: sc.la, schoolPupils: sc.pupils,
         assessorName: snap.assessor, assessmentDate: snap.assessmentDate,
-        ratings: {}, notes: {}, recommendations: {}, ownership: {}, targetDates: {}, dateTypes: {}
+        ratings: {}, notes: {}, recommendations: {}, ownership: {}, targetDates: {}, dateTypes: {},
+        evidenceChecks: {}, ratingSource: {}
       };
       items.forEach(i => {
         const d = get(i.id);
         state.ratings[i.id] = d.status; state.notes[i.id] = d.notes;
         state.recommendations[i.id] = d.actions; state.ownership[i.id] = d.owner;
         state.targetDates[i.id] = d.date; state.dateTypes[i.id] = d.dateType;
+        if (d.evidence && d.evidence.length) state.evidenceChecks[i.id] = d.evidence.slice();
+        if (d.ratingSource === "evidence") state.ratingSource[i.id] = "evidence";
       });
     } else {
       const c = snap.certification || {};
@@ -269,6 +277,35 @@
     v = str(v);
     if (f.aliases && Object.prototype.hasOwnProperty.call(f.aliases, v)) v = f.aliases[v];
     return f.statuses.includes(v) ? v : "Not Set";
+  }
+
+  // Evidence checklist ticks: ids like "e3", unique, at most 50. Where the
+  // checklist data (dfe-howto.js) is loaded, only that standard's current ids.
+  const MAX_EVIDENCE = 50;
+  function validEvidence(itemId, v) {
+    if (!Array.isArray(v)) return [];
+    const known = evidenceItems(itemId);
+    const ok = known.length ? new Set(known.map(e => e.id)) : null;
+    const out = [];
+    v.forEach(x => {
+      if (out.length >= MAX_EVIDENCE || typeof x !== "string" || !/^e\d{1,3}$/.test(x) || out.includes(x)) return;
+      if (ok && !ok.has(x)) return;
+      out.push(x);
+    });
+    return out;
+  }
+  // A standard's evidence checklist items [{ id, text }] (empty if not loaded)
+  function evidenceItems(itemId) {
+    if (typeof HOWTO === "undefined" || !hasOwn(HOWTO, itemId)) return [];
+    return Array.isArray(HOWTO[itemId].evidence) ? HOWTO[itemId].evidence : [];
+  }
+  // Ticked and still-needed evidence for a standard, or null if it has no checklist
+  function evidenceStatus(itemId, ticked) {
+    const items = evidenceItems(itemId);
+    if (!items.length) return null;
+    const t = new Set(Array.isArray(ticked) ? ticked : []);
+    const have = items.filter(e => t.has(e.id));
+    return { done: have.length, total: items.length, missing: items.filter(e => !t.has(e.id)).map(e => e.text) };
   }
 
   // Target dates: a real calendar date "YYYY-MM-DD", otherwise ""
@@ -325,7 +362,9 @@
       snap.items[id] = {
         status: validStatus(f, v.status), notes: txt(v.notes), actions: txt(v.actions), owner: txt(v.owner),
         date: raw.framework === "dfe" ? validDate(v.date) : "",
-        dateType: raw.framework === "dfe" ? validDateType(v.dateType) : ""
+        dateType: raw.framework === "dfe" ? validDateType(v.dateType) : "",
+        evidence: raw.framework === "dfe" ? validEvidence(id, v.evidence) : [],
+        ratingSource: raw.framework === "dfe" && v.ratingSource === "evidence" ? "evidence" : ""
       };
     });
     if (unknown) problems.push(`${unknown} item(s) are no longer in the current ${f.shortLabel} and were ignored`);
@@ -385,7 +424,7 @@
             categoryId: cat.id, categoryTitle: cat.title, isCore: !!cat.isCore,
             itemId: item.id, itemTitle: item.title, status: v,
             notes: d.notes, actions: d.actions, owner: d.owner, severity: f.severity[v],
-            date: d.date || "", dateType: d.dateType || ""
+            date: d.date || "", dateType: d.dateType || "", evidence: d.evidence || []
           });
         }
       });
@@ -487,6 +526,7 @@
     SCHEMA_VERSION, SNAPSHOT_SHEET, FRAMEWORKS, framework,
     emptySnapshot, fromTrackerState, toTrackerState, readTrackerFile, validate, schoolKey, snapshotKey,
     summarise, certificationStatus, writeSnapshotSheet, readSnapshotSheet, parseDate,
-    DATE_TYPES, validDate, validDateType, effectiveDateType, dateStatus
+    DATE_TYPES, validDate, validDateType, effectiveDateType, dateStatus,
+    validEvidence, evidenceItems, evidenceStatus
   };
 })();
