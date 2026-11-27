@@ -357,6 +357,7 @@
       <h2 style="margin-top:0">Trust overview</h2>
       ${trustLine()}
       ${summaryCards(t)}
+      ${reportsBar()}
       <h2 id="grid-heading" style="font-size:18px">Schools</h2>
       ${sendFilesBar()}
       ${filtersHtml()}
@@ -774,6 +775,8 @@
           Use <strong>Back to trust overview</strong> in the tracker to return.</p>
         ${s.records.dfe.length ? `<p class="small" style="margin-bottom:0"><button type="button" class="btn btn-secondary btn-sm" data-download-school="${esc(s.key)}">&#8595; Download this school's file</button>
           <span class="muted">A DfE tracker Excel file to send to the school. They use <strong>Import Excel</strong> in their tracker to load it.</span></p>` : ""}
+        ${s.assessed ? `<p class="small" style="margin-bottom:0"><button type="button" class="btn btn-secondary btn-sm" data-school-report="${esc(s.key)}">Governors' report</button>
+          <span class="muted">This school's report for its governors, ready to print or save as PDF.</span></p>` : ""}
       </div>
       ${sections}
     </div>`;
@@ -849,6 +852,58 @@
       <span><strong>Send schools their files.</strong> ${changed ? `${plural(changed, "school")} changed by the trust.` : "Download each school's DfE tracker file to send back to it."}</span>
       <button type="button" class="btn btn-primary btn-sm" id="btn-send-files">&#8595; Download school files</button>
     </div>`;
+  }
+
+  // ── Reports ──────────────────────────────────────────────────────────────
+  // Board report for the trust (trust-report.html) and each school's own
+  // governors' report (report.html?from=trust). The school list goes to the
+  // report page through sessionStorage (trust-handoff.js); the report reads the
+  // assessments from the trust store itself.
+  function reportsBar() {
+    if (!window.TrustHandoff || !inScope().some(s => s.assessed)) return "";
+    return `<div class="reports-bar">
+      <span><strong>Reports.</strong> A one-page overview for the trust board, or every school's governors' report in one document to print or save as PDF.</span>
+      <span class="btns">
+        <button type="button" class="btn btn-primary btn-sm" id="btn-trust-report">Trust report</button>
+        <button type="button" class="btn btn-secondary btn-sm" id="btn-all-reports">All school reports</button>
+      </span>
+    </div>`;
+  }
+
+  function handoffSchool(s, chosen) {
+    const keyOf = f => {
+      const list = s.records[f] || [];
+      const rec = (chosen && list.find(r => r.key === chosen[f])) || list[0];
+      return rec ? rec.key : "";
+    };
+    return { name: s.name, urn: s.urn, phase: s.phase || "", keys: { dfe: keyOf("dfe"), "cyber-essentials": keyOf("cyber-essentials") } };
+  }
+  const byName = (a, b) => a.name.localeCompare(b.name, "en-GB");
+
+  function openTrustReport() {
+    const list = inScope().slice().sort(byName);
+    if (TrustHandoff.save({ trust: app.trust ? app.trust.name : "", fw: "dfe", returnTo: "", schools: list.map(s => handoffSchool(s)) })) {
+      location.href = "trust-report.html";
+    } else toast("Your browser blocked the report. Allow site data for this page and try again.");
+  }
+
+  async function chooseFramework(list) {
+    const hasCe = ceLive() && list.some(s => s.current["cyber-essentials"]);
+    if (!hasCe) return "dfe";
+    const c = await TrustLink.chooseDialog("Which reports?", ["Choose the assessment to make each school's governors' report from."],
+      [["DfE standards", "dfe", "btn-primary"], ["Cyber Essentials", "ce"], ["Cancel", "cancel"]]);
+    return c === "cancel" || !c ? null : c;
+  }
+
+  async function openSchoolReports(list, returnTo, chosen) {
+    const fw = await chooseFramework(list);
+    if (!fw) return;
+    const fwId = fw === "ce" ? "cyber-essentials" : "dfe";
+    const with_ = list.filter(s => s.current[fwId]).sort(byName);
+    if (!with_.length) { toast("No school has an assessment to report on yet."); return; }
+    if (TrustHandoff.save({ trust: app.trust ? app.trust.name : "", fw: fwId, returnTo: returnTo || "", schools: with_.map(s => handoffSchool(s, chosen)) })) {
+      location.href = `report.html?f=${fw}&from=trust`;
+    } else toast("Your browser blocked the report. Allow site data for this page and try again.");
   }
 
   // A school's tracker state for export: its newest assessment, with a People
@@ -1200,6 +1255,14 @@
       try { await TrustLink.openInTracker(row); } finally { b.disabled = false; }
     }));
     bindCentral(c);
+    const trBtn = document.getElementById("btn-trust-report");
+    if (trBtn) trBtn.addEventListener("click", openTrustReport);
+    const allBtn = document.getElementById("btn-all-reports");
+    if (allBtn) allBtn.addEventListener("click", () => openSchoolReports(inScope()));
+    c.querySelectorAll("[data-school-report]").forEach(b => b.addEventListener("click", () => {
+      const row = schools.find(x => x.key === b.dataset.schoolReport);
+      if (row) openSchoolReports([row], row.key, app.viewing);
+    }));
     const sendBtn = document.getElementById("btn-send-files");
     if (sendBtn) sendBtn.addEventListener("click", sendFilesToSchools);
     c.querySelectorAll("[data-download-school]").forEach(b => b.addEventListener("click", () => {

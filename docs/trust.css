@@ -185,3 +185,7 @@ details.older summary { cursor: pointer; color: var(--dfe-blue); }
 
 /* Send schools their updated files */
 .send-files { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 16px; background: #e8f3f8; border: 1px solid #b8d7e6; border-radius: 10px; padding: 10px 14px; margin: 0 0 14px; font-size: 14px; }
+/* Trust report and all school reports */
+.reports-bar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 16px; background: #eef7f5; border: 1px solid #bfe0d9; border-radius: 10px; padding: 10px 14px; margin: 0 0 14px; font-size: 14px; }
+.reports-bar .btns { display: flex; flex-wrap: wrap; gap: 8px; }
+

@@ -264,3 +264,52 @@ body {
   h2, h3, .intro { break-after: avoid; page-break-after: avoid; }
   thead { display: table-header-group; }
 }
+
+/* ── Several schools' reports in one document (from the Trust Overview) ── */
+.trust-note { color: #fff; font-size: 13px; margin: 10px 0 0; }
+.school-report + .school-report { margin-top: 28px; padding-top: 28px; border-top: 6px dashed #c3c8cc; }
+
+/* ── Trust report ── */
+.tr-row { grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr) 2.8em 2.6em 5.6em; font-size: 9pt; }
+.tr-tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(30mm, 1fr)); gap: 8px; }
+.tr-tiles .ov-tile { padding: 7px 10px; }
+.tr-tiles .ov-big { font-size: 13pt; }
+.tr-tiles .ov-label { font-size: 8.5pt; line-height: 1.25; }
+.tr-tiles .ov-sub { font-size: 7.5pt; }
+.tr-head { font-size: 7.5pt; font-weight: 700; color: var(--grey); text-transform: uppercase; letter-spacing: 0.4px; border-bottom: 1px solid var(--line); }
+.tr-span { grid-column: 2 / 5; }
+.tr-weak { list-style: none; margin: 0; padding: 0; font-size: 9pt; }
+.tr-weak li { margin-bottom: 5px; }
+.tr-wbar { display: flex; height: 7px; border-radius: 4px; background: #eef1f3; overflow: hidden; margin-top: 3px; }
+.tr-wbar .r { background: var(--red); }
+.tr-wbar .a { background: var(--amber); }
+.tr-att { padding-left: 0; list-style: none; }
+.tr-grid { font-size: 8.5pt; table-layout: fixed; }
+.tr-grid th, .tr-grid td { padding: 5px 3px; }
+.tr-grid thead th { font-size: 7.5pt; text-align: center; vertical-align: bottom; line-height: 1.1; padding: 6px 2px; }
+.tr-vert { writing-mode: vertical-rl; transform: rotate(180deg); white-space: nowrap; display: inline-block; }
+.tr-grid thead th:first-child, .tr-grid tbody th { text-align: left; width: 28%; }
+.tr-grid tbody th { font-weight: 600; background: none; color: inherit; border-bottom: 1px solid var(--line); overflow-wrap: anywhere; }
+.tr-star { color: #ffd65a; }
+.tr-cell { text-align: center; }
+.tr-sq { display: inline-flex; width: 20px; height: 20px; border-radius: 6px; align-items: center; justify-content: center; font-size: 8pt; font-weight: 700; color: #fff; background: #fff; border: 1px solid var(--grey); color: var(--ink); }
+.tr-sq.red { background: var(--red); border-color: var(--red); color: #fff; }
+.tr-sq.amber { background: var(--amber); border-color: var(--amber); color: var(--ink); }
+.tr-sq.green { background: var(--green); border-color: var(--green); color: #fff; }
+.tr-sq.none { border-color: var(--line); color: var(--grey); }
+.tr-table { font-size: 9pt; }
+.tr-table .area { text-transform: none; letter-spacing: 0; font-weight: 400; }
+@media (max-width: 700px) {
+  .tr-tiles { grid-template-columns: 1fr 1fr; }
+  .tr-row { grid-template-columns: minmax(0, 1fr) 2.6em 2.6em 5.6em; }
+  .tr-span { grid-column: 2 / 4; }
+  .tr-grid-wrap, .trust-report .table-wrap { overflow-x: auto; }
+  .tr-grid { min-width: 560px; }
+  .tr-table { min-width: 620px; }
+}
+@media print {
+  .school-report + .school-report { break-before: page; page-break-before: always; margin-top: 0; padding-top: 0; border-top: 0; }
+  .tr-grid tr, .tr-table tr { break-inside: avoid; page-break-inside: avoid; }
+}
+.tr-table th:first-child { width: 30%; }
+.tr-table .date-note { white-space: nowrap; }

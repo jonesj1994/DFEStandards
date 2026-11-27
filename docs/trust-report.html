@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <script src="guard.js"></script>
+  <title>Trust Report</title>
+  <link rel="icon" href="favicon.svg" type="image/svg+xml" />
+  <link rel="stylesheet" href="report.css" />
+</head>
+<body>
+
+<!-- Report settings: shown on screen only, never printed -->
+<div class="report-tools no-print" id="report-tools">
+  <div class="tools-inner">
+    <div class="tools-row">
+      <a class="tools-brand" href="index.html"><img src="favicon.svg" alt="" width="26" height="26" />School Compliance Toolkit</a>
+      <a class="tbtn tbtn-secondary" id="back-link" href="trust.html">&#8592; Back to the Trust Overview</a>
+      <button type="button" class="tbtn tbtn-primary" id="btn-print">Print or save as PDF</button>
+      <span class="tools-hint">In the print window, choose <strong>Save as PDF</strong> as the printer to get a file for the board pack.</span>
+    </div>
+    <details class="tools-options" id="tools-options" open>
+      <summary>Report settings</summary>
+      <div class="tools-grid">
+        <div class="tfield">
+          <label for="opt-meeting">Presented to</label>
+          <input type="text" id="opt-meeting" maxlength="120" placeholder="e.g. Trust board, or audit and risk committee" />
+        </div>
+        <div class="tfield">
+          <label for="opt-date">Meeting date</label>
+          <input type="date" id="opt-date" />
+        </div>
+        <div class="tfield">
+          <label for="opt-author">Report prepared by</label>
+          <input type="text" id="opt-author" maxlength="120" placeholder="e.g. Head of IT" />
+        </div>
+        <div class="tfield tfield-wide">
+          <label for="opt-comment">Commentary for the board (optional)</label>
+          <textarea id="opt-comment" rows="3" maxlength="4000" placeholder="e.g. the key points, progress since the last report and what you are asking the board to note or approve"></textarea>
+        </div>
+        <div class="tfield tfield-wide tchecks">
+          <label><input type="checkbox" id="opt-detail" checked /> Include the results for each school (page 2)</label>
+        </div>
+      </div>
+      <p class="tools-note">These settings are saved in this browser only. Each school's full governors' report is on the Trust Overview: <strong>All school reports</strong>.</p>
+    </details>
+  </div>
+</div>
+
+<main class="report trust-report" id="report" aria-live="polite"></main>
+
+<script src="features.js"></script>
+<script src="data.js"></script>
+<script src="dfe-howto.js"></script>
+<script src="ce-data.js"></script>
+<script src="assessment-model.js"></script>
+<script src="trust-sources.js"></script>
+<script src="trust-handoff.js"></script>
+<script src="trust-report.js"></script>
+</body>
+</html>
