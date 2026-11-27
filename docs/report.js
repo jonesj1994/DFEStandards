@@ -9,7 +9,10 @@
   const $ = id => document.getElementById(id);
   const esc = s => String(s == null ? "" : s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
 
-  const FW = new URLSearchParams(location.search).get("f") === "ce" ? "cyber-essentials" : "dfe";
+  const PARAMS = new URLSearchParams(location.search);
+  const FW = PARAMS.get("f") === "ce" ? "cyber-essentials" : "dfe";
+  // Opened from the Trust Overview: every school's report in one document
+  const FROM_TRUST = PARAMS.get("from") === "trust" && !!window.TrustHandoff;
   const IS_DFE = FW === "dfe";
   const F = AM.framework(FW);
   const STATE_KEY = IS_DFE ? "dfe_tracker_v1" : "ce_tracker_v1";
@@ -158,8 +161,8 @@
     }
     if (notSet) bullets.push(`<strong>${plural(notSet, IS_DFE ? "standard has" : "requirement has", IS_DFE ? "standards have" : "requirements have")} not been assessed yet</strong>, so this report is incomplete.`);
 
-    return `<section class="section keep-together" aria-labelledby="h-summary">
-      <h2 id="h-summary">${num()}. Summary</h2>
+    return `<section class="section keep-together" aria-labelledby="${P}h-summary">
+      <h2 id="${P}h-summary">${num()}. Summary</h2>
       ${countChips(t.counts)}
       <ul class="bullets">${bullets.map(b => `<li>${b}</li>`).join("")}</ul>
       ${opts.comment.trim() ? `<div class="commentary"><h3>Commentary</h3><p class="text">${esc(opts.comment.trim())}</p></div>` : ""}
@@ -238,10 +241,10 @@
       </div>`;
     }
 
-    return `<section class="overview" aria-labelledby="ov-title">
+    return `<section class="overview" aria-labelledby="${P}ov-title">
       <header class="ov-head">
         <div class="ov-brand"><img src="favicon.svg" alt="" width="22" height="22" /> Report to governors</div>
-        <h1 id="ov-title">${esc(TITLE)}</h1>
+        <h1 id="${P}ov-title">${esc(TITLE)}</h1>
         <p class="ov-school">${esc(snap.school.name || "School name not entered")}</p>
         ${meta ? `<p class="ov-metaline">${meta}</p>` : ""}
       </header>
@@ -322,8 +325,8 @@
         <td class="num">${c.done} of ${c.total}</td>
         <td class="bar-cell">${bar(c.counts, c.total)}</td>
       </tr>`).join("");
-    return `<section class="section keep-together" aria-labelledby="h-areas">
-      <h2 id="h-areas">${num()}. Results by ${IS_DFE ? "standard area" : "control area"}</h2>
+    return `<section class="section keep-together" aria-labelledby="${P}h-areas">
+      <h2 id="${P}h-areas">${num()}. Results by ${IS_DFE ? "standard area" : "control area"}</h2>
       <p class="intro">${IS_DFE ? "Each area takes its lowest rating, so an area is only Green when every standard in it is Green." : "Each area takes its lowest result, so an area is only Met when every requirement in it is met or not applicable."}</p>
       <div class="table-wrap"><table class="data-table areas">
         <thead><tr><th scope="col">${IS_DFE ? "Standard area" : "Control area"}</th><th scope="col">Overall</th><th scope="col">${IS_DFE ? "Met" : "Met or N/A"}</th><th scope="col">Progress</th></tr></thead>
@@ -360,8 +363,8 @@
         </tr>`).join("")}</tbody>
       </table></div>`;
     }
-    return `<section class="section" aria-labelledby="h-actions">
-      <h2 id="h-actions">${num()}. Priority actions</h2>
+    return `<section class="section" aria-labelledby="${P}h-actions">
+      <h2 id="${P}h-actions">${num()}. Priority actions</h2>
       <p class="intro">${IS_DFE ? "Standards rated Red, then Amber, with core standards first." : "Requirements not met, then partly met."}</p>
       ${body}
     </section>`;
@@ -398,8 +401,8 @@
         ${hidden ? `<p class="muted">${plural(hidden, IS_DFE ? "standard" : "requirement")} met and not listed.</p>` : ""}
       </div>`;
     }).join("");
-    return `<section class="section page-break" aria-labelledby="h-detail">
-      <h2 id="h-detail">${num()}. Full results</h2>
+    return `<section class="section page-break" aria-labelledby="${P}h-detail">
+      <h2 id="${P}h-detail">${num()}. Full results</h2>
       ${blocks}
     </section>`;
   }
@@ -409,8 +412,8 @@
     const sources = IS_DFE
       ? [["Meeting digital and technology standards in schools and colleges (GOV.UK)", STANDARDS_INDEX_URL]]
       : [["Cyber Essentials requirements (NCSC): " + CE_VERSION, CE_SOURCE_URL], ["Cyber Essentials overview (NCSC)", CE_OVERVIEW_URL]];
-    return `<section class="section about keep-together" aria-labelledby="h-about">
-      <h2 id="h-about">${n}. About this report</h2>
+    return `<section class="section about keep-together" aria-labelledby="${P}h-about">
+      <h2 id="${P}h-about">${n}. About this report</h2>
       <h3>Report details</h3>
       <div class="rounded-box">${detailsTable(snap, opts)}</div>
       <h3>Rating key</h3>
@@ -421,8 +424,10 @@
     </section>`;
   }
 
-  // Section numbers, in the order sections are built
+  // Section numbers, in the order sections are built, and a prefix that keeps
+  // heading ids unique when several schools' reports are on one page
   let sectionNo = 0;
+  let P = "";
   const num = () => ++sectionNo;
 
   // ── Target dates (DfE only) ────────────────────────────────────────────────
@@ -463,8 +468,8 @@
     if (count("overdue")) facts.push(`<strong>${plural(count("overdue"), "date has", "dates have")} passed</strong> without the standard being met or reviewed.`);
     if (count("soon")) facts.push(`${plural(count("soon"), "date falls", "dates fall")} in the next 30 days.`);
     if (noDate) facts.push(`${plural(noDate, "standard rated Red or Amber has", "standards rated Red or Amber have")} no target date yet.`);
-    return `<section class="section keep-together" aria-labelledby="h-plan">
-      <h2 id="h-plan">${num()}. Working towards</h2>
+    return `<section class="section keep-together" aria-labelledby="${P}h-plan">
+      <h2 id="${P}h-plan">${num()}. Working towards</h2>
       <p class="intro">Target dates set by the school: <strong>Complete by</strong> for standards still being worked on, and <strong>Next review</strong> for standards already met. Earliest first.</p>
       ${facts.length ? `<ul class="bullets plan-facts">${facts.map(f => `<li>${f}</li>`).join("")}</ul>` : ""}
       ${body}
@@ -474,7 +479,24 @@
   // ── Render ─────────────────────────────────────────────────────────────────
   let opts = loadOptions();
 
+  // One school's report
+  function reportHtml(snap, opts) {
+    const sum = AM.summarise(snap);
+    sectionNo = 0;
+    const parts = [
+      overviewPage(snap, sum, opts),
+      summarySection(snap, sum, opts),
+      areasSection(sum),
+      actionsSection(sum)
+    ];
+    if (IS_DFE) parts.push(planSection(snap));
+    if (opts.detail) parts.push(detailSection(snap, sum, opts));
+    parts.push(aboutSection(snap, opts));
+    return parts.join("");
+  }
+
   function render() {
+    if (FROM_TRUST) { renderTrust(); return; }
     const root = $("report");
     const state = loadTracker();
     if (!state) {
@@ -487,22 +509,66 @@
       return;
     }
     const snap = AM.fromTrackerState(FW, state);
-    const sum = AM.summarise(snap);
     const school = snap.school.name || "School";
     // Used as the suggested file name when saving as PDF
     document.title = `${school} - ${TITLE} governors' report`;
+    P = "";
+    $("report").innerHTML = reportHtml(snap, opts);
+  }
 
-    sectionNo = 0;
-    const parts = [
-      overviewPage(snap, sum, opts),
-      summarySection(snap, sum, opts),
-      areasSection(sum),
-      actionsSection(sum)
-    ];
-    if (IS_DFE) parts.push(planSection(snap));
-    if (opts.detail) parts.push(detailSection(snap, sum, opts));
-    parts.push(aboutSection(snap, opts));
-    root.innerHTML = parts.join("");
+  // ── Reports for the trust's schools ────────────────────────────────────────
+  // The school list comes from the Trust Overview (trust-handoff.js); each
+  // school's newest assessment is read from the trust store. Each school's
+  // report starts on a new page.
+  let trustList = null;   // { payload, snaps: [snapshot] } once loaded
+
+  function renderTrust() {
+    const root = $("report");
+    if (!trustList) { root.innerHTML = '<p class="empty">Loading the schools\' reports&hellip;</p>'; return; }
+    const { payload, snaps } = trustList;
+    if (!snaps.length) {
+      document.title = `${TITLE}: governors' reports`;
+      root.innerHTML = `<div class="empty">
+        <h1>No school reports to show</h1>
+        <p>No ${esc(F.shortLabel)} assessments were found for the schools chosen in the Trust Overview. Import the schools' files there, then create the reports again.</p>
+        <p><a href="trust.html">Back to the Trust Overview</a></p>
+      </div>`;
+      return;
+    }
+    const one = snaps.length === 1;
+    document.title = one
+      ? `${snaps[0].school.name || "School"} - ${TITLE} governors' report`
+      : `${payload.trust || "Trust"} - ${TITLE} governors' reports (${snaps.length} schools)`;
+    // The commentary belongs to one school, so it is only used for a single report
+    const o = one ? opts : { ...opts, comment: "" };
+    root.innerHTML = snaps.map((snap, i) => {
+      P = one ? "" : `s${i + 1}-`;
+      return `<div class="school-report">${reportHtml(snap, o)}</div>`;
+    }).join("");
+  }
+
+  async function loadTrustList() {
+    const payload = TrustHandoff.load();
+    let snaps = [];
+    if (payload) {
+      const recs = await TrustHandoff.records(payload);
+      payload.schools.forEach(s => {
+        const r = recs.get(s.keys[FW]);
+        if (r && r.snapshot.framework === FW) snaps.push(r.snapshot);
+      });
+    }
+    trustList = { payload: payload || { trust: "", schools: [], returnTo: "" }, snaps };
+    const n = snaps.length;
+    const note = $("trust-note");
+    if (note) {
+      note.hidden = false;
+      note.textContent = n > 1
+        ? `${n} schools' reports${payload.trust ? " for " + payload.trust : ""}, each starting on a new page. The settings below apply to every report; commentary is left out, as it is written for one school.`
+        : n === 1 ? "This school's report, made from its newest assessment in the Trust Overview." : "";
+    }
+    const comment = $("opt-comment");
+    if (comment && n > 1) comment.closest(".tfield").hidden = true;
+    render();
   }
 
   // ── Settings panel ─────────────────────────────────────────────────────────
@@ -532,9 +598,19 @@
     $("opt-author").placeholder = "Defaults to the person who completed the assessment";
   }
 
-  $("back-link").href = TRACKER_PAGE;
-  $("back-link").textContent = "← Back to the " + F.shortLabel + " tracker";
+  if (FROM_TRUST) {
+    $("back-link").href = "trust.html";
+    $("back-link").textContent = "← Back to the Trust Overview";
+    // Show the school the reports were opened from on return (trust-link.js)
+    $("back-link").addEventListener("click", () => {
+      const p = TrustHandoff.load();
+      if (p && p.returnTo) try { sessionStorage.setItem("trust_return_school", p.returnTo); } catch (e) { /* ignore */ }
+    });
+  } else {
+    $("back-link").href = TRACKER_PAGE;
+    $("back-link").textContent = "← Back to the " + F.shortLabel + " tracker";
+  }
   $("btn-print").addEventListener("click", () => window.print());
   bindOptions();
-  render();
+  if (FROM_TRUST) loadTrustList(); else render();
 })();
